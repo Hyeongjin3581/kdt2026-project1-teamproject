@@ -1,4 +1,4 @@
-package oncare_backend.model;
+package oncare_backend.model.entity;
 
 import java.time.LocalDateTime;
 
@@ -19,7 +19,7 @@ public class BaseTime {
     // 1. 레코드 생성 시점 가져오는 어노테이션 -> CreatedDate
     @CreatedDate
     private LocalDateTime createDate;
-    
+
     // 2. 마지막으로 레코드를 수정한 시점을 자동 갱신하는 어노테이션 -> LastModifiedDate
     @LastModifiedDate
     private LocalDateTime updateDate;
