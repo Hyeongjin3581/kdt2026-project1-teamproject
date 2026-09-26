@@ -1,5 +1,27 @@
 package oncare_backend.model.dto;
 
-public class InquiryCategoryDto {
+import java.time.LocalDateTime;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import oncare_backend.model.entity.InquiryCategoryEntity;
+
+@NoArgsConstructor @AllArgsConstructor @Data @Builder 
+public class InquiryCategoryDto {
+    private Integer inquiry_category_no;
+    private String inquiry_category_name;
+
+    private LocalDateTime createDate;
+    private LocalDateTime updateDate;
+
+    // 해당 내용은 고정된 카테고리 내용만을 사용하므로, dto -> Entity 변환은 필요가 없음. 
+
+        public static InquiryCategoryDto from(InquiryCategoryEntity entity) {
+        return InquiryCategoryDto.builder()
+            .inquiry_category_no(entity.getInquiry_category_no())
+            .inquiry_category_name(entity.getInquiry_category_name())
+            .build();
+    }
 }

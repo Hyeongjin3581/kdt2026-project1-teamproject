@@ -14,11 +14,11 @@ import lombok.NoArgsConstructor;
 @Entity 
 @Table (name="inquiry_category")
 @NoArgsConstructor @AllArgsConstructor @Data @Builder 
-public class InquiryCategoryEntity extends BaseTime{
+public class InquiryCategoryEntity {
     @Id 
     @GeneratedValue (strategy = GenerationType.IDENTITY)
     private Integer inquiry_category_no;
     
     @Column (nullable = false , length = 50)
-    private String user_category_name;
+    private String inquiry_category_name;
 }
