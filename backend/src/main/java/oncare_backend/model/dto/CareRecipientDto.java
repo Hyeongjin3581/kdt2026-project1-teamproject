@@ -10,13 +10,13 @@ import oncare_backend.model.entity.CareRecipientEntity;
 
 @NoArgsConstructor @AllArgsConstructor @Data @Builder 
 public class CareRecipientDto {
-    private Integer carerecipient_no;
-    private Integer guardian_no;
-    private String carerecipient_name;
-    private Integer carerecipient_age;
-    private String carerecipient_address;
-    private Boolean carerecipient_gender;
-    private String careRecipient_content;
+    private Integer carerecipient_no;               // 수급자 번호
+    private Integer guardian_no;                     // 보호자 번호 FK
+    private String carerecipient_name;            // 수급자 성명
+    private Integer carerecipient_age;             // 수급자 나이
+    private String carerecipient_address;        // 수급자 거주지역
+    private Boolean carerecipient_gender;    // 수급자 성별
+    private String careRecipient_content;     // 수급자 특이사항
 
     // BaseTime 시간 멤버변수 생성
     private LocalDateTime createDate;

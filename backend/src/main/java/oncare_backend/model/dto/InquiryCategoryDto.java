@@ -10,8 +10,8 @@ import oncare_backend.model.entity.InquiryCategoryEntity;
 
 @NoArgsConstructor @AllArgsConstructor @Data @Builder 
 public class InquiryCategoryDto {
-    private Integer inquiry_category_no;
-    private String inquiry_category_name;
+    private Integer inquiry_category_no;        // 문의 카테고리 번호
+    private String inquiry_category_name;     // 문의 카테고리 유형 ( 1. 방문 시간 변경 요청 / 2. 방문 요일 변경 요청 / 3. 담당자 관련 문의 / 4.기타 문의)
 
     private LocalDateTime createDate;
     private LocalDateTime updateDate;

@@ -12,13 +12,13 @@ import oncare_backend.model.entity.GuardianInquiryEntity;
 
 @NoArgsConstructor @AllArgsConstructor @Data @Builder 
 public class GuardianInquiryDto {
-    private Integer inquiry_no;
-    private Integer guardian_no;
-    private Integer inquiry_category_no;
-    private LocalDate wish_date;
-    private LocalTime wish_start_time;
-    private LocalTime wish_end_time;
-    private String inquiry_content;
+    private Integer inquiry_no;                     // 문의번호
+    private Integer guardian_no;                 // 보호자 번호 FK
+    private Integer inquiry_category_no;    // 문의 카테고리 FK
+    private LocalDate wish_date;                // 희망 날짜
+    private LocalTime wish_start_time;      // 희망 시작시간
+    private LocalTime wish_end_time;       // 희망 종료시간
+    private String inquiry_content;           // 요청 내용
 
     private LocalDateTime createDate;
     private LocalDateTime updateDate;

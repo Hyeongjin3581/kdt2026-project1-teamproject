@@ -10,10 +10,10 @@ import oncare_backend.model.entity.GuardianEntity;
 
 @NoArgsConstructor @AllArgsConstructor @Data @Builder 
 public class GuardianDto {
-    private Integer guardian_no;
-    private Integer user_no;
-    private String guardian_name;
-    private String guardian_relationship;
+    private Integer guardian_no;                    // 보호자 번호  
+    private Integer user_no;                           // 사용자 번호 FK
+    private String guardian_name;                // 보호자 성명
+    private String guardian_relationship;      // 수급자와의 관계
 
     private LocalDateTime createDate;
     private LocalDateTime updateDate;
