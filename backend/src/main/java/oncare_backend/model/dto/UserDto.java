@@ -26,13 +26,13 @@ public class UserDto {
                 .phoneNumber(this.phoneNumber).build();
     }
 
-    public static UserDto entityToDto(UserEntity userEntity){
+    public static UserDto entityToDto(UserEntity user){
         return UserDto.builder()
-                .userNo(userEntity.getUserNo())
-                .userId(userEntity.getUserId())
-                .userPassword(userEntity.getUserPassword())
-                .phoneNumber(userEntity.getPhoneNumber())
-                .email(userEntity.getEmail())
-                .userCategoryName(userEntity.getUserCategoryEntity().getUserCategoryName()).build();
+                .userNo(user.getUserNo())
+                .userId(user.getUserId())
+                .userPassword(user.getUserPassword())
+                .phoneNumber(user.getPhoneNumber())
+                .email(user.getEmail())
+                .userCategoryName(user.getUserCategoryEntity().getUserCategoryName()).build();
     }
 }

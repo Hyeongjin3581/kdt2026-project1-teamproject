@@ -1,10 +1,10 @@
 package oncare_backend.model.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "center")
@@ -17,5 +17,10 @@ public class CenterEntity {
     private String centerName;
     private String centerAddress;
     private String centerPhonenumber;
+
+    /*@OneToMany(mappedBy = //"요양보호사엔티티")
+    @Builder.Default
+    @ToString.Exclude
+    private List<CareworkersEntity> careworkersEntities = new ArrayList<>();*/
 
 }

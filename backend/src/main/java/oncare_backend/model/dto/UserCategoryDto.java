@@ -14,12 +14,12 @@ public class UserCategoryDto {
     public UserCategoryEntity dtoToEntity(){
         return UserCategoryEntity.builder()
                 .userCategoryNo(this.userCategoryNo)
-                .userCategoryNo(this.userCategoryNo).build();
+                .userCategoryName(this.userCategoryName).build();
     }
 
-    public static UserCategoryDto entityToDto(UserCategoryEntity userCategoryEntity){
+    public static UserCategoryDto entityToDto(UserCategoryEntity userCategory){
         return UserCategoryDto.builder()
-                .userCategoryName(userCategoryEntity.getUserCategoryName())
-                .userCategoryNo(userCategoryEntity.getUserCategoryNo()).build();
+                .userCategoryName(userCategory.getUserCategoryName())
+                .userCategoryNo(userCategory.getUserCategoryNo()).build();
     }
 }
