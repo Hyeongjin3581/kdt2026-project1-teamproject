@@ -116,7 +116,7 @@ CREATE TABLE careworkersreport (
 -- 문의 카테고리  ([수정] 시트에 영문 테이블명 없음 → inquiry_category)
 CREATE TABLE inquiry_category (
     inquiry_category_no INT NOT NULL AUTO_INCREMENT,
-    user_category_name VARCHAR(50) NOT NULL,
+    inquiry_category_name VARCHAR(50) NOT NULL,
     PRIMARY KEY (inquiry_category_no)
 );
 
