@@ -23,7 +23,7 @@ public class CareRecipientDto {
     private LocalDateTime updateDate;
 
     // Dto에서 Entity로 변환
-    public CareRecipientEntity toEntity(){
+    public CareRecipientEntity dtoToEntity(){
         return CareRecipientEntity.builder()
         .guardian_no(this.guardian_no)
         .carerecipient_name(this.carerecipient_name)
@@ -35,7 +35,7 @@ public class CareRecipientDto {
     }
 
     // Entity에서 Dto로 변환 
-    public static CareRecipientDto from(CareRecipientEntity entity){
+    public static CareRecipientDto entityToDto(CareRecipientEntity entity){
         return CareRecipientDto.builder()
         .carerecipient_no(entity.getCarerecipient_no())
         .guardian_no(entity.getGuardian_no())

@@ -18,7 +18,7 @@ public class InquiryCategoryDto {
 
     // 해당 내용은 고정된 카테고리 내용만을 사용하므로, dto -> Entity 변환은 필요가 없음. 
 
-        public static InquiryCategoryDto from(InquiryCategoryEntity entity) {
+        public static InquiryCategoryDto entityToDto(InquiryCategoryEntity entity) {
         return InquiryCategoryDto.builder()
             .inquiry_category_no(entity.getInquiry_category_no())
             .inquiry_category_name(entity.getInquiry_category_name())

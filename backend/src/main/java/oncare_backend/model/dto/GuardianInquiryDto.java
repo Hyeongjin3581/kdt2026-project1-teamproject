@@ -23,7 +23,7 @@ public class GuardianInquiryDto {
     private LocalDateTime createDate;
     private LocalDateTime updateDate;
 
-    public GuardianInquiryEntity toEntity(){
+    public GuardianInquiryEntity dtoToEntity(){
         return GuardianInquiryEntity.builder()
         .guardian_no(this.guardian_no)
         .inquiry_category_no(this.inquiry_category_no)
@@ -34,7 +34,7 @@ public class GuardianInquiryDto {
         .build();
     }
 
-    public static GuardianInquiryDto from(GuardianInquiryEntity entity){
+    public static GuardianInquiryDto entityToDto(GuardianInquiryEntity entity){
        return GuardianInquiryDto.builder()
        .inquiry_no(entity.getInquiry_no())
        .guardian_no(entity.getGuardian_no())

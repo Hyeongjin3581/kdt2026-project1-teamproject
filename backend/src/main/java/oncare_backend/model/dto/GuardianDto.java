@@ -19,7 +19,7 @@ public class GuardianDto {
     private LocalDateTime updateDate;
 
     // Dto에서 Entity로 변환
-    public GuardianEntity toEntity(){
+    public GuardianEntity dtoToEntity(){
         return GuardianEntity.builder()
         .user_no(this.user_no)
         .guardian_name(this.guardian_name)
@@ -27,7 +27,7 @@ public class GuardianDto {
         .build();
     }
 
-    public static GuardianDto from(GuardianEntity entity){
+    public static GuardianDto entityToDto(GuardianEntity entity){
         return GuardianDto.builder()
         .guardian_no(entity.getGuardian_no())
         .user_no(entity.getUser_no())
