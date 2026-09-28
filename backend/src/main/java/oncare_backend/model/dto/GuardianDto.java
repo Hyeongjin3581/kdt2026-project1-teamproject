@@ -7,6 +7,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import oncare_backend.model.entity.GuardianEntity;
+import oncare_backend.model.entity.UserEntity;
 
 @NoArgsConstructor @AllArgsConstructor @Data @Builder 
 public class GuardianDto {
@@ -21,7 +22,9 @@ public class GuardianDto {
     // Dto에서 Entity로 변환
     public GuardianEntity dtoToEntity(){
         return GuardianEntity.builder()
-        .userNo(this.userNo)
+        .userEntity(this.userNo == null ? null : UserEntity.builder()
+            .userNo(this.userNo)
+            .build())
         .guardianName(this.guardianName)
         .guardianRelationship(this.guardianRelationship)
         .build();
@@ -30,7 +33,7 @@ public class GuardianDto {
     public static GuardianDto entityToDto(GuardianEntity entity){
         return GuardianDto.builder()
         .guardianNo(entity.getGuardianNo())
-        .userNo(entity.getUserNo())
+        .userNo(entity.getUserEntity() == null ? null : entity.getUserEntity().getUserNo())
         .guardianName(entity.getGuardianName())
         .guardianRelationship(entity.getGuardianRelationship())
         .createDate(entity.getCreateDate())

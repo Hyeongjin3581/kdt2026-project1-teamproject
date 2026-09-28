@@ -30,6 +30,9 @@ public class GuardianInquiryService {
 	// 1. 보호자 문의 생성
 	@Transactional
 	public boolean GuardianInquiryCreate(GuardianInquiryDto guardianInquiryDto) {
+		if (guardianInquiryDto.getGuardianNo() == null || guardianInquiryDto.getInquiryCategoryNo() == null) {
+			return false;
+		}
 		Optional<GuardianEntity> guardianOptional = guardianRepository
 				.findById(guardianInquiryDto.getGuardianNo());
 		Optional<InquiryCategoryEntity> categoryOptional = inquiryCategoryRepository
@@ -37,6 +40,8 @@ public class GuardianInquiryService {
 		if (guardianOptional.isEmpty() || categoryOptional.isEmpty()) { return false; }
 
 		GuardianInquiryEntity guardianInquiryEntity = guardianInquiryDto.dtoToEntity();
+		guardianInquiryEntity.setGuardianEntity(guardianOptional.get());
+		guardianInquiryEntity.setInquiryCategoryEntity(categoryOptional.get());
 		GuardianInquiryEntity savedEntity = guardianInquiryRepository.save(guardianInquiryEntity);
 		if (savedEntity.getInquiryNo() >= 1) { return true; }
 		return false;
@@ -45,6 +50,11 @@ public class GuardianInquiryService {
 	// 2. 보호자 문의 수정
 	@Transactional
 	public boolean GuardianInquiryModify(GuardianInquiryDto guardianInquiryDto) {
+		if (guardianInquiryDto.getInquiryNo() == null
+				|| guardianInquiryDto.getGuardianNo() == null
+				|| guardianInquiryDto.getInquiryCategoryNo() == null) {
+			return false;
+		}
 		Optional<GuardianInquiryEntity> inquiryOptional = guardianInquiryRepository
 				.findById(guardianInquiryDto.getInquiryNo());
 		Optional<GuardianEntity> guardianOptional = guardianRepository
@@ -56,8 +66,8 @@ public class GuardianInquiryService {
 		}
 
 		GuardianInquiryEntity guardianInquiryEntity = inquiryOptional.get();
-		guardianInquiryEntity.setGuardianNo(guardianInquiryDto.getGuardianNo());
-		guardianInquiryEntity.setInquiryCategoryNo(guardianInquiryDto.getInquiryCategoryNo());
+		guardianInquiryEntity.setGuardianEntity(guardianOptional.get());
+		guardianInquiryEntity.setInquiryCategoryEntity(categoryOptional.get());
 		guardianInquiryEntity.setWishDate(guardianInquiryDto.getWishDate());
 		guardianInquiryEntity.setWishStartTime(guardianInquiryDto.getWishStartTime());
 		guardianInquiryEntity.setWishEndTime(guardianInquiryDto.getWishEndTime());

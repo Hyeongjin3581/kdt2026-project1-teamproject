@@ -41,5 +41,5 @@ public class RequestEntity {
     // 수급자번호 연결
     @JoinColumn (name="carerecipient_no")
     @ManyToOne
-    private CareRecipientEntity carerecipients;
+        private CareRecipientEntity careRecipientEntity;
 }

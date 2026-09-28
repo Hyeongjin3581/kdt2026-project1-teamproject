@@ -5,7 +5,6 @@ import java.time.LocalTime;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -26,13 +25,13 @@ public class GuardianInquiryEntity extends BaseTime{
     @Column(name = "inquiry_no")
     private Integer inquiryNo;
 
-    @JoinColumn (name="guardian_no" , nullable = false)
     @ManyToOne
-    private Integer guardianNo;
+    @JoinColumn(name = "guardian_no", nullable = false)
+    private GuardianEntity guardianEntity;
 
-    @JoinColumn (name="inquiry_category_no", nullable = false)
     @ManyToOne
-    private Integer inquiryCategoryNo;
+    @JoinColumn(name = "inquiry_category_no", nullable = false)
+    private InquiryCategoryEntity inquiryCategoryEntity;
 
     @Column (nullable = false)
     private LocalDate wishDate;

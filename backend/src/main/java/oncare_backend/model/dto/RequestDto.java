@@ -2,9 +2,6 @@ package oncare_backend.model.dto;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.util.ArrayList;
-import java.util.List;
-
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -25,9 +22,7 @@ public class RequestDto {
     private Integer visitEndTime;
     private String requestContent;
 
-    //FK
-    @Builder.Default
-    private List<CareRecipientDto> carerecipient = new ArrayList<>();
+    private Integer careRecipientNo;
 
     public RequestEntity dtoToEntity(){
         return RequestEntity.builder()
@@ -37,6 +32,9 @@ public class RequestDto {
                             .visitStartTime(this.visitStartTime)
                             .visitEndTime(this.visitEndTime)
                             .requestContent(this.requestContent)
+                                .careRecipientEntity(this.careRecipientNo == null ? null : CareRecipientEntity.builder()
+                                    .careRecipientNo(this.careRecipientNo)
+                                    .build())
                             .build();
     }
 
@@ -49,6 +47,8 @@ public class RequestDto {
                         .visitStartTime(entity.getVisitStartTime())
                         .visitEndTime(entity.getVisitEndTime())
                         .requestContent(entity.getRequestContent())
+                        .careRecipientNo(entity.getCareRecipientEntity() == null
+                            ? null : entity.getCareRecipientEntity().getCareRecipientNo())
                         .build();
     }
 }

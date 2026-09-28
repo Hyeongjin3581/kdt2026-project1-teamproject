@@ -5,10 +5,10 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -35,23 +35,21 @@ public class CareRecipientController {
 	}
 
 	// 3. 수급자 상세 조회
-	@GetMapping("/{careRecipientNo}")
-	public CareRecipientDto CareRecipientinquiry(@PathVariable Integer careRecipientNo) {
+	@GetMapping("")
+	public CareRecipientDto CareRecipientinquiry(@RequestParam Integer careRecipientNo) {
 		return careRecipientService.CareRecipientinquiry(careRecipientNo);
 	}
 
 	// 4. 수급자 정보 수정
-	@PutMapping("/{careRecipientNo}")
-	public boolean CareRecipientModify(
-			@PathVariable Integer careRecipientNo,
-			@RequestBody CareRecipientDto careRecipientDto) {
-		return careRecipientService.CareRecipientModify(careRecipientNo, careRecipientDto);
+	@PutMapping("")
+	public boolean CareRecipientModify(@RequestBody CareRecipientDto careRecipientDto) {
+		return careRecipientService.CareRecipientModify(careRecipientDto);
 	}
 
 	// 5. 수급자 삭제
-	@DeleteMapping("/{careRecipientNo}")
-	public boolean CareRecipientDelete(@PathVariable Integer careRecipientNo) {
-		return careRecipientService.CareRecipientDelete(careRecipientNo);
+	@DeleteMapping("")
+	public boolean CareRecipientDelete(@RequestBody CareRecipientDto careRecipientDto) {
+		return careRecipientService.CareRecipientDelete(careRecipientDto);
 	}
 }
 // 수급자 기본 CRUD 

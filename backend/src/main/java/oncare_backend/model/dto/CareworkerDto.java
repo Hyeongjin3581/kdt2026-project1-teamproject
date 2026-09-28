@@ -4,6 +4,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import oncare_backend.model.entity.CareworkerEntity;
+import oncare_backend.model.entity.CenterEntity;
+import oncare_backend.model.entity.UserEntity;
 
 @Data 
 @AllArgsConstructor 
@@ -29,6 +31,12 @@ public class CareworkerDto {
             .hourWage(this.hourWage)
             .careworkerAge(this.careworkerAge)
             .careworkerState(this.careworkerState)
+                .centerEntity(this.centerNo == null ? null : CenterEntity.builder()
+                    .centerNo(this.centerNo)
+                    .build())
+                .userEntity(this.userNo == null ? null : UserEntity.builder()
+                    .userNo(this.userNo)
+                    .build())
             .build();
     }
 
@@ -42,8 +50,8 @@ public class CareworkerDto {
                 .hourWage(careworker.getHourWage())
                 .careworkerAge(careworker.getCareworkerAge())
                 .careworkerState(careworker.getCareworkerState())
-                .centerNo(careworker.getCenterEntity().getCenterNo())
-                .userNo(careworker.getUserEntity().getUserNo())
+                .centerNo(careworker.getCenterEntity() == null ? null : careworker.getCenterEntity().getCenterNo())
+                .userNo(careworker.getUserEntity() == null ? null : careworker.getUserEntity().getUserNo())
                 .build();
     }
 }

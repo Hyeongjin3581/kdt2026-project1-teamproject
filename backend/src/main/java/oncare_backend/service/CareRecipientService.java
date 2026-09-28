@@ -10,15 +10,28 @@ import org.springframework.transaction.annotation.Transactional;
 import oncare_backend.model.dto.CareRecipientDto;
 import oncare_backend.model.entity.CareRecipientEntity;
 import oncare_backend.model.repository.CareRecipientRepository;
+import oncare_backend.model.entity.GuardianEntity;
+import oncare_backend.model.repository.GuardianRepository;
 @Service 
 public class CareRecipientService {
 
 	@Autowired
 	private CareRecipientRepository careRecipientRepository;
 
+	@Autowired
+	private GuardianRepository guardianRepository;
+
 	// 1. 수급자 등록
 	public boolean CareRecipientSave(CareRecipientDto careRecipientDto) {
+		GuardianEntity guardianEntity = null;
+		if (careRecipientDto.getGuardianNo() != null) {
+			Optional<GuardianEntity> guardianOptional = guardianRepository.findById(careRecipientDto.getGuardianNo());
+			if (guardianOptional.isEmpty()) { return false; }
+			guardianEntity = guardianOptional.get();
+		}
+
 		CareRecipientEntity careRecipientEntity = careRecipientDto.dtoToEntity();
+		careRecipientEntity.setGuardianEntity(guardianEntity);
 		CareRecipientEntity savedEntity = careRecipientRepository.save(careRecipientEntity);
 		if (savedEntity.getCareRecipientNo() >= 1) { return true; }
 		return false;
@@ -44,11 +57,19 @@ public class CareRecipientService {
 
 	// 4. 수급자 정보 수정
 	@Transactional
-	public boolean CareRecipientModify(Integer careRecipientNo, CareRecipientDto careRecipientDto) {
-		Optional<CareRecipientEntity> optional = careRecipientRepository.findById(careRecipientNo);
+	public boolean CareRecipientModify(CareRecipientDto careRecipientDto) {
+		Optional<CareRecipientEntity> optional = careRecipientRepository
+				.findById(careRecipientDto.getCareRecipientNo());
 		if (optional.isPresent()) {
+			GuardianEntity guardianEntity = null;
+			if (careRecipientDto.getGuardianNo() != null) {
+				Optional<GuardianEntity> guardianOptional = guardianRepository.findById(careRecipientDto.getGuardianNo());
+				if (guardianOptional.isEmpty()) { return false; }
+				guardianEntity = guardianOptional.get();
+			}
+
 			CareRecipientEntity careRecipientEntity = optional.get();
-			careRecipientEntity.setGuardianNo(careRecipientDto.getGuardianNo());
+			careRecipientEntity.setGuardianEntity(guardianEntity);
 			careRecipientEntity.setCareRecipientName(careRecipientDto.getCareRecipientName());
 			careRecipientEntity.setCareRecipientAge(careRecipientDto.getCareRecipientAge());
 			careRecipientEntity.setCareRecipientAddress(careRecipientDto.getCareRecipientAddress());
@@ -62,8 +83,9 @@ public class CareRecipientService {
 
 	// 5. 수급자 삭제
 	@Transactional
-	public boolean CareRecipientDelete(Integer careRecipientNo) {
-		Optional<CareRecipientEntity> optional = careRecipientRepository.findById(careRecipientNo);
+	public boolean CareRecipientDelete(CareRecipientDto careRecipientDto) {
+		Optional<CareRecipientEntity> optional = careRecipientRepository
+				.findById(careRecipientDto.getCareRecipientNo());
 		if (optional.isPresent()) {
 			careRecipientRepository.delete(optional.get());
 			return true;
