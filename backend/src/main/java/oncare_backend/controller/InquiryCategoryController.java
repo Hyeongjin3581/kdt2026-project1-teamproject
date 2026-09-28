@@ -11,16 +11,16 @@ import oncare_backend.model.dto.InquiryCategoryDto;
 import oncare_backend.service.InquiryCategoryService;
 
 @RestController 
-@RequestMapping("/api/문의카테고리")
+@RequestMapping("/inquirycategory")
 public class InquiryCategoryController {
 
 	@Autowired
 	private InquiryCategoryService inquiryCategoryService;
 
 	// 1. 문의 카테고리 전체 조회
-	@GetMapping
-	public List<InquiryCategoryDto> 문의카테고리전체조회() {
-		return inquiryCategoryService.문의카테고리전체조회();
+	@GetMapping("")
+	public List<InquiryCategoryDto>InquiryCategoryFindAll() {
+		return inquiryCategoryService.InquiryCategoryFindAll();
 	}
 }
 

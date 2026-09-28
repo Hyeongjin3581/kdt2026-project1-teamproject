@@ -17,7 +17,7 @@ public class CareRecipientService {
 	private CareRecipientRepository careRecipientRepository;
 
 	// 1. 수급자 등록
-	public boolean 수급자등록(CareRecipientDto careRecipientDto) {
+	public boolean CareRecipientSave(CareRecipientDto careRecipientDto) {
 		CareRecipientEntity careRecipientEntity = careRecipientDto.dtoToEntity();
 		CareRecipientEntity savedEntity = careRecipientRepository.save(careRecipientEntity);
 		if (savedEntity.getCareRecipientNo() >= 1) { return true; }
@@ -26,7 +26,7 @@ public class CareRecipientService {
 
 	// 2. 수급자 전체 조회
 	@Transactional(readOnly = true)
-	public List<CareRecipientDto> 수급자전체조회() {
+	public List<CareRecipientDto> CareRecipientFindAll() {
 		return careRecipientRepository.findAll().stream()
 				.map(CareRecipientDto::entityToDto)
 				.toList();
@@ -34,7 +34,7 @@ public class CareRecipientService {
 
 	// 3. 수급자 상세 조회
 	@Transactional(readOnly = true)
-	public CareRecipientDto 수급자조회(Integer careRecipientNo) {
+	public CareRecipientDto CareRecipientinquiry(Integer careRecipientNo) {
 		Optional<CareRecipientEntity> optional = careRecipientRepository.findById(careRecipientNo);
 		if (optional.isPresent()) {
 			return CareRecipientDto.entityToDto(optional.get());
@@ -44,7 +44,7 @@ public class CareRecipientService {
 
 	// 4. 수급자 정보 수정
 	@Transactional
-	public boolean 수급자수정(Integer careRecipientNo, CareRecipientDto careRecipientDto) {
+	public boolean CareRecipientModify(Integer careRecipientNo, CareRecipientDto careRecipientDto) {
 		Optional<CareRecipientEntity> optional = careRecipientRepository.findById(careRecipientNo);
 		if (optional.isPresent()) {
 			CareRecipientEntity careRecipientEntity = optional.get();
@@ -62,7 +62,7 @@ public class CareRecipientService {
 
 	// 5. 수급자 삭제
 	@Transactional
-	public boolean 수급자삭제(Integer careRecipientNo) {
+	public boolean CareRecipientDelete(Integer careRecipientNo) {
 		Optional<CareRecipientEntity> optional = careRecipientRepository.findById(careRecipientNo);
 		if (optional.isPresent()) {
 			careRecipientRepository.delete(optional.get());

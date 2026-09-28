@@ -29,7 +29,7 @@ public class GuardianInquiryService {
 
 	// 1. 보호자 문의 생성
 	@Transactional
-	public boolean 보호자문의생성(GuardianInquiryDto guardianInquiryDto) {
+	public boolean GuardianInquiryCreate(GuardianInquiryDto guardianInquiryDto) {
 		Optional<GuardianEntity> guardianOptional = guardianRepository
 				.findById(guardianInquiryDto.getGuardianNo());
 		Optional<InquiryCategoryEntity> categoryOptional = inquiryCategoryRepository
@@ -44,8 +44,9 @@ public class GuardianInquiryService {
 
 	// 2. 보호자 문의 수정
 	@Transactional
-	public boolean 보호자문의수정(Integer inquiryNo, GuardianInquiryDto guardianInquiryDto) {
-		Optional<GuardianInquiryEntity> inquiryOptional = guardianInquiryRepository.findById(inquiryNo);
+	public boolean GuardianInquiryModify(GuardianInquiryDto guardianInquiryDto) {
+		Optional<GuardianInquiryEntity> inquiryOptional = guardianInquiryRepository
+				.findById(guardianInquiryDto.getInquiryNo());
 		Optional<GuardianEntity> guardianOptional = guardianRepository
 				.findById(guardianInquiryDto.getGuardianNo());
 		Optional<InquiryCategoryEntity> categoryOptional = inquiryCategoryRepository
@@ -67,8 +68,9 @@ public class GuardianInquiryService {
 
 	// 3. 보호자 문의 삭제
 	@Transactional
-	public boolean 보호자문의삭제(Integer inquiryNo) {
-		Optional<GuardianInquiryEntity> optional = guardianInquiryRepository.findById(inquiryNo);
+	public boolean GuardianInquiryDelete(GuardianInquiryDto guardianInquiryDto) {
+		Optional<GuardianInquiryEntity> optional = guardianInquiryRepository
+				.findById(guardianInquiryDto.getInquiryNo());
 		if (optional.isPresent()) {
 			guardianInquiryRepository.delete(optional.get());
 			return true;
@@ -78,7 +80,7 @@ public class GuardianInquiryService {
 
 	// 4. 보호자 문의 전체 조회(관리자)
 	@Transactional(readOnly = true)
-	public List<GuardianInquiryDto> 보호자문의전체조회() {
+	public List<GuardianInquiryDto>GuardianInquiryFindAll() {
 		return guardianInquiryRepository.findAll().stream()
 				.map(GuardianInquiryDto::entityToDto)
 				.toList();

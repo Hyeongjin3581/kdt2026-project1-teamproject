@@ -17,7 +17,7 @@ public class InquiryCategoryService {
 
 	// 1. 문의 카테고리 전체 조회
 	@Transactional(readOnly = true)
-	public List<InquiryCategoryDto> 문의카테고리전체조회() {
+	public List<InquiryCategoryDto>InquiryCategoryFindAll() {
 		return inquiryCategoryRepository.findAll().stream()
 				.map(InquiryCategoryDto::entityToDto)
 				.toList();
