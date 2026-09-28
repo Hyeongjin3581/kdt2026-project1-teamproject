@@ -26,8 +26,18 @@ public class CareWorkerReportController {
     }
     
     // [2] 센터 별 근무기록 불러오기
-    @GetMapping ("")
+    @GetMapping ("/center")
     public List<CareworkerReportDto> findAllByCenter(@RequestParam(name = "center_no") Integer centerNo){
-        return findAllByCenter(centerNo);
+        return careWorkerReportService.findAllByCenter(centerNo);
     }
+
+    // [3] 요양보호사 별 근무기록 불러오기
+    @GetMapping("/careworker")
+    public List<CareworkerReportDto> findAllByCareworker(@RequestParam(name = "careworker_no") Integer careworkerNo) {
+        return careWorkerReportService.findAllByCareworker(careworkerNo);
+    }
+    
+    // [4] 근무 기록 레코드 -> 근무기록상태 바꾸기
+
+    // [5] 근무 기록 삭제
 }

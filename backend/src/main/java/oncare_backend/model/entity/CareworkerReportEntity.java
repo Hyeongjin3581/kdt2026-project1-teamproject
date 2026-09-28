@@ -42,10 +42,10 @@ public class CareworkerReportEntity {
     // 요양보호사 연결
     @JoinColumn (name = "careworker_no")
     @ManyToOne(fetch = FetchType.LAZY)
-    private CareworkerEntity careworker;
+    private CareworkerEntity careworkerEntity;
 
     // 매칭서비스요청 연결
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn (name = "request_no")
-    private RequestEntity request;
+    private RequestEntity requestEntity;
 }
