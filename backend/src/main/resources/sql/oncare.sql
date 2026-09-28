@@ -133,4 +133,4 @@ CREATE TABLE guardian_inquiry (
     PRIMARY KEY (inquiry_no),
     FOREIGN KEY (guardian_no) REFERENCES guardians (guardian_no),
     FOREIGN KEY (inquiry_category_no) REFERENCES inquiry_category (inquiry_category_no)
-);
+);*/
