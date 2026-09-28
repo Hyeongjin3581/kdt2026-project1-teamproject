@@ -1,0 +1,54 @@
+package oncare_backend.model.dto;
+
+import java.time.LocalDate;
+import java.time.LocalTime;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
+import oncare_backend.model.entity.CareworkerReportEntity;
+
+@NoArgsConstructor
+@AllArgsConstructor 
+@Getter @Setter @ToString 
+@Builder 
+public class CareworkerReportDto {
+
+    private Integer careworkersReportNo;
+
+    //FK
+    @Builder.Default
+    private Integer careworkerNo = null;
+    //FK
+    @Builder.Default
+    private Integer requestNo = null;
+
+    private LocalDate workDate;
+    private LocalTime workStartTime;
+    private LocalTime workEndTime;
+    private String workStatus;
+
+    public CareworkerReportEntity dtoToEntity(){
+        return CareworkerReportEntity.builder()
+                                    .workDate(this.workDate)
+                                    .workStartTime(this.workStartTime)
+                                    .workEndTime(this.workEndTime)
+                                    .workStatus(workStatus)
+                                    .build();
+    }
+
+    public static CareworkerReportDto entityToDto(CareworkerReportEntity entity){
+        return CareworkerReportDto.builder()
+                                    .careworkersReportNo(entity.getCareworkersReportNo())
+                                    .requestNo(entity.getRequest().getRequestNo())
+                                    .workDate(entity.getWorkDate())
+                                    .workStartTime(entity.getWorkStartTime())
+                                    .workEndTime(entity.getWorkEndTime())
+                                    .workStatus(entity.getWorkStatus())
+                                    .build();
+    }
+}
