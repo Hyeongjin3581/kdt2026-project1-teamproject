@@ -7,8 +7,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 import oncare_backend.model.dto.CareworkerReportDto;
 import oncare_backend.service.CareWorkerReportService;
+
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -38,6 +41,14 @@ public class CareWorkerReportController {
     }
     
     // [4] 근무 기록 레코드 -> 근무기록상태 바꾸기
-
+    @PutMapping("")
+    public boolean updateReport( @RequestParam(name="careworker_report_no")Integer careworkersReportNo,
+                                 @RequestParam(name="work_status")String status ){
+        return careWorkerReportService.updateReport(careworkersReportNo, status);
+    }
     // [5] 근무 기록 삭제
+    @DeleteMapping("")
+    public boolean deleteReport( @RequestParam(name="careworker_report_no")Integer careworkersReportNo ){
+        return careWorkerReportService.deleteReport(careworkersReportNo);
+    }
 }

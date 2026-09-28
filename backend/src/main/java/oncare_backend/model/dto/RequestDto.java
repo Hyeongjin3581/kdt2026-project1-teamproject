@@ -25,9 +25,9 @@ public class RequestDto {
     private Integer visitEndTime;
     private String requestContent;
 
-    //FK
+    // FK
     @Builder.Default
-    private List<CareRecipientDto> carerecipient = new ArrayList<>();
+    private Integer carerecipientNo = null;
 
     public RequestEntity dtoToEntity(){
         return RequestEntity.builder()
@@ -43,6 +43,7 @@ public class RequestDto {
     public static RequestDto entityToDto(RequestEntity entity){
         return RequestDto.builder()
                         .requestNo(entity.getRequestNo())
+                        .carerecipientNo(entity.getCarerecipientsEntity().getCareRecipientNo())
                         .preferredGender(entity.isPreferredGender())
                         .requestState(entity.getRequestState())
                         .visitDate(entity.getVisitDate())
