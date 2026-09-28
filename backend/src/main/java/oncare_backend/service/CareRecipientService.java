@@ -20,7 +20,7 @@ public class CareRecipientService {
 	public boolean 수급자등록(CareRecipientDto careRecipientDto) {
 		CareRecipientEntity careRecipientEntity = careRecipientDto.dtoToEntity();
 		CareRecipientEntity savedEntity = careRecipientRepository.save(careRecipientEntity);
-		if (savedEntity.getCarerecipient_no() >= 1) { return true; }
+		if (savedEntity.getCareRecipientNo() >= 1) { return true; }
 		return false;
 	}
 
@@ -48,12 +48,12 @@ public class CareRecipientService {
 		Optional<CareRecipientEntity> optional = careRecipientRepository.findById(careRecipientNo);
 		if (optional.isPresent()) {
 			CareRecipientEntity careRecipientEntity = optional.get();
-			careRecipientEntity.setGuardian_no(careRecipientDto.getGuardian_no());
-			careRecipientEntity.setCarerecipient_name(careRecipientDto.getCarerecipient_name());
-			careRecipientEntity.setCarerecipient_age(careRecipientDto.getCarerecipient_age());
-			careRecipientEntity.setCarerecipient_address(careRecipientDto.getCarerecipient_address());
-			careRecipientEntity.setCarerecipient_gender(careRecipientDto.getCarerecipient_gender());
-			careRecipientEntity.setCareRecipient_content(careRecipientDto.getCareRecipient_content());
+			careRecipientEntity.setGuardianNo(careRecipientDto.getGuardianNo());
+			careRecipientEntity.setCareRecipientName(careRecipientDto.getCareRecipientName());
+			careRecipientEntity.setCareRecipientAge(careRecipientDto.getCareRecipientAge());
+			careRecipientEntity.setCareRecipientAddress(careRecipientDto.getCareRecipientAddress());
+			careRecipientEntity.setCareRecipientGender(careRecipientDto.getCareRecipientGender());
+			careRecipientEntity.setCareRecipientContent(careRecipientDto.getCareRecipientContent());
 			careRecipientRepository.save(careRecipientEntity);
 			return true;
 		}

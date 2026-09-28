@@ -9,6 +9,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -21,20 +22,25 @@ import lombok.NoArgsConstructor;
 public class GuardianInquiryEntity extends BaseTime{
     @Id 
     @GeneratedValue (strategy = GenerationType.IDENTITY)
-    private Integer inquiry_no;
+    @Column(name = "inquiry_no")
+    private Integer inquiryNo;
 
     @JoinColumn (name="guardian_no" , nullable = false)
-    private Integer guardian_no;
+    @ManyToOne
+    private Integer guardianNo;
 
     @JoinColumn (name="inquiry_category_no", nullable = false)
-    private Integer inquiry_category_no;
+    @ManyToOne
+    private Integer inquiryCategoryNo;
 
     @Column (nullable = false)
-    private LocalDate wish_date;
+    private LocalDate wishDate;
 
-    private LocalTime wish_start_time;
-    private LocalTime wish_end_time;
+    @Column(name = "wish_start_time")
+    private LocalTime wishStartTime;
+    @Column(name = "wish_end_time")
+    private LocalTime wishEndTime;
     
     @Column (length = 1000)
-    private String inquiry_content;
+    private String inquiryContent;
 }

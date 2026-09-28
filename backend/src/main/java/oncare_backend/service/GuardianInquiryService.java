@@ -31,14 +31,14 @@ public class GuardianInquiryService {
 	@Transactional
 	public boolean 보호자문의생성(GuardianInquiryDto guardianInquiryDto) {
 		Optional<GuardianEntity> guardianOptional = guardianRepository
-				.findById(guardianInquiryDto.getGuardian_no());
+				.findById(guardianInquiryDto.getGuardianNo());
 		Optional<InquiryCategoryEntity> categoryOptional = inquiryCategoryRepository
-				.findById(guardianInquiryDto.getInquiry_category_no());
+				.findById(guardianInquiryDto.getInquiryCategoryNo());
 		if (guardianOptional.isEmpty() || categoryOptional.isEmpty()) { return false; }
 
 		GuardianInquiryEntity guardianInquiryEntity = guardianInquiryDto.dtoToEntity();
 		GuardianInquiryEntity savedEntity = guardianInquiryRepository.save(guardianInquiryEntity);
-		if (savedEntity.getInquiry_no() >= 1) { return true; }
+		if (savedEntity.getInquiryNo() >= 1) { return true; }
 		return false;
 	}
 
@@ -47,20 +47,20 @@ public class GuardianInquiryService {
 	public boolean 보호자문의수정(Integer inquiryNo, GuardianInquiryDto guardianInquiryDto) {
 		Optional<GuardianInquiryEntity> inquiryOptional = guardianInquiryRepository.findById(inquiryNo);
 		Optional<GuardianEntity> guardianOptional = guardianRepository
-				.findById(guardianInquiryDto.getGuardian_no());
+				.findById(guardianInquiryDto.getGuardianNo());
 		Optional<InquiryCategoryEntity> categoryOptional = inquiryCategoryRepository
-				.findById(guardianInquiryDto.getInquiry_category_no());
+				.findById(guardianInquiryDto.getInquiryCategoryNo());
 		if (inquiryOptional.isEmpty() || guardianOptional.isEmpty() || categoryOptional.isEmpty()) {
 			return false;
 		}
 
 		GuardianInquiryEntity guardianInquiryEntity = inquiryOptional.get();
-		guardianInquiryEntity.setGuardian_no(guardianInquiryDto.getGuardian_no());
-		guardianInquiryEntity.setInquiry_category_no(guardianInquiryDto.getInquiry_category_no());
-		guardianInquiryEntity.setWish_date(guardianInquiryDto.getWish_date());
-		guardianInquiryEntity.setWish_start_time(guardianInquiryDto.getWish_start_time());
-		guardianInquiryEntity.setWish_end_time(guardianInquiryDto.getWish_end_time());
-		guardianInquiryEntity.setInquiry_content(guardianInquiryDto.getInquiry_content());
+		guardianInquiryEntity.setGuardianNo(guardianInquiryDto.getGuardianNo());
+		guardianInquiryEntity.setInquiryCategoryNo(guardianInquiryDto.getInquiryCategoryNo());
+		guardianInquiryEntity.setWishDate(guardianInquiryDto.getWishDate());
+		guardianInquiryEntity.setWishStartTime(guardianInquiryDto.getWishStartTime());
+		guardianInquiryEntity.setWishEndTime(guardianInquiryDto.getWishEndTime());
+		guardianInquiryEntity.setInquiryContent(guardianInquiryDto.getInquiryContent());
 		guardianInquiryRepository.save(guardianInquiryEntity);
 		return true;
 	}

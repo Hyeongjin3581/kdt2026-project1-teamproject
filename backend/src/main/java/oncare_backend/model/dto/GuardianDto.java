@@ -10,10 +10,10 @@ import oncare_backend.model.entity.GuardianEntity;
 
 @NoArgsConstructor @AllArgsConstructor @Data @Builder 
 public class GuardianDto {
-    private Integer guardian_no;                    // 보호자 번호  
-    private Integer user_no;                           // 사용자 번호 FK
-    private String guardian_name;                // 보호자 성명
-    private String guardian_relationship;      // 수급자와의 관계
+    private Integer guardianNo;                    // 보호자 번호
+    private Integer userNo;                           // 사용자 번호 FK
+    private String guardianName;                // 보호자 성명
+    private String guardianRelationship;      // 수급자와의 관계
 
     private LocalDateTime createDate;
     private LocalDateTime updateDate;
@@ -21,18 +21,18 @@ public class GuardianDto {
     // Dto에서 Entity로 변환
     public GuardianEntity dtoToEntity(){
         return GuardianEntity.builder()
-        .user_no(this.user_no)
-        .guardian_name(this.guardian_name)
-        .guardian_relationship(this.guardian_relationship)
+        .userNo(this.userNo)
+        .guardianName(this.guardianName)
+        .guardianRelationship(this.guardianRelationship)
         .build();
     }
 
     public static GuardianDto entityToDto(GuardianEntity entity){
         return GuardianDto.builder()
-        .guardian_no(entity.getGuardian_no())
-        .user_no(entity.getUser_no())
-        .guardian_name(entity.getGuardian_name())
-        .guardian_relationship(entity.getGuardian_relationship())
+        .guardianNo(entity.getGuardianNo())
+        .userNo(entity.getUserNo())
+        .guardianName(entity.getGuardianName())
+        .guardianRelationship(entity.getGuardianRelationship())
         .createDate(entity.getCreateDate())
         .updateDate(entity.getUpdateDate())
         .build();
