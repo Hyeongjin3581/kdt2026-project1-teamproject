@@ -19,8 +19,11 @@ public class CenterService {
 
     public boolean save(CenterDto centerDto) {
         CenterEntity centerEntity = centerDto.dtoToEntity();
-        centerRepository.save(centerEntity);
-        return true;
+        CenterEntity saved = centerRepository.save(centerEntity);
+        if (saved.getCenterNo() >= 1){
+            return true;
+        }
+        return false;
     }
 
     public List<CenterDto> findAll() {
