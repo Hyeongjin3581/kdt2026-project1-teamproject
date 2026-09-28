@@ -9,14 +9,14 @@
 -- USE oncare;
 
 -- 유저 카테고리
-CREATE TABLE usercategory (
+CREATE TABLE IF NOT EXISTS usercategory (
     user_category_no INT NOT NULL AUTO_INCREMENT,
     user_category_name VARCHAR(50) NOT NULL,
     PRIMARY KEY (user_category_no)
 );
 
 -- 센터목록
-CREATE TABLE center (
+CREATE TABLE IF NOT EXISTS center (
     center_no INT NOT NULL AUTO_INCREMENT,
     center_name VARCHAR(50) NOT NULL,
     center_address VARCHAR(255) NOT NULL,
@@ -25,7 +25,7 @@ CREATE TABLE center (
 );
 
 -- 사용자 목록
-CREATE TABLE user (
+CREATE TABLE IF NOT EXISTS user (
     user_no INT NOT NULL AUTO_INCREMENT,
     user_id VARCHAR(50) NOT NULL,
     user_password VARCHAR(50) NOT NULL,
@@ -36,7 +36,7 @@ CREATE TABLE user (
 );
 
 -- 보호자테이블
-CREATE TABLE guardians (
+CREATE TABLE IF NOT EXISTS guardians (
     guardian_no INT NOT NULL AUTO_INCREMENT,
     user_no INT NOT NULL UNIQUE,
     guardian_name VARCHAR(10) NOT NULL,
@@ -46,7 +46,7 @@ CREATE TABLE guardians (
 );
 
 -- 수급자테이블
-CREATE TABLE careRecipients (
+CREATE TABLE IF NOT EXISTS careRecipients (
     carerecipient_no INT NOT NULL AUTO_INCREMENT,
     guardian_no INT NOT NULL,
     carerecipient_name VARCHAR(50) NOT NULL,
@@ -59,7 +59,7 @@ CREATE TABLE careRecipients (
 );
 
 -- 요양보호사목록
-CREATE TABLE careworkers (
+CREATE TABLE IF NOT EXISTS careworkers (
     careworker_no INT NOT NULL AUTO_INCREMENT,
     careworker_name VARCHAR(50) NOT NULL,
     careworker_address VARCHAR(255) NOT NULL,
@@ -75,7 +75,7 @@ CREATE TABLE careworkers (
 );
 
 -- 다음주근무가능시간
-CREATE TABLE caregiverAvailability (
+CREATE TABLE IF NOT EXISTS caregiverAvailability (
     availability_no INT NOT NULL AUTO_INCREMENT,
     caregiver_no INT NOT NULL,
     available_date DATE NOT NULL,
@@ -87,7 +87,7 @@ CREATE TABLE caregiverAvailability (
 );
 
 -- 매칭서비스요청
-CREATE TABLE requests (
+CREATE TABLE IF NOT EXISTS requests (
     request_no INT NOT NULL AUTO_INCREMENT,
     carerecipient_no INT NOT NULL,
     preferred_gender CHAR(5), -- [수정] 시트: boolean char(5) → 타입 하나만 가능해서 CHAR(5)
@@ -101,7 +101,7 @@ CREATE TABLE requests (
 );
 
 -- 요양보호사근무기록
-CREATE TABLE careworkersreport (
+CREATE TABLE IF NOT EXISTS careworkersreport (
     careworkers_report_no INT NOT NULL AUTO_INCREMENT,
     careworker_no INT NOT NULL,
     request_no INT NOT NULL,
@@ -115,14 +115,14 @@ CREATE TABLE careworkersreport (
 );
 
 -- 문의 카테고리  ([수정] 시트에 영문 테이블명 없음 → inquiry_category)
-CREATE TABLE inquiry_category (
+CREATE TABLE IF NOT EXISTS inquiry_category (
     inquiry_category_no INT NOT NULL AUTO_INCREMENT,
     inquiry_category_name VARCHAR(50) NOT NULL,
     PRIMARY KEY (inquiry_category_no)
 );
 
 -- 보호자문의  ([수정] 시트에 영문 테이블명 없음 → guardian_inquiry)
-CREATE TABLE guardian_inquiry (
+CREATE TABLE IF NOT EXISTS guardian_inquiry (
     inquiry_no INT NOT NULL AUTO_INCREMENT,
     guardian_no INT NOT NULL,
     inquiry_category_no INT NOT NULL, -- [수정] 시트: varchar(50) → 참조하는 PK가 INT라 FK 오류
@@ -133,4 +133,6 @@ CREATE TABLE guardian_inquiry (
     PRIMARY KEY (inquiry_no),
     FOREIGN KEY (guardian_no) REFERENCES guardians (guardian_no),
     FOREIGN KEY (inquiry_category_no) REFERENCES inquiry_category (inquiry_category_no)
-);*/
+);
+
+SHOW COLUMNS FROM oncare.guardians;

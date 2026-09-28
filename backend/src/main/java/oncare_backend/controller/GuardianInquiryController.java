@@ -22,7 +22,7 @@ public class GuardianInquiryController {
 	private GuardianInquiryService guardianInquiryService;
 
 	// 1. 보호자 문의 생성
-	@PostMapping
+	@PostMapping("")
 	public boolean GuardianInquiryCreate(@RequestBody GuardianInquiryDto guardianInquiryDto) {
 		return guardianInquiryService.GuardianInquiryCreate(guardianInquiryDto);
 	}
@@ -40,7 +40,7 @@ public class GuardianInquiryController {
 	}
 
 	// 4. 보호자 문의 전체 조회(관리자)
-	@GetMapping
+	@GetMapping("")
 	public List<GuardianInquiryDto>GuardianInquiryFindAll() {
 		return guardianInquiryService.GuardianInquiryFindAll();
 	}

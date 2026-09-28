@@ -23,19 +23,19 @@ public class CareRecipientController {
 	private CareRecipientService careRecipientService;
 
 	// 1. 수급자 등록
-	@PostMapping
+	@PostMapping("")
 	public boolean CareRecipientSave(@RequestBody CareRecipientDto careRecipientDto) {
 		return careRecipientService.CareRecipientSave(careRecipientDto);
 	}
 
 	// 2. 수급자 전체 조회
-	@GetMapping
+	@GetMapping("")
 	public List<CareRecipientDto> CareRecipientFindAll() {
 		return careRecipientService.CareRecipientFindAll();
 	}
 
 	// 3. 수급자 상세 조회
-	@GetMapping("")
+	@GetMapping("/detail")
 	public CareRecipientDto CareRecipientinquiry(@RequestParam Integer careRecipientNo) {
 		return careRecipientService.CareRecipientinquiry(careRecipientNo);
 	}
