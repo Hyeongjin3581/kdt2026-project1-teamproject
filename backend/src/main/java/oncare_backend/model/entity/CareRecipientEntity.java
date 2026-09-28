@@ -25,7 +25,7 @@ public class CareRecipientEntity extends BaseTime{
     // FK는 JoinColumn으로 받아오기.
     @JoinColumn(name = "guardian_no", nullable = true)
     @ManyToOne
-    private Integer guardianNo;
+    private GuardianEntity guardianEntity;
 
     @Column(name = "carerecipient_name", nullable = false, length = 50)
     private String careRecipientName;

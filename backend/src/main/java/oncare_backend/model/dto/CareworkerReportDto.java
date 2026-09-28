@@ -45,7 +45,7 @@ public class CareworkerReportDto {
     public static CareworkerReportDto entityToDto(CareworkerReportEntity entity){
         return CareworkerReportDto.builder()
                                     .careworkersReportNo(entity.getCareworkersReportNo())
-                                    .requestNo(entity.getRequest().getRequestNo())
+                                    .requestNo(entity.getRequestEntity().getRequestNo())
                                     .workDate(entity.getWorkDate())
                                     .workStartTime(entity.getWorkStartTime())
                                     .workEndTime(entity.getWorkEndTime())

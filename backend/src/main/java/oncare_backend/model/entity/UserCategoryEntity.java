@@ -7,7 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "userCategory")
+@Table(name = "usercategory")
 @NoArgsConstructor @AllArgsConstructor @Data @Builder
 public class UserCategoryEntity {
     @Id

@@ -3,7 +3,9 @@ package oncare_backend.service;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import oncare_backend.model.dto.UserDto;
+import oncare_backend.model.entity.UserCategoryEntity;
 import oncare_backend.model.entity.UserEntity;
+import oncare_backend.model.repository.UserCategoryRepository;
 import oncare_backend.model.repository.UserRepository;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -15,13 +17,20 @@ import java.util.List;
 @Transactional
 public class UserService {
     private final UserRepository userRepository;
+    private final UserCategoryRepository userCategoryRepository;
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder(); // 단방향 해시함수 라이브러리
 
     // 회원가입
     public boolean save(UserDto userDto) {
         UserEntity userEntity = userDto.dtoToEntity();
-        userEntity.setUserPassword(passwordEncoder.encode(userDto.getUserPassword()));
+        userEntity.setUserPassword(passwordEncoder.encode(userDto.getUserPassword())); // 유저 password 암호화 해서 세팅
 
+        // 넘긴 유저카테고리no값으로 해당 카테고리 찾아서 userEntity에 대입
+        UserCategoryEntity userCategoryEntity = userCategoryRepository.findById(userDto.getUserCategoryNo()).orElse(null);
+        if (userCategoryEntity == null){
+            return false;
+        }
+        userEntity.setUserCategoryEntity(userCategoryEntity);
         UserEntity saved = userRepository.save(userEntity);
         if (saved.getUserNo() >= 1){
             return true;
