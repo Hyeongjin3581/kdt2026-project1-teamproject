@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 
 @Entity
 @Table(name = "caregiverAvailability")
@@ -21,8 +22,8 @@ public class CareworkerAvailabilityEntity {
     private Integer availabilityNo;
 
     private LocalDate availableDate;
-    private Integer startTime;
-    private Integer endTime;
+    private LocalTime startTime;
+    private LocalTime endTime;
     private String status;
 
     @ManyToOne(fetch = FetchType.LAZY)

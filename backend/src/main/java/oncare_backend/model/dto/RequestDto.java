@@ -15,11 +15,11 @@ import oncare_backend.model.entity.RequestEntity;
 @Builder 
 public class RequestDto {
     private Integer requestNo;
-    private boolean preferredGender;
+    private String preferredGender;
     private String requestState;
     private LocalDate visitDate;
-    private Integer visitStartTime;
-    private Integer visitEndTime;
+    private LocalTime visitStartTime;
+    private LocalTime visitEndTime;
     private String requestContent;
 
     private Integer careRecipientNo;
@@ -41,7 +41,7 @@ public class RequestDto {
     public static RequestDto entityToDto(RequestEntity entity){
         return RequestDto.builder()
                         .requestNo(entity.getRequestNo())
-                        .preferredGender(entity.isPreferredGender())
+                        .preferredGender(entity.getPreferredGender())
                         .requestState(entity.getRequestState())
                         .visitDate(entity.getVisitDate())
                         .visitStartTime(entity.getVisitStartTime())

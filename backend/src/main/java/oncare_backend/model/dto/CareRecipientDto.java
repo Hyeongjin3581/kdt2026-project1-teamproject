@@ -16,7 +16,7 @@ public class CareRecipientDto {
     private String careRecipientName;            // 수급자 성명
     private Integer careRecipientAge;             // 수급자 나이
     private String careRecipientAddress;        // 수급자 거주지역
-    private Boolean careRecipientGender;    // 수급자 성별
+    private String careRecipientGender;     // 수급자 성별
     private String careRecipientContent;     // 수급자 특이사항
 
     // BaseTime 시간 멤버변수 생성

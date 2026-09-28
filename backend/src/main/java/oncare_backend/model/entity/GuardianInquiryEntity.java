@@ -33,13 +33,13 @@ public class GuardianInquiryEntity extends BaseTime{
     @JoinColumn(name = "inquiry_category_no", nullable = false)
     private InquiryCategoryEntity inquiryCategoryEntity;
 
-    @Column (nullable = false)
+    @Column (nullable = true)
     private LocalDate wishDate;
 
     @Column(name = "wish_start_time")
-    private Integer wishStartTime;
+    private LocalTime wishStartTime;
     @Column(name = "wish_end_time")
-    private Integer wishEndTime;
+    private LocalTime wishEndTime;
     
     @Column (length = 1000)
     private String inquiryContent;

@@ -19,8 +19,8 @@ public class CareworkerAvailabilityDto {
     private Integer availabilityNo;
 
     private LocalDate availableDate;
-    private Integer startTime;
-    private Integer endTime;
+        private LocalTime startTime;
+        private LocalTime endTime;
     private String status;
 
     private Integer careworkerNo;
