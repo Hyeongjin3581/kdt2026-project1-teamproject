@@ -43,9 +43,9 @@ public class GuardianInquiryDto {
     .wishStartTime(entity.getWishStartTime())
     .wishEndTime(entity.getWishEndTime())
     .inquiryContent(entity.getInquiryContent())
-       .createDate(entity.getCreateDate())
-       .updateDate(entity.getUpdateDate())
-       .build();
+    .createDate(entity.getCreateDate())
+    .updateDate(entity.getUpdateDate())
+    .build();
     }
 }
 
