@@ -15,7 +15,7 @@ import java.time.LocalTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class CareworkerAvailabilityEntity {
+public class CaregiverAvailabilityEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

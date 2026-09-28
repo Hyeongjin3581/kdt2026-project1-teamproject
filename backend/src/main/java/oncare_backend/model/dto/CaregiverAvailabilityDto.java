@@ -1,19 +1,20 @@
 package oncare_backend.model.dto;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import oncare_backend.model.entity.CareworkerAvailabilityEntity;
+import oncare_backend.model.entity.CaregiverAvailabilityEntity;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class CareworkerAvailabilityDto {
+public class CaregiverAvailabilityDto {
 
     private Integer availabilityNo;
 
@@ -21,13 +22,15 @@ public class CareworkerAvailabilityDto {
     private LocalTime startTime;
     private LocalTime endTime;
     private String status;
+    private Integer caregiverNo;
 
-    private Integer careworkerNo;
+    private LocalDateTime createDate;
+    private LocalDateTime updateDate;
 
 
     // DTO -> Entity
-    public CareworkerAvailabilityEntity dtoToEntity() {
-        return CareworkerAvailabilityEntity.builder()
+    public CaregiverAvailabilityEntity dtoToEntity() {
+        return CaregiverAvailabilityEntity.builder()
                 .availableDate(this.availableDate)
                 .startTime(this.startTime)
                 .endTime(this.endTime)
@@ -37,16 +40,16 @@ public class CareworkerAvailabilityDto {
 
 
     // Entity -> DTO
-    public static CareworkerAvailabilityDto entityToDto(
-            CareworkerAvailabilityEntity availability) {
+    public static CaregiverAvailabilityDto entityToDto(
+            CaregiverAvailabilityEntity availability) {
 
-        return CareworkerAvailabilityDto.builder()
+        return CaregiverAvailabilityDto.builder()
                 .availabilityNo(availability.getAvailabilityNo())
                 .availableDate(availability.getAvailableDate())
                 .startTime(availability.getStartTime())
                 .endTime(availability.getEndTime())
                 .status(availability.getStatus())
-                .careworkerNo(
+                .caregiverNo(
                         availability.getCareworkerEntity().getCareworkerNo()
                 )
                 .build();
