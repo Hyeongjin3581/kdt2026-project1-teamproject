@@ -12,37 +12,37 @@ import oncare_backend.model.entity.GuardianInquiryEntity;
 
 @NoArgsConstructor @AllArgsConstructor @Data @Builder 
 public class GuardianInquiryDto {
-    private Integer inquiry_no;                     // 문의번호
-    private Integer guardian_no;                 // 보호자 번호 FK
-    private Integer inquiry_category_no;    // 문의 카테고리 FK
-    private LocalDate wish_date;                // 희망 날짜
-    private Integer wish_start_time;      // 희망 시작시간
-    private Integer wish_end_time;       // 희망 종료시간
-    private String inquiry_content;           // 요청 내용
+    private Integer inquiryNo;                     // 문의번호
+    private Integer guardianNo;                 // 보호자 번호 FK
+    private Integer inquiryCategoryNo;    // 문의 카테고리 FK
+    private LocalDate wishDate;                // 희망 날짜
+    private Integer wishStartTime;      // 희망 시작시간
+    private Integer wishEndTime;       // 희망 종료시간
+    private String inquiryContent;           // 요청 내용
 
     private LocalDateTime createDate;
     private LocalDateTime updateDate;
 
     public GuardianInquiryEntity dtoToEntity(){
         return GuardianInquiryEntity.builder()
-        .guardian_no(this.guardian_no)
-        .inquiry_category_no(this.inquiry_category_no)
-        .wish_date(this.wish_date)
-        .wish_start_time(this.wish_start_time)
-        .wish_end_time(this.wish_end_time)
-        .inquiry_content(this.inquiry_content)
+        .guardianNo(this.guardianNo)
+        .inquiryCategoryNo(this.inquiryCategoryNo)
+        .wishDate(this.wishDate)
+        .wishStartTime(this.wishStartTime)
+        .wishEndTime(this.wishEndTime)
+        .inquiryContent(this.inquiryContent)
         .build();
     }
 
     public static GuardianInquiryDto entityToDto(GuardianInquiryEntity entity){
        return GuardianInquiryDto.builder()
-       .inquiry_no(entity.getInquiry_no())
-       .guardian_no(entity.getGuardian_no())
-       .inquiry_category_no(entity.getInquiry_category_no())
-       .wish_date(entity.getWish_date())
-       .wish_start_time(entity.getWish_start_time())
-       .wish_end_time(entity.getWish_end_time())
-       .inquiry_content(entity.getInquiry_content())
+    .inquiryNo(entity.getInquiryNo())
+    .guardianNo(entity.getGuardianNo())
+    .inquiryCategoryNo(entity.getInquiryCategoryNo())
+    .wishDate(entity.getWishDate())
+    .wishStartTime(entity.getWishStartTime())
+    .wishEndTime(entity.getWishEndTime())
+    .inquiryContent(entity.getInquiryContent())
        .createDate(entity.getCreateDate())
        .updateDate(entity.getUpdateDate())
        .build();

@@ -23,22 +23,25 @@ import lombok.NoArgsConstructor;
 public class GuardianInquiryEntity extends BaseTime{
     @Id 
     @GeneratedValue (strategy = GenerationType.IDENTITY)
-    private Integer inquiry_no;
+    @Column(name = "inquiry_no")
+    private Integer inquiryNo;
 
     @JoinColumn (name="guardian_no" , nullable = false)
-    @ManyToOne(fetch = FetchType.LAZY)
-    private Integer guardian_no;
+    @ManyToOne
+    private Integer guardianNo;
 
     @JoinColumn (name="inquiry_category_no", nullable = false)
-    @ManyToOne(fetch = FetchType.LAZY)
-    private Integer inquiry_category_no;
+    @ManyToOne
+    private Integer inquiryCategoryNo;
 
     @Column (nullable = false)
-    private LocalDate wish_date;
+    private LocalDate wishDate;
 
-    private Integer wish_start_time;
-    private Integer wish_end_time;
+    @Column(name = "wish_start_time")
+    private LocalTime wishStartTime;
+    @Column(name = "wish_end_time")
+    private LocalTime wishEndTime;
     
     @Column (length = 1000)
-    private String inquiry_content;
+    private String inquiryContent;
 }

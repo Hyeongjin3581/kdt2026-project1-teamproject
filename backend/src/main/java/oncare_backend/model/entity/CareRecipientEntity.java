@@ -19,24 +19,26 @@ import lombok.NoArgsConstructor;
 public class CareRecipientEntity extends BaseTime{
     @Id 
     @GeneratedValue (strategy = GenerationType.IDENTITY)
-    private Integer carerecipient_no;
+    @Column(name = "carerecipient_no")
+    private Integer careRecipientNo;
     
     // FK는 JoinColumn으로 받아오기.
     @JoinColumn(name = "guardian_no", nullable = true)
     @ManyToOne
-    private Integer guardian_no;
+    private Integer guardianNo;
 
-    @Column(nullable = false , length = 50)
-    private String carerecipient_name;
+    @Column(name = "carerecipient_name", nullable = false, length = 50)
+    private String careRecipientName;
 
-    @Column (nullable = false)
-    private Integer carerecipient_age;
+    @Column(name = "carerecipient_age", nullable = false)
+    private Integer careRecipientAge;
 
-    @Column (nullable = false )
-    private String carerecipient_address;
+    @Column(name = "carerecipient_address", nullable = false)
+    private String careRecipientAddress;
 
-    @Column (nullable = false)
-    private Boolean carerecipient_gender;
+    @Column(name = "carerecipient_gender", nullable = false)
+    private Boolean careRecipientGender;
 
-    private String careRecipient_content;
+    @Column(name = "careRecipient_content")
+    private String careRecipientContent;
 }

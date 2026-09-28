@@ -17,8 +17,9 @@ import lombok.NoArgsConstructor;
 public class InquiryCategoryEntity {
     @Id 
     @GeneratedValue (strategy = GenerationType.IDENTITY)
-    private Integer inquiry_category_no;
+    @Column(name = "inquiry_category_no")
+    private Integer inquiryCategoryNo;
     
     @Column (nullable = false , length = 50)
-    private String inquiry_category_name;
+    private String inquiryCategoryName;
 }
