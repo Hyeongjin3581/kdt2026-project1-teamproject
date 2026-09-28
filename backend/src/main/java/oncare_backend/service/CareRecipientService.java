@@ -10,7 +10,6 @@ import org.springframework.transaction.annotation.Transactional;
 import oncare_backend.model.dto.CareRecipientDto;
 import oncare_backend.model.entity.CareRecipientEntity;
 import oncare_backend.model.repository.CareRecipientRepository;
-
 @Service 
 public class CareRecipientService {
 
