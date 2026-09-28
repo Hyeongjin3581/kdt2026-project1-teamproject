@@ -6,6 +6,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -23,6 +24,7 @@ public class GuardianEntity extends BaseTime{
 
     // FK를 joinColumn 으로 받아옴. 
     @JoinColumn(name = "user_no", nullable = false, unique = true)
+    @OneToOne
     private Integer user_no;
 
     @Column(nullable = false , length = 10)

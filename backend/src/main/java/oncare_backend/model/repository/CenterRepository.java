@@ -1,4 +1,4 @@
-package oncare_backend.repository;
+package oncare_backend.model.repository;
 
 import oncare_backend.model.entity.CenterEntity;
 import org.springframework.data.jpa.repository.JpaRepository;

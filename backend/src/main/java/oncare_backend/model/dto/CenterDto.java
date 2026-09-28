@@ -17,8 +17,8 @@ public class CenterDto {
     private String centerAddress;
     private String centerPhonenumber;
 
-    /*@Builder.Default
-    private List<CareworkersDto> careworkers = new ArrayList<>();*/
+    @Builder.Default
+    private List<CareworkerDto> careworkers = new ArrayList<>();
 
 
     public CenterEntity dtoToEntity(){

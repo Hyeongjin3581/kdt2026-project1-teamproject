@@ -29,8 +29,8 @@ public class CareworkerEntity {
     @JoinColumn(name = "center_no")
     private CenterEntity centerEntity;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    // @ManyToOne(fetch = FetchType.LAZY) 
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_no")
     private UserEntity userEntity;
-
 }

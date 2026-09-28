@@ -6,6 +6,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -22,6 +23,7 @@ public class CareRecipientEntity extends BaseTime{
     
     // FK는 JoinColumn으로 받아오기.
     @JoinColumn(name = "guardian_no", nullable = true)
+    @ManyToOne
     private Integer guardian_no;
 
     @Column(nullable = false , length = 50)
