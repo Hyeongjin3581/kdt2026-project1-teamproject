@@ -18,9 +18,9 @@ public class CenterEntity {
     private String centerAddress;
     private String centerPhonenumber;
 
-    /*@OneToMany(mappedBy = //"요양보호사엔티티")
+    @OneToMany(mappedBy = "centerEntity")
     @Builder.Default
     @ToString.Exclude
-    private List<CareworkersEntity> careworkersEntities = new ArrayList<>();*/
+    private List<CareworkerEntity> careworkersEntities = new ArrayList<>();
 
 }
