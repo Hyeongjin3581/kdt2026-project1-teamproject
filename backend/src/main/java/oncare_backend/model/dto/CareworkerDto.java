@@ -28,12 +28,13 @@ public class CareworkerDto {
     // DTO -> Entity
     public CareworkerEntity dtoToEntity(){
         return CareworkerEntity.builder()
+            .careworkerNo(this.careworkerNo)
             .careworkerName(this.careworkerName)
-            .careworkerAddress(this.careworkerAddress)
             .careworkerGender(this.careworkerGender)
             .hourWage(this.hourWage)
             .careworkerAge(this.careworkerAge)
             .careworkerState(this.careworkerState)
+            .careworkerAddress(this.careworkerAddress)
             .build();
     }
 
