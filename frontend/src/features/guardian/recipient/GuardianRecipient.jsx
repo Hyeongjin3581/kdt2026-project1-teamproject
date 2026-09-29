@@ -1,6 +1,7 @@
 import { useState } from "react";
 import axios from "axios";
 import Panel from "../../../components/common/Panel";
+import AddressField from "../../../components/common/AddressField";
 import { TODAY } from "../../../constants";
 
 export default function GuardianRecipient({ guardianNo, onComplete, onCancel }) {
@@ -52,7 +53,7 @@ export default function GuardianRecipient({ guardianNo, onComplete, onCancel }) 
           <label className="text-xs font-semibold text-slate-600">수급자 성명 <span className="text-teal-600">*</span><input value={form.name} onChange={(event) => update("name", event.target.value)} className={field} placeholder="예: 김순자" /></label>
           <label className="text-xs font-semibold text-slate-600">수급자 나이 <span className="text-teal-600">*</span><input type="number" min="0" max="130" value={form.age} onChange={(event) => update("age", event.target.value)} className={field} placeholder="예: 78" /></label>
           <label className="text-xs font-semibold text-slate-600">수급자 성별 <span className="text-teal-600">*</span><select value={form.gender} onChange={(event) => update("gender", event.target.value)} className={field}><option value="">선택해주세요</option><option value="female">여성</option><option value="male">남성</option></select></label>
-          <label className="text-xs font-semibold text-slate-600">수급자 거주지역(주소) <span className="text-teal-600">*</span><input value={form.address} onChange={(event) => update("address", event.target.value)} className={field} placeholder="예: 안산시 상록구 본오동" /></label>
+          <AddressField label="수급자 거주지역(주소)" required value={form.address} onChange={(v) => update("address", v)} />
           <label className="text-xs font-semibold text-slate-600 sm:col-span-2">특이사항<textarea value={form.significant} onChange={(event) => update("significant", event.target.value)} rows={4} className={`${field} resize-none`} placeholder="건강 상태나 상담 시 참고할 내용을 입력해주세요." /></label>
         </div>
         {message && <p className="mt-4 text-xs font-semibold text-rose-600">{message}</p>}

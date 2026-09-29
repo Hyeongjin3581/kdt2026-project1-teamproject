@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
+import AddressField from "../../../components/common/AddressField";
 
 // 요양보호사 등록·수정 모달 : POST /api/careworkers, PUT /api/careworkers
 // careworker : 수정할 요양보호사의 백엔드 DTO (등록이면 null)
@@ -111,7 +112,7 @@ export default function CaregiverFormModal({ careworker, onClose, onSaved }) {
                     </label>
                     <label className="block text-xs font-semibold text-slate-600">나이<input type="number" min="0" max="100" value={form.age} onChange={(e) => update("age", e.target.value)} className={field} /></label>
                     <label className="block text-xs font-semibold text-slate-600">시급(원)<input type="number" min="0" value={form.hourWage} onChange={(e) => update("hourWage", e.target.value)} className={field} placeholder="예: 13000" /></label>
-                    <label className="block text-xs font-semibold text-slate-600 sm:col-span-2">주소<input value={form.address} onChange={(e) => update("address", e.target.value)} className={field} placeholder="예: 경기도 안양시 동안구 비산동" /></label>
+                    <AddressField className="sm:col-span-2" value={form.address} onChange={(v) => update("address", v)} />
                     <label className="block text-xs font-semibold text-slate-600">근무 상태
                         <select value={form.state} onChange={(e) => update("state", e.target.value)} className={field}><option>근무중</option><option>휴직</option><option>퇴사</option></select>
                     </label>

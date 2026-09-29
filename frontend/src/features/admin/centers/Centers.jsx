@@ -3,6 +3,7 @@ import axios from "axios";
 import SectionTitle from "../../../components/common/SectionTitle";
 import Panel from "../../../components/common/Panel";
 import LoadStatus from "../../../components/common/LoadStatus";
+import AddressField from "../../../components/common/AddressField";
 
 const field = "mt-1.5 w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-800 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100";
 
@@ -40,7 +41,7 @@ function CenterForm({ center, onClose, onSaved }) {
                 </div>
                 <div className="space-y-3 px-6 py-5">
                     <label className="block text-xs font-semibold text-slate-600">센터명<input value={form.name} onChange={(e) => update("name", e.target.value)} className={field} placeholder="예: 안양 온케어 방문요양센터" /></label>
-                    <label className="block text-xs font-semibold text-slate-600">주소<input value={form.address} onChange={(e) => update("address", e.target.value)} className={field} placeholder="예: 경기도 안양시 동안구 시민대로 180" /></label>
+                    <AddressField value={form.address} onChange={(v) => update("address", v)} />
                     <label className="block text-xs font-semibold text-slate-600">전화번호<input value={form.phone} onChange={(e) => update("phone", e.target.value)} className={field} placeholder="예: 031-380-1001" /></label>
                     {message && <p className="text-xs font-semibold text-rose-600">{message}</p>}
                 </div>

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import axios from "axios";
+import AddressField from "./AddressField";
 
 // 수급자 정보 수정·삭제 모달 : PUT /carerecipient, DELETE /carerecipient (body 에 { careRecipientNo })
 // recipient : 백엔드 수급자 DTO 그대로 (careRecipientNo, guardianNo, careRecipientName ...)
@@ -70,7 +71,7 @@ export default function RecipientEditModal({ recipient, onClose, onChanged }) {
                     <label className="block text-xs font-semibold text-slate-600">성별
                         <select value={form.gender} onChange={(e) => update("gender", e.target.value)} className={field}><option>여자</option><option>남자</option></select>
                     </label>
-                    <label className="block text-xs font-semibold text-slate-600">거주지역(주소)<input value={form.address} onChange={(e) => update("address", e.target.value)} className={field} /></label>
+                    <AddressField label="거주지역(주소)" value={form.address} onChange={(v) => update("address", v)} />
                     <label className="block text-xs font-semibold text-slate-600 sm:col-span-2">특이사항<textarea rows={3} value={form.content} onChange={(e) => update("content", e.target.value)} className={`${field} resize-none`} /></label>
                     {message && <p className="text-xs font-semibold text-rose-600 sm:col-span-2">{message}</p>}
                 </div>
