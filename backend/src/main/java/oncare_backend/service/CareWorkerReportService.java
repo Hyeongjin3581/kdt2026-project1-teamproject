@@ -34,11 +34,10 @@ public class CareWorkerReportService{
         // 1. dto -> entity
         CareworkerReportEntity entity = careworkerReportDto.dtoToEntity();
 
-        // 2. FK 넣기
+        // 2. FK 추가 (엔티티 주입)
         // 요양보호사 번호 FK(careworker_no)
         CareworkerEntity careworkerEntity = careWorkerRepository.findById(careworkerReportDto.getCareworkerNo() ).orElse(null);
-        if (careworkerEntity == null)
-            return false;
+        if (careworkerEntity == null) return false;
         entity.setCareworkerEntity(careworkerEntity);
 
         // 서비스요청 번호 FK(request_no)
