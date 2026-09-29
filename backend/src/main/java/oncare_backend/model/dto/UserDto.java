@@ -14,7 +14,6 @@ public class UserDto {
     private String userId;
     private String userPassword;
     private String phoneNumber;
-    private String email;
 
     private Integer userCategoryNo;
     private String userCategoryName;
@@ -23,12 +22,7 @@ public class UserDto {
         return UserEntity.builder()
                 .userId(this.userId)
                 .userPassword(this.userPassword)
-                .email(this.email)
-                .phoneNumber(this.phoneNumber)
-                .userCategoryEntity(this.userCategoryNo == null ? null : UserCategoryEntity.builder()
-                    .userCategoryNo(this.userCategoryNo)
-                    .build())
-                .build();
+                .phoneNumber(this.phoneNumber).build();
     }
 
     public static UserDto entityToDto(UserEntity user){
@@ -37,11 +31,6 @@ public class UserDto {
                 .userId(user.getUserId())
                 .userPassword(user.getUserPassword())
                 .phoneNumber(user.getPhoneNumber())
-                .email(user.getEmail())
-                .userCategoryNo(user.getUserCategoryEntity() == null
-                    ? null : user.getUserCategoryEntity().getUserCategoryNo())
-                .userCategoryName(user.getUserCategoryEntity() == null
-                    ? null : user.getUserCategoryEntity().getUserCategoryName())
-                .build();
+                .userCategoryName(user.getUserCategoryEntity().getUserCategoryName()).build();
     }
 }

@@ -5,12 +5,14 @@ import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import oncare_backend.model.entity.CareworkerEntity;
 import oncare_backend.model.entity.CenterEntity;
 import oncare_backend.model.entity.UserEntity;
 
 @Data 
 @AllArgsConstructor 
+@NoArgsConstructor 
 @Builder 
 public class CareworkerDto {
     private Integer careworkerNo;
@@ -30,18 +32,13 @@ public class CareworkerDto {
     // DTO -> Entity
     public CareworkerEntity dtoToEntity(){
         return CareworkerEntity.builder()
+            .careworkerNo(this.careworkerNo)
             .careworkerName(this.careworkerName)
-            .careworkerAddress(this.careworkerAddress)
             .careworkerGender(this.careworkerGender)
             .hourWage(this.hourWage)
             .careworkerAge(this.careworkerAge)
             .careworkerState(this.careworkerState)
-                .centerEntity(this.centerNo == null ? null : CenterEntity.builder()
-                    .centerNo(this.centerNo)
-                    .build())
-                .userEntity(this.userNo == null ? null : UserEntity.builder()
-                    .userNo(this.userNo)
-                    .build())
+            .careworkerAddress(this.careworkerAddress)
             .build();
     }
 
