@@ -1,0 +1,66 @@
+import { Fragment, useMemo, useState } from "react";
+import SectionTitle from "../../../components/common/SectionTitle";
+import Panel from "../../../components/common/Panel";
+import Badge from "../../../components/common/Badge";
+import { useCenter, inCenter } from "../../../context/CenterContext";
+import { guardians } from "../../../data/guardians";
+
+export default function Guardians() {
+  const [q, setQ] = useState("");
+  const [open, setOpen] = useState(guardians[0].name);
+  const center = useCenter();
+  const visible = useMemo(() => guardians.filter(inCenter(center)).filter((g) => `${g.name}${g.tel}${g.recipients.map((r) => r.name).join("")}`.includes(q)), [q, center]);
+  const refresh = () => {
+    setQ("");
+    setOpen(guardians.find(inCenter(center))?.name ?? null);
+  };
+  return (
+    <div className="space-y-5">
+      <SectionTitle title="보호자 관리" subtitle="서비스에 로그인하는 보호자 계정 목록입니다. 한 보호자는 한 명 이상의 수급자와 연결될 수 있습니다." action={<button onClick={refresh} className="rounded-lg border border-teal-200 bg-white px-4 py-2.5 text-sm font-bold text-teal-700 transition hover:bg-teal-50">↻ 새로고침</button>} />
+      <Panel className="overflow-hidden">
+        <div className="flex flex-wrap gap-3 border-b border-slate-100 p-4">
+          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="보호자명, 연락처, 연결된 수급자 검색" className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-100 sm:w-80" />
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[860px] text-sm">
+            <thead className="bg-slate-50 text-left text-[11px] uppercase tracking-wide text-slate-400"><tr>{["보호자명", "연락처", "연결된 수급자", "관계", "가입일", "상태", ""].map((h) => <th key={h} className="px-5 py-3">{h}</th>)}</tr></thead>
+            <tbody>
+              {visible.map((g) => (
+                <Fragment key={g.name}>
+                  <tr className="border-t border-slate-100 hover:bg-slate-50/70">
+                    <td className="px-5 py-4"><b className="text-slate-800">{g.name}</b></td>
+                    <td className="px-5 py-4 font-mono text-slate-600">{g.tel}</td>
+                    <td className="px-5 py-4 text-slate-700">{g.recipients[0].name}{g.recipients.length > 1 && <span className="ml-1 rounded bg-teal-50 px-1.5 py-0.5 text-[11px] font-bold text-teal-700">+{g.recipients.length - 1}</span>}</td>
+                    <td className="px-5 py-4 text-slate-600">{g.relation}</td>
+                    <td className="px-5 py-4 font-mono text-slate-500">{g.joined}</td>
+                    <td className="px-5 py-4"><Badge tone={g.tone}>{g.status}</Badge></td>
+                    <td className="px-5 py-4"><button onClick={() => setOpen(open === g.name ? null : g.name)} className="text-xs font-bold text-teal-600 hover:underline">{open === g.name ? "닫기" : "연결 수급자 보기"} {open === g.name ? "▴" : "▾"}</button></td>
+                  </tr>
+                  {open === g.name && (
+                    <tr className="border-t border-slate-100 bg-slate-50/60">
+                      <td colSpan={7} className="px-5 py-4">
+                        <p className="mb-3 text-[11px] font-bold uppercase tracking-wide text-slate-400">{g.name} 보호자와 연결된 수급자 {g.recipients.length}명</p>
+                        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                          {g.recipients.map((r) => (
+                            <div key={r.name} className="rounded-lg border border-slate-200 bg-white p-3">
+                              <div className="flex items-center gap-2"><div className="grid h-8 w-8 place-items-center rounded-full bg-teal-100 text-xs font-bold text-teal-700">{r.name[0]}</div><b className="text-sm text-slate-800">{r.name} <span className="font-normal text-slate-400">수급자</span></b></div>
+                              <div className="mt-3 space-y-1 text-xs">
+                                <div className="flex justify-between"><span className="text-slate-400">거주 지역</span><span className="text-slate-600">{r.area}</span></div>
+                                <div className="flex justify-between"><span className="text-slate-400">담당 요양보호사</span><b className="text-slate-700">{r.cg}</b></div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </Fragment>
+              ))}
+              {visible.length === 0 && <tr><td colSpan={7} className="px-5 py-10 text-center text-sm text-slate-400">선택한 센터에 등록된 보호자가 없습니다.</td></tr>}
+            </tbody>
+          </table>
+        </div>
+      </Panel>
+    </div>
+  );
+}

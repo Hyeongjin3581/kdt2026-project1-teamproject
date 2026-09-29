@@ -1,122 +1,50 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import './App.css'
+import { useState } from "react";
+import Login from "./features/auth/Login";
+import Signup from "./features/auth/Signup";
+import AdminApp from "./features/admin/AdminApp";
+import GuardianApp from "./features/guardian/GuardianApp";
 
-function App() {
-  const [count, setCount] = useState(0)
+function OncareApp() {
+  const [role, setRole] = useState(null);
+  const [authView, setAuthView] = useState("login");
+  const logout = () => { setRole(null); setAuthView("login"); };
+  if (role === null) return authView === "signup" ? <Signup toLogin={() => setAuthView("login")} /> : <Login login={setRole} toSignup={() => setAuthView("signup")} />;
+  if (role === "admin") return <AdminApp logout={logout} />;
+  return <GuardianApp logout={logout} />;
+}
+
+export default function App() {
+  // 폰 프레임(iframe) 안에서 렌더될 때는 토글 UI 없이 앱만 보여줍니다 (재귀 방지).
+  const framed = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("frame") === "off";
+  const [mobile, setMobile] = useState(false);
+  if (framed) return <OncareApp />;
 
   return (
     <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
+      {mobile ? (
+        <div className="grid min-h-screen place-items-center bg-[#06231d] p-6">
+          <div className="relative">
+            <div className="mx-auto h-[812px] w-[390px] overflow-hidden rounded-[44px] border-[10px] border-[#0b3128] bg-black shadow-2xl">
+              <div className="absolute left-1/2 top-[10px] z-10 h-6 w-32 -translate-x-1/2 rounded-full bg-[#0b3128]" />
+              <iframe title="모바일 미리보기" src="?frame=off" className="h-full w-full border-0 bg-white" />
+            </div>
+            <p className="mt-4 text-center font-mono text-[11px] tracking-widest text-teal-200/70">MOBILE PREVIEW · 390 × 812</p>
+          </div>
         </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
-
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
+      ) : (
+        <OncareApp />
+      )}
+      <button
+        type="button"
+        onClick={() => setMobile((v) => !v)}
+        className="fixed bottom-5 right-5 z-50 flex items-center gap-2 rounded-full bg-teal-600 px-4 py-3 text-sm font-bold text-white shadow-lg shadow-teal-900/25 transition hover:bg-teal-700"
+      >
+        {mobile ? (
+          <><span aria-hidden>🖥️</span> 데스크톱 보기</>
+        ) : (
+          <><span aria-hidden>📱</span> 모바일 보기</>
+        )}
+      </button>
     </>
-  )
+  );
 }
-
-export default App
