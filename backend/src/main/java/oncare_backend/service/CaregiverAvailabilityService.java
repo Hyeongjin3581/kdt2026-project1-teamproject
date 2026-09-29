@@ -22,6 +22,7 @@ public class CaregiverAvailabilityService {
 
     // 1. 근무가능시간 등록
     public boolean createCaregiverAvailability(CaregiverAvailabilityDto caregiverAvailabilityDto){
+        if (caregiverAvailabilityDto.getCaregiverNo() == null) return false;
 
         // 1. DTO -> Entity
         CaregiverAvailabilityEntity caregiverAvailabilityEntity = caregiverAvailabilityDto.dtoToEntity();
@@ -71,6 +72,7 @@ public class CaregiverAvailabilityService {
         CaregiverAvailabilityEntity caregiverAvailabilityEntity = caregiverAvailabilityRepository.findById(caregiverAvailabilityDto.getAvailabilityNo()).orElse(null);
 
         if ( caregiverAvailabilityEntity == null ) return false;
+        if (caregiverAvailabilityDto.getCaregiverNo() == null) return false;
 
         CareworkerEntity careworkerEntity = careworkersRepository.findById(caregiverAvailabilityDto.getCaregiverNo()).orElse(null);
 

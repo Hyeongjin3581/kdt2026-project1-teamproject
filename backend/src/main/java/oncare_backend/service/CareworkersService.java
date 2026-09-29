@@ -27,6 +27,7 @@ public class CareworkersService {
 
     // 1. 요양보호사 등록
     public boolean createCareworker(CareworkerDto careworkerDto) {
+        if (careworkerDto.getCenterNo() == null || careworkerDto.getUserNo() == null) return false;
 
         // 1. DTO -> Entity
         CareworkerEntity careworkerEntity = careworkerDto.dtoToEntity();
@@ -80,6 +81,7 @@ public class CareworkersService {
         CareworkerEntity careworkerEntity = careworkerRepository.findById(careworkerDto.getCareworkerNo()).orElse(null);
 
         if ( careworkerEntity == null ) return false;
+        if (careworkerDto.getCenterNo() == null || careworkerDto.getUserNo() == null) return false;
 
         CenterEntity centerEntity = centerRepository.findById(careworkerDto.getCenterNo()).orElse(null);
         UserEntity userEntity = userRepository.findById(careworkerDto.getUserNo()).orElse(null);

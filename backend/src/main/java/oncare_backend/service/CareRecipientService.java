@@ -41,7 +41,7 @@ public class CareRecipientService {
 	@Transactional(readOnly = true)
 	public List<CareRecipientDto> CareRecipientFindAll() {
 		return careRecipientRepository.findAll().stream()
-				.map(CareRecipientDto::entityToDto)
+				.map(this::toDto)
 				.toList();
 	}
 
@@ -50,9 +50,24 @@ public class CareRecipientService {
 	public CareRecipientDto CareRecipientinquiry(Integer careRecipientNo) {
 		Optional<CareRecipientEntity> optional = careRecipientRepository.findById(careRecipientNo);
 		if (optional.isPresent()) {
-			return CareRecipientDto.entityToDto(optional.get());
+			return toDto(optional.get());
 		}
 		return null;
+	}
+
+	private CareRecipientDto toDto(CareRecipientEntity entity) {
+		GuardianEntity guardianEntity = entity.getGuardianEntity();
+		return CareRecipientDto.builder()
+				.careRecipientNo(entity.getCareRecipientNo())
+				.guardianNo(guardianEntity == null ? null : guardianEntity.getGuardianNo())
+				.careRecipientName(entity.getCareRecipientName())
+				.careRecipientAge(entity.getCareRecipientAge())
+				.careRecipientAddress(entity.getCareRecipientAddress())
+				.careRecipientGender(entity.getCareRecipientGender())
+				.careRecipientContent(entity.getCareRecipientContent())
+				.createDate(entity.getCreateDate())
+				.updateDate(entity.getUpdateDate())
+				.build();
 	}
 
 	// 4. 수급자 정보 수정

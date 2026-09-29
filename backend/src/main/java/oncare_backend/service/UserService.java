@@ -22,6 +22,8 @@ public class UserService {
 
     // 회원가입
     public boolean save(UserDto userDto) {
+        if (userDto.getUserCategoryNo() == null) return false;
+
         UserEntity userEntity = userDto.dtoToEntity();
         userEntity.setUserPassword(passwordEncoder.encode(userDto.getUserPassword())); // 유저 password 암호화 해서 세팅
 
@@ -71,9 +73,18 @@ public class UserService {
             return false;
         }
 
+        UserCategoryEntity userCategoryEntity = null;
+        if (userDto.getUserCategoryNo() != null) {
+            userCategoryEntity = userCategoryRepository.findById(userDto.getUserCategoryNo()).orElse(null);
+            if (userCategoryEntity == null) return false;
+        }
+
         userEntity.setUserId(setEntity.getUserId());
         userEntity.setEmail(setEntity.getEmail());
         userEntity.setPhoneNumber(setEntity.getPhoneNumber());
+        if (userCategoryEntity != null) {
+            userEntity.setUserCategoryEntity(userCategoryEntity);
+        }
         // 비밀번호가 null 이거나 비어있으면 false , 사용자가 비밀번호 입력한 경우 암호화해서 set사용해서 변경
         if (userDto.getUserPassword() != null && !userDto.getUserPassword().isBlank()){
             userEntity.setUserPassword(passwordEncoder.encode(setEntity.getUserPassword()));

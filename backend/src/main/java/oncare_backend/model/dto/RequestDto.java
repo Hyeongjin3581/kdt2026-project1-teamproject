@@ -18,8 +18,8 @@ public class RequestDto {
     private String preferredGender;
     private String requestState;
     private LocalDate visitDate;
-    private LocalTime visitStartTime;
-    private LocalTime visitEndTime;
+    private Integer visitStartTime;
+    private Integer visitEndTime;
     private String requestContent;
 
     private Integer carerecipientNo;

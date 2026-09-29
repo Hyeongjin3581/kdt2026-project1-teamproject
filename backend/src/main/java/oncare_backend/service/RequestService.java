@@ -24,6 +24,8 @@ public class RequestService {
     // 수급자 식별을 위한 수급자 번호와, 요청 레코드를 담은 DTO를 새로 등록
     // Q. 수급자 번호를 매개변수로 입력해야 하는가? 
     public boolean saveRequest(RequestDto requestDto, Integer carerecipientNo){
+        if (carerecipientNo == null) return false;
+
         // 1. dto -> entity
         RequestEntity entity = requestDto.dtoToEntity();
 

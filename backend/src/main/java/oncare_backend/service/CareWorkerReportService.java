@@ -31,6 +31,8 @@ public class CareWorkerReportService{
 
     // [1] 근무기록 생성
     public boolean saveReport(CareworkerReportDto careworkerReportDto) {
+        if (careworkerReportDto.getCareworkerNo() == null || careworkerReportDto.getRequestNo() == null) return false;
+
         // 1. dto -> entity
         CareworkerReportEntity entity = careworkerReportDto.dtoToEntity();
 
