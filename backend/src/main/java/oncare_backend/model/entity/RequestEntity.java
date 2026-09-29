@@ -31,11 +31,11 @@ public class RequestEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer requestNo;
 
-    @Column private boolean preferredGender;
+    @Column private String preferredGender;
     @Column private String requestState;
     @Column private LocalDate visitDate;
-    @Column private Integer visitStartTime;
-    @Column private Integer visitEndTime;
+    @Column private LocalTime visitStartTime;
+    @Column private LocalTime visitEndTime;
     @Column private String requestContent;
 
     // 수급자번호 연결

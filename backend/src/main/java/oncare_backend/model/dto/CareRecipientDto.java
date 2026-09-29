@@ -7,6 +7,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import oncare_backend.model.entity.CareRecipientEntity;
+import oncare_backend.model.entity.GuardianEntity;
 
 @NoArgsConstructor @AllArgsConstructor @Data @Builder 
 public class CareRecipientDto {
@@ -15,7 +16,7 @@ public class CareRecipientDto {
     private String careRecipientName;            // 수급자 성명
     private Integer careRecipientAge;             // 수급자 나이
     private String careRecipientAddress;        // 수급자 거주지역
-    private Boolean careRecipientGender;    // 수급자 성별
+    private String careRecipientGender;     // 수급자 성별
     private String careRecipientContent;     // 수급자 특이사항
 
     // BaseTime 시간 멤버변수 생성
@@ -25,7 +26,9 @@ public class CareRecipientDto {
     // Dto에서 Entity로 변환
     public CareRecipientEntity dtoToEntity(){
         return CareRecipientEntity.builder()
-        .guardianNo(this.guardianNo)
+        .guardianEntity(this.guardianNo == null ? null : GuardianEntity.builder()
+            .guardianNo(this.guardianNo)
+            .build())
         .careRecipientName(this.careRecipientName)
         .careRecipientAge(this.careRecipientAge)
         .careRecipientAddress(this.careRecipientAddress)
@@ -38,7 +41,7 @@ public class CareRecipientDto {
     public static CareRecipientDto entityToDto(CareRecipientEntity entity){
         return CareRecipientDto.builder()
         .careRecipientNo(entity.getCareRecipientNo())
-        .guardianNo(entity.getGuardianNo())
+        .guardianNo(entity.getGuardianEntity() == null ? null : entity.getGuardianEntity().getGuardianNo())
         .careRecipientName(entity.getCareRecipientName())
         .careRecipientAge(entity.getCareRecipientAge())
         .careRecipientAddress(entity.getCareRecipientAddress())

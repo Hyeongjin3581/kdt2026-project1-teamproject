@@ -29,7 +29,10 @@ public class GuardianInquiryService {
 
 	// 1. 보호자 문의 생성
 	@Transactional
-	public boolean 보호자문의생성(GuardianInquiryDto guardianInquiryDto) {
+	public boolean GuardianInquiryCreate(GuardianInquiryDto guardianInquiryDto) {
+		if (guardianInquiryDto.getGuardianNo() == null || guardianInquiryDto.getInquiryCategoryNo() == null) {
+			return false;
+		}
 		Optional<GuardianEntity> guardianOptional = guardianRepository
 				.findById(guardianInquiryDto.getGuardianNo());
 		Optional<InquiryCategoryEntity> categoryOptional = inquiryCategoryRepository
@@ -37,6 +40,8 @@ public class GuardianInquiryService {
 		if (guardianOptional.isEmpty() || categoryOptional.isEmpty()) { return false; }
 
 		GuardianInquiryEntity guardianInquiryEntity = guardianInquiryDto.dtoToEntity();
+		guardianInquiryEntity.setGuardianEntity(guardianOptional.get());
+		guardianInquiryEntity.setInquiryCategoryEntity(categoryOptional.get());
 		GuardianInquiryEntity savedEntity = guardianInquiryRepository.save(guardianInquiryEntity);
 		if (savedEntity.getInquiryNo() >= 1) { return true; }
 		return false;
@@ -44,8 +49,14 @@ public class GuardianInquiryService {
 
 	// 2. 보호자 문의 수정
 	@Transactional
-	public boolean 보호자문의수정(Integer inquiryNo, GuardianInquiryDto guardianInquiryDto) {
-		Optional<GuardianInquiryEntity> inquiryOptional = guardianInquiryRepository.findById(inquiryNo);
+	public boolean GuardianInquiryModify(GuardianInquiryDto guardianInquiryDto) {
+		if (guardianInquiryDto.getInquiryNo() == null
+				|| guardianInquiryDto.getGuardianNo() == null
+				|| guardianInquiryDto.getInquiryCategoryNo() == null) {
+			return false;
+		}
+		Optional<GuardianInquiryEntity> inquiryOptional = guardianInquiryRepository
+				.findById(guardianInquiryDto.getInquiryNo());
 		Optional<GuardianEntity> guardianOptional = guardianRepository
 				.findById(guardianInquiryDto.getGuardianNo());
 		Optional<InquiryCategoryEntity> categoryOptional = inquiryCategoryRepository
@@ -55,8 +66,8 @@ public class GuardianInquiryService {
 		}
 
 		GuardianInquiryEntity guardianInquiryEntity = inquiryOptional.get();
-		guardianInquiryEntity.setGuardianNo(guardianInquiryDto.getGuardianNo());
-		guardianInquiryEntity.setInquiryCategoryNo(guardianInquiryDto.getInquiryCategoryNo());
+		guardianInquiryEntity.setGuardianEntity(guardianOptional.get());
+		guardianInquiryEntity.setInquiryCategoryEntity(categoryOptional.get());
 		guardianInquiryEntity.setWishDate(guardianInquiryDto.getWishDate());
 		guardianInquiryEntity.setWishStartTime(guardianInquiryDto.getWishStartTime());
 		guardianInquiryEntity.setWishEndTime(guardianInquiryDto.getWishEndTime());
@@ -67,8 +78,9 @@ public class GuardianInquiryService {
 
 	// 3. 보호자 문의 삭제
 	@Transactional
-	public boolean 보호자문의삭제(Integer inquiryNo) {
-		Optional<GuardianInquiryEntity> optional = guardianInquiryRepository.findById(inquiryNo);
+	public boolean GuardianInquiryDelete(GuardianInquiryDto guardianInquiryDto) {
+		Optional<GuardianInquiryEntity> optional = guardianInquiryRepository
+				.findById(guardianInquiryDto.getInquiryNo());
 		if (optional.isPresent()) {
 			guardianInquiryRepository.delete(optional.get());
 			return true;
@@ -78,7 +90,7 @@ public class GuardianInquiryService {
 
 	// 4. 보호자 문의 전체 조회(관리자)
 	@Transactional(readOnly = true)
-	public List<GuardianInquiryDto> 보호자문의전체조회() {
+	public List<GuardianInquiryDto>GuardianInquiryFindAll() {
 		return guardianInquiryRepository.findAll().stream()
 				.map(GuardianInquiryDto::entityToDto)
 				.toList();

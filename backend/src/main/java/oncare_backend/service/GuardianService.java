@@ -17,7 +17,7 @@ public class GuardianService {
 
 	// 1. 보호자 전체 조회(관리자)
 	@Transactional(readOnly = true)
-	public List<GuardianDto> 보호자전체조회() {
+	public List<GuardianDto> GuardianFindAll() {
 		return guardianRepository.findAll().stream()
 				.map(GuardianDto::entityToDto)
 				.toList();

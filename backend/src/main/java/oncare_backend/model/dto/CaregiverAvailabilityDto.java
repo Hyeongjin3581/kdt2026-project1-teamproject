@@ -8,7 +8,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import oncare_backend.model.entity.CaregiverAvailabilityEntity;
+import oncare_backend.model.entity.CareworkerAvailabilityEntity;
+import oncare_backend.model.entity.CareworkerEntity;
 
 @Data
 @NoArgsConstructor
@@ -19,8 +20,8 @@ public class CaregiverAvailabilityDto {
     private Integer availabilityNo;
 
     private LocalDate availableDate;
-    private Integer startTime;
-    private Integer endTime;
+        private LocalTime startTime;
+        private LocalTime endTime;
     private String status;
     private Integer caregiverNo;
 
@@ -35,6 +36,9 @@ public class CaregiverAvailabilityDto {
                 .startTime(this.startTime)
                 .endTime(this.endTime)
                 .status(this.status)
+                .careworkerEntity(this.careworkerNo == null ? null : CareworkerEntity.builder()
+                        .careworkerNo(this.careworkerNo)
+                        .build())
                 .build();
     }
 
@@ -49,9 +53,8 @@ public class CaregiverAvailabilityDto {
                 .startTime(availability.getStartTime())
                 .endTime(availability.getEndTime())
                 .status(availability.getStatus())
-                .caregiverNo(
-                        availability.getCareworkerEntity().getCareworkerNo()
-                )
+                .careworkerNo(availability.getCareworkerEntity() == null
+                        ? null : availability.getCareworkerEntity().getCareworkerNo())
                 .build();
     }
 }

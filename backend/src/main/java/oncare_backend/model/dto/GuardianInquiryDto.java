@@ -9,6 +9,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import oncare_backend.model.entity.GuardianInquiryEntity;
+import oncare_backend.model.entity.GuardianEntity;
+import oncare_backend.model.entity.InquiryCategoryEntity;
 
 @NoArgsConstructor @AllArgsConstructor @Data @Builder 
 public class GuardianInquiryDto {
@@ -16,8 +18,8 @@ public class GuardianInquiryDto {
     private Integer guardianNo;                 // 보호자 번호 FK
     private Integer inquiryCategoryNo;    // 문의 카테고리 FK
     private LocalDate wishDate;                // 희망 날짜
-    private Integer wishStartTime;      // 희망 시작시간
-    private Integer wishEndTime;       // 희망 종료시간
+    private LocalTime wishStartTime;      // 희망 시작시간
+    private LocalTime wishEndTime;       // 희망 종료시간
     private String inquiryContent;           // 요청 내용
 
     private LocalDateTime createDate;
@@ -25,8 +27,12 @@ public class GuardianInquiryDto {
 
     public GuardianInquiryEntity dtoToEntity(){
         return GuardianInquiryEntity.builder()
-        .guardianNo(this.guardianNo)
-        .inquiryCategoryNo(this.inquiryCategoryNo)
+        .guardianEntity(this.guardianNo == null ? null : GuardianEntity.builder()
+            .guardianNo(this.guardianNo)
+            .build())
+        .inquiryCategoryEntity(this.inquiryCategoryNo == null ? null : InquiryCategoryEntity.builder()
+            .inquiryCategoryNo(this.inquiryCategoryNo)
+            .build())
         .wishDate(this.wishDate)
         .wishStartTime(this.wishStartTime)
         .wishEndTime(this.wishEndTime)
@@ -37,15 +43,16 @@ public class GuardianInquiryDto {
     public static GuardianInquiryDto entityToDto(GuardianInquiryEntity entity){
        return GuardianInquiryDto.builder()
     .inquiryNo(entity.getInquiryNo())
-    .guardianNo(entity.getGuardianNo())
-    .inquiryCategoryNo(entity.getInquiryCategoryNo())
+        .guardianNo(entity.getGuardianEntity() == null ? null : entity.getGuardianEntity().getGuardianNo())
+        .inquiryCategoryNo(entity.getInquiryCategoryEntity() == null
+            ? null : entity.getInquiryCategoryEntity().getInquiryCategoryNo())
     .wishDate(entity.getWishDate())
     .wishStartTime(entity.getWishStartTime())
     .wishEndTime(entity.getWishEndTime())
     .inquiryContent(entity.getInquiryContent())
-       .createDate(entity.getCreateDate())
-       .updateDate(entity.getUpdateDate())
-       .build();
+    .createDate(entity.getCreateDate())
+    .updateDate(entity.getUpdateDate())
+    .build();
     }
 }
 

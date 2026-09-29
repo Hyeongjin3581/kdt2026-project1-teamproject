@@ -34,8 +34,8 @@ public class CareworkerReportEntity {
     private Integer careworkersReportNo;
     
     @Column private LocalDate workDate;
-    @Column private Integer workStartTime;
-    @Column private Integer workEndTime;
+    @Column private LocalTime workStartTime;
+    @Column private LocalTime workEndTime;
     @Column private String workStatus;
 
     

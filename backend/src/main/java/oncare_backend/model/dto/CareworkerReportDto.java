@@ -12,6 +12,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import oncare_backend.model.entity.CareworkerReportEntity;
+import oncare_backend.model.entity.CareworkerEntity;
+import oncare_backend.model.entity.RequestEntity;
 
 @NoArgsConstructor
 @AllArgsConstructor 
@@ -29,8 +31,8 @@ public class CareworkerReportDto {
     private Integer requestNo = null;
 
     private LocalDate workDate;
-    private Integer workStartTime;
-    private Integer workEndTime;
+    private LocalTime workStartTime;
+    private LocalTime workEndTime;
     private String workStatus;
 
     public CareworkerReportEntity dtoToEntity(){
@@ -39,14 +41,22 @@ public class CareworkerReportDto {
                                     .workStartTime(this.workStartTime)
                                     .workEndTime(this.workEndTime)
                                     .workStatus(workStatus)
+                                        .careworker(this.careworkerNo == null ? null : CareworkerEntity.builder()
+                                            .careworkerNo(this.careworkerNo)
+                                            .build())
+                                        .request(this.requestNo == null ? null : RequestEntity.builder()
+                                            .requestNo(this.requestNo)
+                                            .build())
                                     .build();
     }
 
     public static CareworkerReportDto entityToDto(CareworkerReportEntity entity){
         return CareworkerReportDto.builder()
                                     .careworkersReportNo(entity.getCareworkersReportNo())
-                                    .careworkerNo(entity.getCareworkerEntity().getCareworkerNo())
-                                    .requestNo(entity.getRequestEntity().getRequestNo())
+                                        .careworkerNo(entity.getCareworker() == null
+                                            ? null : entity.getCareworker().getCareworkerNo())
+                                        .requestNo(entity.getRequest() == null
+                                            ? null : entity.getRequest().getRequestNo())
                                     .workDate(entity.getWorkDate())
                                     .workStartTime(entity.getWorkStartTime())
                                     .workEndTime(entity.getWorkEndTime())
