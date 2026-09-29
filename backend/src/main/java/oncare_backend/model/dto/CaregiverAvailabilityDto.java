@@ -31,7 +31,7 @@ public class CaregiverAvailabilityDto {
     // DTO -> Entity
     public CaregiverAvailabilityEntity dtoToEntity() {
         return CaregiverAvailabilityEntity.builder()
-                .availabilityNo(availabilityNo)
+                .availabilityNo(this.availabilityNo)
                 .availableDate(this.availableDate)
                 .startTime(this.startTime)
                 .endTime(this.endTime)
