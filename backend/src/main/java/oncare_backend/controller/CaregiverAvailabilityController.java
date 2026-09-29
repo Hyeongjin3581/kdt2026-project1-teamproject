@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 import oncare_backend.model.dto.CaregiverAvailabilityDto;
 import oncare_backend.service.CaregiverAvailabilityService;
 
+
 @RestController
 @RequestMapping("/api/caregiver-availability")
 public class CaregiverAvailabilityController {
