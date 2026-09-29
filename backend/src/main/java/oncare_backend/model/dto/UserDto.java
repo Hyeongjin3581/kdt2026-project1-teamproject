@@ -13,7 +13,6 @@ public class UserDto {
     private String userId;
     private String userPassword;
     private String phoneNumber;
-    private String email;
 
     private Integer userCategoryNo;
     private String userCategoryName;
@@ -22,7 +21,6 @@ public class UserDto {
         return UserEntity.builder()
                 .userId(this.userId)
                 .userPassword(this.userPassword)
-                .email(this.email)
                 .phoneNumber(this.phoneNumber).build();
     }
 
@@ -32,7 +30,6 @@ public class UserDto {
                 .userId(user.getUserId())
                 .userPassword(user.getUserPassword())
                 .phoneNumber(user.getPhoneNumber())
-                .email(user.getEmail())
                 .userCategoryName(user.getUserCategoryEntity().getUserCategoryName()).build();
     }
 }
