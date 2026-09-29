@@ -4,9 +4,7 @@ import { WEEK_LIMIT } from "../../../constants";
 import { caregiverRecords } from "../../../data/caregivers";
 
 export default function CaregiverRecord({ c, onClose }) {
-  const rows = caregiverRecords[c.id] ?? [
-    ["09.17 (수)", "-", "-", "-", "neutral"],
-  ];
+  const rows = caregiverRecords[c.id] ?? [];
   return (
     <div className="fixed inset-0 z-40 flex justify-end bg-slate-900/40" onClick={onClose}>
       <div className="h-full w-full max-w-md overflow-y-auto bg-[#f4f8f7] p-5 shadow-2xl" onClick={(e) => e.stopPropagation()}>
@@ -31,6 +29,7 @@ export default function CaregiverRecord({ c, onClose }) {
                   <td className="px-4 py-3"><Badge tone={r[4]}>{r[4] === "warning" ? "이동주의" : "완료"}</Badge></td>
                 </tr>
               ))}
+              {rows.length === 0 && <tr><td colSpan={5} className="px-4 py-8 text-center text-sm text-slate-400">조회된 근무 기록이 없습니다.</td></tr>}
             </tbody>
           </table>
         </Panel>

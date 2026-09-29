@@ -37,10 +37,10 @@ export default function AccountModal({ onClose, onLogout }) {
             ) : (
               <div className="space-y-3">
                 <div className="grid grid-cols-2 gap-3">
-                  <label className="block text-xs font-semibold text-slate-600">이름<input className={fieldCls} defaultValue="이수현" /></label>
-                  <label className="block text-xs font-semibold text-slate-600">연락처<input className={fieldCls} defaultValue="010-1234-5678" /></label>
+                  <label className="block text-xs font-semibold text-slate-600">이름<input className={fieldCls} placeholder="이름 입력" /></label>
+                  <label className="block text-xs font-semibold text-slate-600">연락처<input className={fieldCls} placeholder="연락처 입력" /></label>
                 </div>
-                <label className="block text-xs font-semibold text-slate-600">이메일<input type="email" className={fieldCls} defaultValue="lee.sh@family.kr" /></label>
+                <label className="block text-xs font-semibold text-slate-600">이메일<input type="email" className={fieldCls} placeholder="이메일 입력" /></label>
                 <label className="block text-xs font-semibold text-slate-600">비밀번호 변경 (새 비밀번호)<input type="password" className={fieldCls} placeholder="변경할 경우에만 입력" /></label>
                 <label className="block text-xs font-semibold text-slate-600">비밀번호 확인<input type="password" className={fieldCls} placeholder="비밀번호를 한 번 더 입력" /></label>
                 <div className="flex justify-end pt-1">
@@ -60,11 +60,7 @@ export default function AccountModal({ onClose, onLogout }) {
             ) : (
               <div className="space-y-4">
                 <p className="text-xs text-slate-500">현재 연결된 어르신을 확인하거나 새 연결코드로 어르신을 변경할 수 있습니다.</p>
-                <div className="rounded-lg border border-slate-200 px-4 py-3">
-                  <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">현재 연결 수급자</p>
-                  <p className="mt-1 text-sm font-bold text-slate-800">김순자 어르신</p>
-                  <p className="text-xs text-slate-400">안산시 본오동 · 요양 3등급</p>
-                </div>
+                <div className="rounded-lg border border-dashed border-slate-200 px-4 py-5 text-center text-sm text-slate-400">연결된 수급자 정보가 없습니다.</div>
                 <label className="block text-xs font-semibold text-slate-600">새 어르신 연결코드
                   <input className={fieldCls} placeholder="센터에서 받은 6자리 코드" maxLength={6} />
                 </label>

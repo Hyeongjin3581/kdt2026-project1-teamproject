@@ -1,3 +1,7 @@
-// 앱 전역에서 공유되는 상수
-export const TODAY = "2026.09.17 (수)";
+export const TODAY = new Intl.DateTimeFormat("ko-KR", {
+	year: "numeric",
+	month: "2-digit",
+	day: "2-digit",
+	weekday: "short",
+}).format(new Date());
 export const WEEK_LIMIT = 52;

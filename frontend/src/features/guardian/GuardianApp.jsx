@@ -21,11 +21,8 @@ const guardianNav = [
 export default function GuardianApp({ logout }) {
   const [page, setPage] = useState("home");
   const [accountOpen, setAccountOpen] = useState(false);
-  const [recipients, setRecipients] = useState([
-    { id: 1, name: "김순자", age: "78", address: "안산시 상록구 본오동", gender: "female", significant: "" },
-    { id: 2, name: "김순대", age: "81", address: "안산시 단원구 고잔동", gender: "male", significant: "" },
-  ]);
-  const [activeRecipientId, setActiveRecipientId] = useState(1);
+  const [recipients, setRecipients] = useState([]);
+  const [activeRecipientId, setActiveRecipientId] = useState(null);
   const activeRecipient = recipients.find((recipient) => recipient.id === activeRecipientId) ?? recipients[0];
 
   const content =
@@ -50,8 +47,8 @@ export default function GuardianApp({ logout }) {
         </nav>
         <div className="mt-auto rounded-lg border border-white/10 bg-white/5 p-3">
           <div className="flex items-center gap-2">
-            <div className="grid h-8 w-8 place-items-center rounded-full bg-teal-600 text-xs font-bold text-white">이</div>
-            <div><p className="text-xs font-semibold text-white">이수현 보호자</p><p className="text-[11px] text-slate-400">{activeRecipient ? `${activeRecipient.name} 어르신 보호자` : "돌봄 어르신 등록 전"}</p></div>
+            <div className="grid h-8 w-8 place-items-center rounded-full bg-teal-600 text-xs font-bold text-white">보</div>
+            <div><p className="text-xs font-semibold text-white">보호자 계정</p><p className="text-[11px] text-slate-400">{activeRecipient ? `${activeRecipient.name} 어르신 보호자` : "연결된 수급자 없음"}</p></div>
           </div>
           <div className="mt-3 flex gap-2">
             <button onClick={() => setAccountOpen(true)} className="flex-1 rounded-lg border border-white/20 py-1.5 text-[11px] font-semibold text-teal-200 transition hover:bg-white/10 hover:text-white">계정 관리</button>
@@ -64,8 +61,8 @@ export default function GuardianApp({ logout }) {
           <div className="flex items-center gap-2 lg:hidden"><AppMark size="h-8 w-8 text-sm" /><b className="font-display text-slate-900">온케어</b></div>
           <p className="hidden text-xs text-slate-500 lg:block">{TODAY} · <b className="text-slate-700">보호자 포털</b></p>
           <div className="flex items-center gap-3">
-            <Badge tone="ok">돌봄 중</Badge>
-            <div className="grid h-8 w-8 place-items-center rounded-full bg-teal-100 text-xs font-bold text-teal-700">이</div>
+            <Badge tone="neutral">보호자</Badge>
+            <div className="grid h-8 w-8 place-items-center rounded-full bg-teal-100 text-xs font-bold text-teal-700">보</div>
           </div>
         </header>
         <main className="mx-auto max-w-[1400px] p-5 lg:p-8">{content}</main>

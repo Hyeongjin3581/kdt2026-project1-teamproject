@@ -3,19 +3,13 @@ import Badge from "../../../components/common/Badge";
 import { TODAY } from "../../../constants";
 
 export default function GuardianRecords() {
-  const records = [
-    { date: "09.15 (월)", cg: "박영희", t: "09:00~12:00", note: "식사 보조 · 실내 걷기 운동 · 혈압 정상", tone: "ok" },
-    { date: "09.12 (금)", cg: "박영희", t: "09:00~12:00", note: "가사 지원(청소) · 산책 30분 · 컨디션 양호", tone: "ok" },
-    { date: "09.10 (수)", cg: "김미영", t: "13:00~16:00", note: "식사 보조 · 목욕 지원 · 특이사항 없음", tone: "ok" },
-    { date: "09.08 (월)", cg: "박영희", t: "09:00~12:00", note: "혈압 측정 · 복약 확인 · 가사 지원", tone: "ok" },
-    { date: "09.05 (금)", cg: "박영희", t: "09:00~12:00", note: "산책 40분 · 식사 보조 · 컨디션 양호", tone: "ok" },
-  ];
+  const records = [];
   return (
     <div className="space-y-5">
       <div>
         <p className="font-mono text-[10px] font-bold tracking-[.16em] text-teal-600">GUARDIAN PORTAL · {TODAY.replace(/[()]/g, "").trim()}</p>
         <h1 className="font-display text-2xl font-extrabold tracking-tight text-slate-900">방문 기록</h1>
-        <p className="mt-1 text-sm text-slate-500">김순자 어르신의 최근 방문 활동 내역입니다.</p>
+        <p className="mt-1 text-sm text-slate-500">연결된 수급자의 방문 활동 내역입니다.</p>
       </div>
       <Panel className="overflow-hidden">
         <div className="overflow-x-auto">
@@ -33,6 +27,7 @@ export default function GuardianRecords() {
                   <td className="px-5 py-4"><Badge tone={r.tone}>완료</Badge></td>
                 </tr>
               ))}
+              {records.length === 0 && <tr><td colSpan={5} className="px-5 py-8 text-center text-sm text-slate-400">조회된 방문 기록이 없습니다.</td></tr>}
             </tbody>
           </table>
         </div>

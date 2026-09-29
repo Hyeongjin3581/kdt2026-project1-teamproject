@@ -31,9 +31,9 @@ export default function Login({ login, toSignup }) {
             ))}
           </div>
           <label className="mt-6 block text-xs font-semibold text-slate-600">아이디</label>
-          <input key={role + "-id"} className="mt-2 w-full rounded-lg border border-slate-200 px-3 py-3 text-sm outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-100" defaultValue={meta.id} />
+          <input key={role + "-id"} className="mt-2 w-full rounded-lg border border-slate-200 px-3 py-3 text-sm outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-100" placeholder="아이디 입력" />
           <label className="mt-5 block text-xs font-semibold text-slate-600">비밀번호</label>
-          <input className="mt-2 w-full rounded-lg border border-slate-200 px-3 py-3 text-sm outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-100" type="password" defaultValue="oncare" />
+          <input className="mt-2 w-full rounded-lg border border-slate-200 px-3 py-3 text-sm outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-100" type="password" placeholder="비밀번호 입력" />
           <button onClick={() => login(role)} className="mt-7 w-full rounded-lg bg-teal-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-teal-700">{meta.cta}</button>
           <p className="mt-4 text-center text-[11px] text-slate-400">{meta.note}</p>
           <div className="mt-5 border-t border-slate-100 pt-4 text-center text-xs text-slate-500">아직 계정이 없으신가요? <button onClick={toSignup} className="font-bold text-teal-600 hover:underline">회원가입</button></div>

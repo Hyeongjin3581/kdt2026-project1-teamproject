@@ -99,7 +99,7 @@ export default function Signup({ toLogin }) {
                 ))}
               </div>
               <div className="mt-5 grid gap-4 sm:grid-cols-2">
-                <label className="text-xs font-semibold text-slate-600">이름<input className={field} placeholder="홍길동" /></label>
+                <label className="text-xs font-semibold text-slate-600">이름<input className={field} placeholder="이름 입력" /></label>
                 <label className="text-xs font-semibold text-slate-600">연락처<input className={field} placeholder="010-0000-0000" /></label>
                 <div className="text-xs font-semibold text-slate-600 sm:col-span-2">아이디 (이메일)
                   <div className="mt-1.5 flex gap-2">

@@ -4,6 +4,8 @@ import Panel from "../../../components/common/Panel";
 import Badge from "../../../components/common/Badge";
 import { useCenter, inCenter } from "../../../context/CenterContext";
 import { centers } from "../../../data/centers";
+import { caregivers } from "../../../data/caregivers";
+import { recipients } from "../../../data/recipients";
 import { assignments, stateMeta } from "../../../data/schedules";
 
 export default function AutoScheduling() {
@@ -11,6 +13,9 @@ export default function AutoScheduling() {
   const [confirmed, setConfirmed] = useState(false);
   const center = useCenter();
   const list = assignments.filter(inCenter(center));
+  const targetCount = recipients.filter(inCenter(center)).length;
+  const unassignedCount = list.filter((item) => item.state === "unassigned").length;
+  const caregiverCount = caregivers.filter(inCenter(center)).length;
 
   if (stage === "setup") {
     return (
@@ -20,9 +25,10 @@ export default function AutoScheduling() {
           <Panel className="p-5">
             <h2 className="font-display font-bold text-slate-900">편성 대상 현황</h2>
             <div className="mt-4 grid grid-cols-2 gap-3">
-              {[["대상 수급자", "38명"], ["미배정 방문", "12건"], ["가용 요양보호사", "6명"], ["주 근무 상한", "52시간"]].map(([l, v]) => (
-                <div key={l} className="rounded-lg bg-slate-50 px-3 py-3"><p className="text-[11px] text-slate-400">{l}</p><b className="font-mono text-lg text-slate-800">{v}</b></div>
-              ))}
+              <div className="rounded-lg bg-slate-50 px-3 py-3"><p className="text-[11px] text-slate-400">대상 수급자</p><b className="font-mono text-lg text-slate-800">{targetCount}명</b></div>
+              <div className="rounded-lg bg-slate-50 px-3 py-3"><p className="text-[11px] text-slate-400">미배정 방문</p><b className="font-mono text-lg text-slate-800">{unassignedCount}건</b></div>
+              <div className="rounded-lg bg-slate-50 px-3 py-3"><p className="text-[11px] text-slate-400">등록 요양보호사</p><b className="font-mono text-lg text-slate-800">{caregiverCount}명</b></div>
+              <div className="rounded-lg bg-slate-50 px-3 py-3"><p className="text-[11px] text-slate-400">주 근무 상한</p><b className="font-mono text-lg text-slate-800">52시간</b></div>
             </div>
           </Panel>
           <Panel className="p-5">
@@ -59,10 +65,10 @@ export default function AutoScheduling() {
 
   return (
     <div className="space-y-5">
-      <SectionTitle title="2026년 9월 21일 ~ 9월 26일 자동편성 결과" subtitle="배정 초안입니다. 자동편성은 최종 결정이 아니라 관리자의 의사결정을 돕는 기능입니다. 확인 후 확정하세요." action={
+      <SectionTitle title="자동편성 결과" subtitle="배정 초안입니다. 자동편성은 최종 결정이 아니라 관리자의 의사결정을 돕는 기능입니다. 확인 후 확정하세요." action={
         <div className="flex gap-2">
           <button onClick={() => setStage("setup")} className="rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-bold text-slate-700 hover:bg-slate-50">↻ 다시 추천</button>
-          <button onClick={() => setConfirmed(true)} className="rounded-lg bg-teal-600 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-teal-700">{confirmed ? "전체 확정 완료 ✓" : "전체 확정"}</button>
+          <button onClick={() => setConfirmed(true)} disabled={!list.length} className="rounded-lg bg-teal-600 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-teal-700 disabled:cursor-not-allowed disabled:opacity-50">{confirmed ? "전체 확정 완료 ✓" : "전체 확정"}</button>
         </div>
       } />
       <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
@@ -99,9 +105,10 @@ export default function AutoScheduling() {
               </div>
             );
           })}
+          {list.length === 0 && <p className="px-5 py-10 text-center text-sm text-slate-400">자동편성 결과 데이터가 없습니다.</p>}
         </div>
       </Panel>
-      {confirmed && <Panel className="border-teal-200 bg-teal-50 p-4 text-sm text-teal-800">배정 초안이 확정되어 방문 일정에 반영되었습니다. 남은 미배정 1건은 결원 관리에서 대체자를 지정하세요.</Panel>}
+      {confirmed && <Panel className="border-teal-200 bg-teal-50 p-4 text-sm text-teal-800">배정 초안이 확정되었습니다.</Panel>}
     </div>
   );
 }

@@ -7,7 +7,7 @@ import { guardians } from "../../../data/guardians";
 
 export default function Guardians() {
   const [q, setQ] = useState("");
-  const [open, setOpen] = useState(guardians[0].name);
+  const [open, setOpen] = useState(guardians[0]?.name ?? null);
   const center = useCenter();
   const visible = useMemo(() => guardians.filter(inCenter(center)).filter((g) => `${g.name}${g.tel}${g.recipients.map((r) => r.name).join("")}`.includes(q)), [q, center]);
   const refresh = () => {

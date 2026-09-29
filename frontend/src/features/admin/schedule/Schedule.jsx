@@ -14,7 +14,7 @@ export default function Schedule() {
       <SectionTitle title="방문 일정" subtitle="요양보호사별 주간 타임테이블입니다. 같은 시간대에도 여러 요양보호사가 각각 다른 수급자를 방문할 수 있습니다." />
       <Panel className="p-4">
         <div className="flex flex-wrap items-center gap-2">
-          {["기간: 이번 주 (09.21~09.26)", "지역: 전체"].map((f) => <button key={f} className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50">{f} ▾</button>)}
+          {["기간 선택", "지역 선택"].map((f) => <button key={f} className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50">{f} ▾</button>)}
           <div className="ml-auto flex items-center gap-3 text-[11px] text-slate-500">
             <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-emerald-500" />정상 배정</span>
             <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-red-500" />시간 충돌</span>
@@ -25,16 +25,16 @@ export default function Schedule() {
         </div>
       </Panel>
       <Panel className="overflow-x-auto">
-        <div className="min-w-[960px]">
-          <div className="grid grid-cols-[132px_repeat(6,1fr)] border-b border-slate-100 bg-slate-50 text-center text-xs font-bold text-slate-500">
+        <div className="min-w-[1100px]">
+          <div className="grid grid-cols-[132px_repeat(7,1fr)] border-b border-slate-100 bg-slate-50 text-center text-xs font-bold text-slate-500">
             <div className="px-3 py-3 text-left">요양보호사</div>
             {scheduleDays.map((d) => <div key={d} className="px-3 py-3">{d}</div>)}
           </div>
-          {rows.map((row) => (
-            <div key={row.cg} className="grid grid-cols-[132px_repeat(6,1fr)] border-b border-slate-100 last:border-0">
+            {rows.map((row) => (
+            <div key={row.cg} className="grid grid-cols-[132px_repeat(7,1fr)] border-b border-slate-100 last:border-0">
               <div className="flex items-center gap-2 border-r border-slate-100 px-3 py-4">
                 <div className="grid h-8 w-8 place-items-center rounded-full bg-teal-100 text-xs font-bold text-teal-700">{row.cg[0]}</div>
-                <div><b className="block text-xs text-slate-700">{row.cg}</b>{center === "all" && <span className="text-[10px] text-slate-400">{centers.find((c) => c.id === row.center)?.short}</span>}</div>
+                <div><b className="block text-xs text-slate-700">{row.cg}</b>{center === "all" && <span className="text-[10px] text-slate-400">{centers.find((c) => c.id === row.center)?.short ?? "센터 정보 없음"}</span>}</div>
               </div>
               {row.cells.map((visits, i) => {
                 const bad = conflictSet(visits);
@@ -56,10 +56,12 @@ export default function Schedule() {
               })}
             </div>
           ))}
-          {rows.length === 0 && <div className="px-5 py-10 text-center text-sm text-slate-400">선택한 센터에 등록된 요양보호사 일정이 없습니다.</div>}
+          {rows.length === 0 && <div className="px-5 py-10 text-center text-sm text-slate-400">조회된 요양보호사 일정이 없습니다.</div>}
         </div>
       </Panel>
-      {conflictCount > 0
+      {rows.length === 0
+        ? <Panel className="p-4 text-center text-sm text-slate-400">일정 데이터를 불러오면 시간 충돌 여부를 확인할 수 있습니다.</Panel>
+        : conflictCount > 0
         ? <Panel className="border-red-200 bg-red-50 p-4 text-sm text-red-800"><b>진단 경고 · 시간 충돌 {conflictCount}건</b> — 수동 배정 변경 또는 일정 수정으로 동일 요양보호사에게 시간이 겹치는 방문이 발생했습니다. 담당자를 변경하거나 자동편성으로 재조정하세요.</Panel>
         : <Panel className="flex items-center gap-2 border-emerald-200 bg-emerald-50/70 p-3 text-xs text-emerald-800"><span className="text-emerald-500">✓</span> 현재 시간 충돌이 없습니다. 수동으로 배정을 변경하거나 일정을 수정해 충돌이 생기면 진단 경고가 표시됩니다.</Panel>}
     </div>

@@ -29,10 +29,10 @@ export default function GuardianRecipient({ onComplete, onCancel }) {
           <p className="leading-5">수급자번호와 사용자번호는 등록 시 서버에서 자동으로 연결됩니다. 요양 등급과 담당 요양보호사는 센터 상담 후 안내됩니다.</p>
         </div>
         <div className="mt-6 grid gap-4 sm:grid-cols-2">
-          <label className="text-xs font-semibold text-slate-600">수급자 성명 <span className="text-teal-600">*</span><input value={form.name} onChange={(event) => update("name", event.target.value)} className={field} placeholder="예: 김순자" /></label>
-          <label className="text-xs font-semibold text-slate-600">수급자 나이 <span className="text-teal-600">*</span><input type="number" min="0" max="130" value={form.age} onChange={(event) => update("age", event.target.value)} className={field} placeholder="예: 78" /></label>
+          <label className="text-xs font-semibold text-slate-600">수급자 성명 <span className="text-teal-600">*</span><input value={form.name} onChange={(event) => update("name", event.target.value)} className={field} placeholder="수급자 성명 입력" /></label>
+          <label className="text-xs font-semibold text-slate-600">수급자 나이 <span className="text-teal-600">*</span><input type="number" min="0" max="130" value={form.age} onChange={(event) => update("age", event.target.value)} className={field} placeholder="나이 입력" /></label>
           <label className="text-xs font-semibold text-slate-600">수급자 성별 <span className="text-teal-600">*</span><select value={form.gender} onChange={(event) => update("gender", event.target.value)} className={field}><option value="">선택해주세요</option><option value="female">여성</option><option value="male">남성</option></select></label>
-          <label className="text-xs font-semibold text-slate-600">수급자 거주지역(주소) <span className="text-teal-600">*</span><input value={form.address} onChange={(event) => update("address", event.target.value)} className={field} placeholder="예: 안산시 상록구 본오동" /></label>
+          <label className="text-xs font-semibold text-slate-600">수급자 거주지역(주소) <span className="text-teal-600">*</span><input value={form.address} onChange={(event) => update("address", event.target.value)} className={field} placeholder="주소 입력" /></label>
           <label className="text-xs font-semibold text-slate-600 sm:col-span-2">특이사항<textarea value={form.significant} onChange={(event) => update("significant", event.target.value)} rows={4} className={`${field} resize-none`} placeholder="건강 상태나 상담 시 참고할 내용을 입력해주세요." /></label>
         </div>
         {message && <p className="mt-4 text-xs font-semibold text-rose-600">{message}</p>}

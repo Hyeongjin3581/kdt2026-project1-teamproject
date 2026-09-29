@@ -5,21 +5,14 @@ import { TODAY } from "../../../constants";
 
 export default function GuardianHome({ go, recipients, activeRecipientId, onSelectRecipient }) {
   const activeRecipient = recipients.find((recipient) => recipient.id === activeRecipientId) ?? recipients[0];
-  const week = [
-    { day: "월 09.15", t: "09:00~12:00", cg: "박영희", tone: "ok", label: "방문 완료" },
-    { day: "수 09.17", t: "09:00~12:00", cg: "박영희", tone: "info", label: "오늘 예정" },
-    { day: "금 09.19", t: "09:00~12:00", cg: "박영희", tone: "neutral", label: "예정" },
-  ];
-  const alerts = [
-    ["ok", "이번 주 담당자 변경 없이 박영희 요양보호사가 방문합니다."],
-    ["info", "09월 15일 (월) 방문 기록이 등록되었습니다."],
-  ];
+  const week = [];
+  const alerts = [];
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <p className="font-mono text-[10px] font-bold tracking-[.16em] text-teal-600">GUARDIAN PORTAL · {TODAY.replace(/[()]/g, "").trim()}</p>
-          <h1 className="font-display text-2xl font-extrabold tracking-tight text-slate-900">안녕하세요, 이수현 보호자님</h1>
+          <h1 className="font-display text-2xl font-extrabold tracking-tight text-slate-900">안녕하세요, 보호자님</h1>
           <p className="mt-1 text-sm text-slate-500">{activeRecipient ? `${activeRecipient.name} 어르신의 방문요양 현황을 확인하세요.` : "돌봄 어르신을 등록하고 방문요양 상담을 시작하세요."}</p>
         </div>
         <div className="flex gap-2">
@@ -59,7 +52,7 @@ export default function GuardianHome({ go, recipients, activeRecipientId, onSele
 
           {activeRecipient ? <><Panel className="overflow-hidden">
             <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
-              <div><h2 className="font-display font-bold text-slate-900">이번 주 방문 일정</h2><p className="mt-0.5 text-xs text-slate-400">2026.09.15 ~ 09.19</p></div>
+              <div><h2 className="font-display font-bold text-slate-900">이번 주 방문 일정</h2></div>
               <button onClick={() => go("schedule")} className="text-xs font-semibold text-teal-600 hover:underline">전체 보기 →</button>
             </div>
             <div className="overflow-x-auto">
@@ -76,6 +69,7 @@ export default function GuardianHome({ go, recipients, activeRecipientId, onSele
                       <td className="px-5 py-3.5"><Badge tone={v.tone}>{v.label}</Badge></td>
                     </tr>
                   ))}
+                  {week.length === 0 && <tr><td colSpan={4} className="px-5 py-8 text-center text-sm text-slate-400">조회된 방문 일정이 없습니다.</td></tr>}
                 </tbody>
               </table>
             </div>
@@ -84,19 +78,11 @@ export default function GuardianHome({ go, recipients, activeRecipientId, onSele
           <Panel className="overflow-hidden">
             <div className="border-b border-slate-100 px-5 py-4">
               <h2 className="font-display font-bold text-slate-900">오늘 예정 방문</h2>
-              <p className="mt-0.5 text-xs text-slate-400">2026년 9월 17일 (수)</p>
+              <p className="mt-0.5 text-xs text-slate-400">{TODAY}</p>
             </div>
             <div className="flex items-stretch">
               <div className="w-1.5 bg-teal-500 shrink-0" />
-              <div className="flex flex-1 flex-wrap items-center justify-between gap-4 px-5 py-5">
-                <div>
-                  <Badge tone="info">오늘 예정</Badge>
-                  <p className="mt-3 font-mono text-lg font-bold text-teal-700">09:00 ~ 12:00</p>
-                  <p className="mt-1 font-display text-xl font-bold text-slate-900">박영희 요양보호사</p>
-                  <p className="mt-0.5 text-sm text-slate-500">신체 지원 · 가사 지원 예정</p>
-                </div>
-                <button onClick={() => go("request")} className="rounded-lg border border-slate-200 px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50">일정 변경 요청</button>
-              </div>
+              <div className="flex flex-1 items-center justify-between gap-4 px-5 py-5"><p className="text-sm text-slate-500">조회된 방문 일정이 없습니다.</p><button onClick={() => go("schedule")} className="text-xs font-semibold text-teal-600 hover:underline">일정 확인 →</button></div>
             </div>
           </Panel>
           </> : <Panel className="border-dashed p-5">
@@ -115,6 +101,7 @@ export default function GuardianHome({ go, recipients, activeRecipientId, onSele
                   <p className="text-xs leading-5 text-slate-600">{msg}</p>
                 </div>
               ))}
+              {alerts.length === 0 && <p className="px-3 py-5 text-center text-xs text-slate-400">새 알림이 없습니다.</p>}
             </div>
           </Panel>
 

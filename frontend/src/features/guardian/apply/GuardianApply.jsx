@@ -51,7 +51,7 @@ export default function GuardianApply({ recipient, recipients, onSelectRecipient
           <h2 className="mt-5 font-display text-2xl font-extrabold text-slate-900">신청이 접수되었습니다</h2>
           <p className="mt-3 text-sm leading-6 text-slate-500">담당 사회복지사가 접수 내용을 검토한 뒤 1~2일 내 유선으로 상담을 진행합니다.</p>
           <div className="mx-auto mt-6 max-w-sm rounded-lg bg-slate-50 p-4 text-left text-sm">
-            {[["접수번호", "ONC-20260921-014"], ["신청 대상", `${recipient.name} 어르신`], ["희망 요일", selectedDays.join(", ") || "미선택"]].map(([l, v]) => (
+            {[["접수번호", "서버 연동 후 발급"], ["신청 대상", `${recipient.name} 어르신`], ["희망 요일", selectedDays.join(", ") || "미선택"]].map(([l, v]) => (
               <div key={l} className="flex justify-between border-b border-slate-100 py-2 last:border-0"><span className="text-slate-400">{l}</span><b className="text-slate-700">{v}</b></div>
             ))}
             <div className="flex items-center justify-between py-2"><span className="text-slate-400">진행 상태</span><Badge tone="info">접수 완료 · 검토 대기</Badge></div>

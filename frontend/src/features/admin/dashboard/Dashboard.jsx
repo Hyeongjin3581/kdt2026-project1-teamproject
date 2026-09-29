@@ -6,28 +6,32 @@ import { WEEK_LIMIT } from "../../../constants";
 import { useCenter, inCenter } from "../../../context/CenterContext";
 import { centers } from "../../../data/centers";
 import { caregivers } from "../../../data/caregivers";
-import { todayVisits } from "../../../data/schedules";
+import { guardians } from "../../../data/guardians";
+import { recipients } from "../../../data/recipients";
+import { assignments, todayVisits, vacancyEvents } from "../../../data/schedules";
 
 export default function Dashboard({ go }) {
-  const alerts = [
-    ["danger", "긴급", "오늘 15:00 방문 일정에 결원이 발생했습니다. 대체자 지정이 필요합니다.", "vacancy"],
-    ["warning", "주의", "한소영 요양보호사의 이번 주 근무시간이 52시간 기준에 도달했습니다.", "caregivers"],
-    ["warning", "미배정", "다음 주 방문 일정 중 4건이 아직 배정되지 않았습니다.", "auto"],
-    ["info", "자동편성", "다음 주 자동편성 초안이 생성되었습니다. 관리자 확인이 필요합니다.", "auto"],
-    ["info", "신규 등록", "정민아 보호자가 어르신 연결코드로 신규 가입했습니다.", "guardians"],
-  ];
+  const alerts = [];
   const center = useCenter();
-  const overLimit = caregivers.filter(inCenter(center)).filter((c) => c.week >= 48);
+  const centerCaregivers = caregivers.filter(inCenter(center));
+  const overLimit = centerCaregivers.filter((c) => c.week >= 48);
   const visits = todayVisits.filter(inCenter(center));
+  const centerAssignments = assignments.filter(inCenter(center));
+  const assignedCount = centerAssignments.filter((item) => item.state === "assigned").length;
+  const unassignedCount = centerAssignments.filter((item) => item.state === "unassigned").length;
+  const reviewCount = centerAssignments.filter((item) => item.state === "review").length;
+  const vacancyCount = vacancyEvents.filter(inCenter(center)).length;
+  const registrationCount = (items) => items.filter(inCenter(center)).length;
+  const completionRate = centerAssignments.length ? Math.round((assignedCount / centerAssignments.length) * 100) : 0;
   return (
     <div className="space-y-5">
       <SectionTitle title="오늘의 운영 현황" subtitle="센터 운영 상황을 한눈에 확인하고 바로 업무를 처리하세요." action={<button onClick={() => go("auto")} className="rounded-lg bg-teal-600 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-teal-700">✦ 다음 주 자동편성</button>} />
       <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
         {[
-          ["오늘 방문 예정", "18", "건", "info", "TODAY", "schedule"],
-          ["오늘 근무 요양보호사", "6", "명", "neutral", "출근", "caregivers"],
-          ["이번 주 미배정 일정", "4", "건", "warning", "확인 필요", "auto"],
-          ["긴급 결원 / 대체 필요", "1", "건", "danger", "즉시 처리", "vacancy"],
+          ["오늘 방문 예정", visits.length, "건", "info", "일정", "schedule"],
+          ["등록 요양보호사", centerCaregivers.length, "명", "neutral", "인력", "caregivers"],
+          ["미배정 일정", unassignedCount, "건", "warning", "편성", "auto"],
+          ["결원 / 대체 필요", vacancyCount, "건", "danger", "결원", "vacancy"],
         ].map(([label, value, unit, tone, tag, target]) => (
           <button key={label} onClick={() => go(target)} className="text-left">
             <Panel className="p-4 transition hover:shadow-md">
@@ -42,16 +46,17 @@ export default function Dashboard({ go }) {
         <div className="space-y-5">
           <Panel className="p-5">
             <div className="flex items-center justify-between">
-              <div><h2 className="font-display font-bold text-slate-900">이번 주 자동편성 진행 상태</h2><p className="mt-0.5 text-xs text-slate-400">2026.09.21 ~ 09.26 · 초안 생성 완료</p></div>
+              <div><h2 className="font-display font-bold text-slate-900">자동편성 진행 상태</h2><p className="mt-0.5 text-xs text-slate-400">등록된 배정 데이터 기준</p></div>
               <button onClick={() => go("auto")} className="text-xs font-semibold text-teal-600 hover:underline">초안 확인 →</button>
             </div>
             <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
-              {[["전체 일정", "42건"], ["자동배정", "38건"], ["미배정", "4건"], ["확인 필요", "6건"]].map(([l, v]) => (
-                <div key={l} className="rounded-lg bg-slate-50 px-3 py-3"><p className="text-[11px] text-slate-400">{l}</p><b className="font-mono text-lg text-slate-800">{v}</b></div>
-              ))}
+              <div className="rounded-lg bg-slate-50 px-3 py-3"><p className="text-[11px] text-slate-400">전체 일정</p><b className="font-mono text-lg text-slate-800">{centerAssignments.length}건</b></div>
+              <div className="rounded-lg bg-slate-50 px-3 py-3"><p className="text-[11px] text-slate-400">자동배정</p><b className="font-mono text-lg text-slate-800">{assignedCount}건</b></div>
+              <div className="rounded-lg bg-slate-50 px-3 py-3"><p className="text-[11px] text-slate-400">미배정</p><b className="font-mono text-lg text-slate-800">{unassignedCount}건</b></div>
+              <div className="rounded-lg bg-slate-50 px-3 py-3"><p className="text-[11px] text-slate-400">확인 필요</p><b className="font-mono text-lg text-slate-800">{reviewCount}건</b></div>
             </div>
-            <div className="mt-4 h-2 w-full overflow-hidden rounded-full bg-slate-100"><div className="h-full rounded-full bg-teal-500" style={{ width: "90%" }} /></div>
-            <p className="mt-2 text-[11px] text-slate-400">자동배정 완료율 90% · 나머지 4건은 결원/조건 미충족 건입니다.</p>
+            <div className="mt-4 h-2 w-full overflow-hidden rounded-full bg-slate-100"><div className="h-full rounded-full bg-teal-500" style={{ width: `${completionRate}%` }} /></div>
+            <p className="mt-2 text-[11px] text-slate-400">자동배정 완료율 {completionRate}%</p>
           </Panel>
           <Panel className="overflow-hidden">
             <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
@@ -67,6 +72,7 @@ export default function Dashboard({ go }) {
                   <b className={`w-16 text-right font-mono text-sm ${c.week >= WEEK_LIMIT ? "text-red-600" : "text-amber-600"}`}>{c.week}/{WEEK_LIMIT}h</b>
                 </div>
               ))}
+              {overLimit.length === 0 && <p className="px-5 py-6 text-center text-xs text-slate-400">근무시간 데이터가 없습니다.</p>}
             </div>
           </Panel>
           <Panel className="overflow-hidden">
@@ -87,6 +93,7 @@ export default function Dashboard({ go }) {
                       <td className="px-5 py-4"><span className="rounded bg-slate-100 px-1.5 py-0.5 text-[11px] text-slate-500">{centers.find((c) => c.id === v.center)?.short}</span></td>
                     </tr>
                   ))}
+                  {visits.length === 0 && <tr><td colSpan={5} className="px-5 py-8 text-center text-sm text-slate-400">조회된 방문 일정이 없습니다.</td></tr>}
                 </tbody>
               </table>
             </div>
@@ -103,14 +110,15 @@ export default function Dashboard({ go }) {
                   <span className="mt-0.5 text-slate-300">›</span>
                 </button>
               ))}
+              {alerts.length === 0 && <p className="px-3 py-5 text-center text-xs text-slate-400">처리할 알림이 없습니다.</p>}
             </div>
           </Panel>
           <Panel className="p-5">
-            <h2 className="font-display font-bold text-slate-900">신규 보호자 / 수급자 등록 현황</h2>
-            <p className="mt-0.5 text-xs text-slate-400">최근 7일</p>
+            <h2 className="font-display font-bold text-slate-900">등록 현황</h2>
+            <p className="mt-0.5 text-xs text-slate-400">선택한 센터 기준</p>
             <div className="mt-4 grid grid-cols-2 gap-3">
-              <div className="rounded-lg bg-teal-50/60 px-3 py-4 text-center"><b className="font-display text-2xl text-teal-700">1</b><p className="mt-1 text-[11px] text-slate-500">신규 보호자</p></div>
-              <div className="rounded-lg bg-emerald-50/60 px-3 py-4 text-center"><b className="font-display text-2xl text-emerald-700">1</b><p className="mt-1 text-[11px] text-slate-500">신규 수급자</p></div>
+              <div className="rounded-lg bg-teal-50/60 px-3 py-4 text-center"><b className="font-display text-2xl text-teal-700">{registrationCount(guardians)}</b><p className="mt-1 text-[11px] text-slate-500">보호자</p></div>
+              <div className="rounded-lg bg-emerald-50/60 px-3 py-4 text-center"><b className="font-display text-2xl text-emerald-700">{registrationCount(recipients)}</b><p className="mt-1 text-[11px] text-slate-500">수급자</p></div>
             </div>
             <button onClick={() => go("guardians")} className="mt-3 w-full rounded-lg border border-slate-200 py-2 text-xs font-bold text-slate-600 transition hover:bg-slate-50">보호자 관리로 이동</button>
           </Panel>

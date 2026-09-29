@@ -9,10 +9,11 @@ import { vacancyEvents } from "../../../data/schedules";
 export default function Vacancy() {
   const center = useCenter();
   const events = vacancyEvents.filter(inCenter(center));
-  const [selected, setSelected] = useState(23);
+  const [selected, setSelected] = useState(null);
   const [sent, setSent] = useState(null);
-  const first = new Date(2026, 8, 1).getDay(); // 9월 1일 요일
-  const daysInMonth = 30;
+  const currentMonth = new Date();
+  const first = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1).getDay();
+  const daysInMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0).getDate();
   const cells = [...Array(first).fill(null), ...Array.from({ length: daysInMonth }, (_, i) => i + 1)];
   const eventOf = (d) => events.find((e) => e.date === d);
   const ev = eventOf(selected) ?? events[0];
@@ -23,7 +24,7 @@ export default function Vacancy() {
       <div className="grid gap-5 xl:grid-cols-[1fr_1.15fr]">
         <Panel className="p-5">
           <div className="flex items-center justify-between">
-            <h2 className="font-display font-bold text-slate-900">2026년 9월</h2>
+            <h2 className="font-display font-bold text-slate-900">{currentMonth.toLocaleDateString("ko-KR", { year: "numeric", month: "long" })}</h2>
             <div className="flex items-center gap-3 text-[11px] text-slate-500">
               <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-red-500" />결원</span>
               <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-amber-500" />미배정</span>
@@ -57,7 +58,7 @@ export default function Vacancy() {
                 <span className="rounded-lg bg-red-50 px-3 py-1.5 font-mono text-xs font-bold text-red-600">{ev.deadline}</span>
               </div>
               <h2 className="mt-4 font-display text-xl font-bold text-slate-900">{ev.recipient} 수급자 방문</h2>
-              <p className="mt-1 text-sm text-slate-500">{ev.dateLabel} {ev.time} · {ev.area}{center === "all" && ` · ${centers.find((c) => c.id === ev.center)?.short}`}</p>
+              <p className="mt-1 text-sm text-slate-500">{ev.dateLabel} {ev.time} · {ev.area}{center === "all" && ` · ${centers.find((c) => c.id === ev.center)?.short ?? "센터 정보 없음"}`}</p>
               <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
                 {[["기존 담당", ev.cg === "미배정" ? "미배정" : `${ev.cg} 요양보호사`], ["지역", ev.area], ["방문 날짜", ev.dateLabel], ["방문 시간", ev.time]].map(([l, v]) => (
                   <div key={l} className="rounded-lg bg-slate-50 px-3 py-2"><p className="text-[11px] text-slate-400">{l}</p><b className="text-slate-700">{v}</b></div>
@@ -83,7 +84,7 @@ export default function Vacancy() {
             </Panel>
           </div>
         ) : (
-          <Panel className="grid place-items-center p-10 text-center text-sm text-slate-400">왼쪽 캘린더에서 결원/미배정 날짜를 선택하세요.</Panel>
+          <Panel className="grid place-items-center p-10 text-center text-sm text-slate-400">결원 및 미배정 일정 데이터가 없습니다.</Panel>
         )}
       </div>
     </div>

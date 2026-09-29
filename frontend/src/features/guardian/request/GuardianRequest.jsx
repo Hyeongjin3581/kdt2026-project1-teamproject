@@ -3,37 +3,13 @@ import Panel from "../../../components/common/Panel";
 import Badge from "../../../components/common/Badge";
 import { TODAY } from "../../../constants";
 
-const recipientRequests = {
-  1: [
-    { id: "ONC-20260910-021", date: "2026-09-10", kind: "요청", type: "방문 시간 변경 요청", service: "방문요양 서비스 연장", status: "처리 완료", tone: "ok", summary: "수요일 방문을 오후 시간대로 변경 요청", details: [["연결된 신청", "방문요양 서비스 연장"], ["희망 일정", "수요일 14:00 ~ 17:00"], ["접수 내용", "다음 주 수요일 병원 진료 후 방문을 오후로 변경 요청"], ["센터 답변", "9월 17일부터 오후 방문으로 반영되었습니다."], ["처리 일시", "2026.09.11 10:20"]] },
-    { id: "ONC-20260828-009", date: "2026-08-28", kind: "문의", type: "담당자 관련 문의", service: "방문요양 서비스 연장", status: "답변 완료", tone: "ok", summary: "담당 요양보호사 방문 일정 문의", details: [["연결된 신청", "방문요양 서비스 연장"], ["문의 내용", "추석 연휴 전 주 방문 일정과 담당자를 확인하고 싶습니다."], ["센터 답변", "박영희 요양보호사가 기존 일정대로 방문 예정입니다."], ["답변 일시", "2026.08.29 14:05"]] },
-    { id: "ONC-20260813-004", date: "2026-08-13", kind: "신청", type: "방문요양 서비스 연장", service: "방문요양 서비스 연장", status: "검토 완료", tone: "info", summary: "주 3회 방문요양 서비스 연장 신청", details: [["연결된 신청", "방문요양 서비스 연장"], ["희망 일정", "월 · 수 · 금 09:00 ~ 12:00"], ["신청 내용", "현재 이용 중인 방문요양 서비스를 연장 신청합니다."], ["센터 안내", "갱신 서류 확인 후 서비스가 연장되었습니다."], ["처리 일시", "2026.08.15 16:30"]] },
-  ],
-  2: [
-    { id: "ONC-20260914-031", date: "2026-09-14", kind: "신청", type: "방문요양 서비스 신청", service: "방문요양 서비스 신청", status: "검토 중", tone: "info", summary: "주 2회 오전 방문요양 서비스 신청", details: [["연결된 신청", "방문요양 서비스 신청"], ["희망 일정", "화 · 목 10:00 ~ 13:00"], ["신청 내용", "가사 지원과 일상생활 보조를 희망합니다."], ["진행 안내", "담당 사회복지사가 신청서를 검토 중입니다."], ["접수 일시", "2026.09.14 11:42"]] },
-    { id: "ONC-20260905-018", date: "2026-09-05", kind: "문의", type: "서비스 이용 문의", service: "방문요양 서비스 신청", status: "답변 완료", tone: "ok", summary: "방문요양 이용 가능 시간 문의", details: [["연결된 신청", "방문요양 서비스 신청"], ["문의 내용", "평일 오후 시간에도 방문요양 이용이 가능한지 문의드립니다."], ["센터 답변", "담당 인력 배정 상황을 확인한 후 안내드렸습니다."], ["답변 일시", "2026.09.05 15:10"]] },
-  ],
-};
-
-const recipientVisits = {
-  1: [
-    { id: "visit-1", date: "09.17 (수)", time: "09:00 ~ 12:00", service: "방문요양 서비스 연장", caregiver: "박영희 요양보호사", status: "오늘 예정", tone: "info" },
-    { id: "visit-2", date: "09.19 (금)", time: "09:00 ~ 12:00", service: "방문요양 서비스 연장", caregiver: "박영희 요양보호사", status: "예정", tone: "neutral" },
-  ],
-  2: [
-    { id: "visit-3", date: "09.18 (목)", time: "10:00 ~ 13:00", service: "방문요양 서비스 신청", caregiver: "배정 예정", status: "예정", tone: "neutral" },
-  ],
-};
-
 export default function GuardianRequest({ recipients, activeRecipientId, onSelectRecipient }) {
   const [reqSent, setReqSent] = useState(false);
   const [requestType, setRequestType] = useState("방문 시간 변경 요청");
   const [requestContent, setRequestContent] = useState("");
-  const [requestHistory, setRequestHistory] = useState(recipientRequests);
-  const [selectedDays, setSelectedDays] = useState(["월"]);
-  const [preferredTimes, setPreferredTimes] = useState({
-    월: { start: "09:00", end: "12:00" },
-  });
+  const [requestHistory, setRequestHistory] = useState({});
+  const [selectedDays, setSelectedDays] = useState([]);
+  const [preferredTimes, setPreferredTimes] = useState({});
   const field = "mt-1.5 w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-600 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100";
   const weekdays = ["월", "화", "수", "목", "금", "토", "일"];
   const toggleDay = (day) => {
@@ -51,7 +27,7 @@ export default function GuardianRequest({ recipients, activeRecipientId, onSelec
   const needsSchedule = requestType !== "담당자 관련 문의";
   const selectedRecipient = recipients.find((recipient) => recipient.id === activeRecipientId) ?? recipients[0];
   const history = requestHistory[selectedRecipient?.id] ?? [];
-  const visits = recipientVisits[selectedRecipient?.id] ?? [];
+  const visits = [];
   const [selectedRequestId, setSelectedRequestId] = useState(null);
   const [selectedVisitId, setSelectedVisitId] = useState(null);
   const selectedRequest = history.find((request) => request.id === selectedRequestId);
@@ -63,7 +39,7 @@ export default function GuardianRequest({ recipients, activeRecipientId, onSelec
   };
   const sendRequest = () => {
     if (!selectedRecipient || !selectedVisit) return;
-    const date = "2026-09-17";
+    const date = new Date().toISOString().slice(0, 10);
     const newRequest = {
       id: `ONC-${Date.now()}`,
       date,
@@ -77,7 +53,7 @@ export default function GuardianRequest({ recipients, activeRecipientId, onSelec
         ["연결된 신청", selectedVisit.service],
         ["대상 방문", `${selectedVisit.date} · ${selectedVisit.time} · ${selectedVisit.caregiver}`],
         ["요청 내용", requestContent.trim() || "별도 내용 없이 일정 관련 요청을 전달했습니다."],
-        ["접수 일시", "2026.09.17 09:30"],
+        ["접수 일시", new Date().toLocaleString("ko-KR")],
       ],
     };
     setRequestHistory((current) => ({ ...current, [selectedRecipient.id]: [newRequest, ...(current[selectedRecipient.id] ?? [])] }));
@@ -114,7 +90,7 @@ export default function GuardianRequest({ recipients, activeRecipientId, onSelec
             <div className="mt-5 rounded-xl border border-dashed border-slate-200 bg-slate-50/70 px-5 py-10 text-center">
               <div className="mx-auto grid h-11 w-11 place-items-center rounded-full bg-teal-50 text-lg text-teal-600">▤</div>
               <p className="mt-3 text-sm font-bold text-slate-700">방문 일정을 선택해주세요</p>
-              <p className="mt-1 text-xs leading-5 text-slate-400">오른쪽 방문 일정에서 변경하거나 문의할 일정을 선택하면 요청 작성이 활성화됩니다.</p>
+              <p className="mt-1 text-xs leading-5 text-slate-400">연결된 방문 일정 데이터가 없습니다. 일정을 불러온 뒤 요청을 작성할 수 있습니다.</p>
             </div>
           ) : reqSent ? (
             <div className="mt-4 rounded-lg bg-teal-50 p-5 text-center">
@@ -172,6 +148,7 @@ export default function GuardianRequest({ recipients, activeRecipientId, onSelec
                   <span className="text-slate-300">›</span>
                 </button>;
               })}
+              {recipients.length === 0 && <p className="rounded-lg px-3 py-4 text-center text-xs text-slate-400">연결된 수급자 데이터가 없습니다.</p>}
             </div>
           </div>
           <div className="border-b border-slate-100 p-3">
@@ -181,6 +158,7 @@ export default function GuardianRequest({ recipients, activeRecipientId, onSelec
                 const isSelected = visit.id === selectedVisit?.id;
                 return <button key={visit.id} type="button" onClick={() => { setSelectedVisitId(visit.id); setSelectedRequestId(null); setReqSent(false); }} className={`flex w-full items-center justify-between rounded-lg border px-3 py-2.5 text-left transition ${isSelected ? "border-teal-300 bg-teal-50 shadow-sm" : "border-transparent hover:bg-slate-50"}`}><div><p className="text-xs font-semibold text-slate-700">{visit.date} · {visit.time}</p><p className="mt-0.5 text-[10px] text-slate-400">{visit.caregiver}</p></div><Badge tone={visit.tone}>{visit.status}</Badge></button>;
               })}
+              {visits.length === 0 && <p className="px-3 py-4 text-center text-xs text-slate-400">조회된 방문 일정이 없습니다.</p>}
             </div>
           </div>
           <div className="p-3">
@@ -192,6 +170,7 @@ export default function GuardianRequest({ recipients, activeRecipientId, onSelec
                   <div className="flex items-start justify-between gap-2"><div><span className="mr-1.5 rounded bg-slate-100 px-1.5 py-0.5 text-[9px] font-bold text-slate-500">{item.kind}</span><span className="text-xs font-bold text-slate-700">{item.type}</span><p className="mt-1 text-[11px] font-medium text-teal-700">신청 · {item.service}</p><p className="mt-0.5 text-[11px] text-slate-400">{item.date} · {item.summary}</p></div><Badge tone={item.tone}>{item.status}</Badge></div>
                 </button>;
               })}
+              {history.length === 0 && <p className="px-3 py-4 text-center text-xs text-slate-400">요청 내역이 없습니다.</p>}
             </div>
           </div>
         </Panel>

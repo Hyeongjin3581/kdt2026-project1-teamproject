@@ -3,17 +3,13 @@ import Badge from "../../../components/common/Badge";
 import { TODAY } from "../../../constants";
 
 export default function GuardianSchedule() {
-  const week = [
-    { day: "월 09.15", t: "09:00~12:00", cg: "박영희", tone: "ok", label: "방문 완료", note: "식사 보조 · 실내 걷기 · 혈압 정상" },
-    { day: "수 09.17", t: "09:00~12:00", cg: "박영희", tone: "info", label: "오늘 예정", note: "신체 지원 · 가사 지원 예정" },
-    { day: "금 09.19", t: "09:00~12:00", cg: "박영희", tone: "neutral", label: "예정", note: "방문 예정" },
-  ];
+  const week = [];
   return (
     <div className="space-y-5">
       <div>
         <p className="font-mono text-[10px] font-bold tracking-[.16em] text-teal-600">GUARDIAN PORTAL · {TODAY.replace(/[()]/g, "").trim()}</p>
         <h1 className="font-display text-2xl font-extrabold tracking-tight text-slate-900">방문 일정</h1>
-        <p className="mt-1 text-sm text-slate-500">김순자 어르신의 이번 주 방문 일정입니다. 2026.09.15 ~ 09.19</p>
+        <p className="mt-1 text-sm text-slate-500">연결된 수급자의 방문 일정을 확인합니다.</p>
       </div>
       <Panel className="overflow-hidden">
         <div className="overflow-x-auto">
@@ -31,6 +27,7 @@ export default function GuardianSchedule() {
                   <td className="px-5 py-4"><Badge tone={v.tone}>{v.label}</Badge></td>
                 </tr>
               ))}
+              {week.length === 0 && <tr><td colSpan={5} className="px-5 py-8 text-center text-sm text-slate-400">조회된 방문 일정이 없습니다.</td></tr>}
             </tbody>
           </table>
         </div>

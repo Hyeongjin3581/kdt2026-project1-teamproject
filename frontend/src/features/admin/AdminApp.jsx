@@ -20,12 +20,12 @@ const adminNav = [
   { id: "caregivers", label: "요양보호사 관리", short: "보호사", icon: "☺" },
   { id: "schedule", label: "방문 일정", short: "일정", icon: "▤" },
   { id: "auto", label: "자동편성", short: "편성", icon: "✦" },
-  { id: "vacancy", label: "결원 관리", short: "결원", icon: "↺", badge: 1 },
+  { id: "vacancy", label: "결원 관리", short: "결원", icon: "↺" },
 ];
 
 export default function AdminApp({ logout }) {
   const [page, setPage] = useState("dashboard");
-  const [center, setCenter] = useState("ansan");
+  const [center, setCenter] = useState("all");
   const content =
     page === "dashboard" ? <Dashboard go={setPage} /> :
     page === "recipients" ? <Recipients /> :
@@ -53,7 +53,7 @@ export default function AdminApp({ logout }) {
         </nav>
         <div className="mt-auto rounded-lg border border-white/10 bg-white/5 p-3">
           <p className="text-xs font-semibold text-white">{centerName(center)}</p>
-          <p className="mt-1 text-[11px] text-slate-400">관리자 · 이수진</p>
+          <p className="mt-1 text-[11px] text-slate-400">관리자</p>
           <button onClick={logout} className="mt-3 text-xs text-teal-300 transition hover:text-white">로그아웃 →</button>
         </div>
       </aside>
@@ -63,8 +63,7 @@ export default function AdminApp({ logout }) {
           <p className="hidden text-xs text-slate-500 lg:block">{TODAY} · <b className="text-slate-700">{centerName(center)}</b></p>
           <div className="flex items-center gap-3">
             <div className="w-40 lg:hidden"><CenterSelect center={center} setCenter={setCenter} /></div>
-            <Badge tone="warning">● 결원 1건</Badge>
-            <div className="grid h-8 w-8 place-items-center rounded-full bg-teal-100 text-xs font-bold text-teal-700">이</div>
+            <Badge tone="neutral">관리자</Badge>
           </div>
         </header>
         <main className="mx-auto max-w-[1500px] p-5 lg:p-8">{content}</main>

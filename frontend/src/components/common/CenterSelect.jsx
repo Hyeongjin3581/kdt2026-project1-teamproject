@@ -9,7 +9,7 @@ export default function CenterSelect({ center, setCenter, dark = false }) {
       <button onClick={() => setOpen((o) => !o)} onBlur={() => setTimeout(() => setOpen(false), 150)}
         className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm font-bold transition ${dark ? "bg-white/10 text-white hover:bg-white/15" : "border border-slate-200 text-slate-700 hover:bg-slate-50"}`}>
         <span className={`h-2 w-2 shrink-0 rounded-full ${center === "all" ? (dark ? "bg-slate-400" : "bg-slate-400") : "bg-teal-400"}`} />
-        <span className="flex-1 truncate">{cur.name}</span>
+        <span className="flex-1 truncate">{cur?.name ?? "센터 선택"}</span>
         <span className={dark ? "text-teal-300" : "text-slate-400"}>▾</span>
       </button>
       {open && (
