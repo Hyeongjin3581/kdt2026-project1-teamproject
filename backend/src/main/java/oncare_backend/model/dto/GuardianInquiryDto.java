@@ -8,8 +8,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import oncare_backend.model.entity.GuardianInquiryEntity;
-import oncare_backend.model.entity.GuardianEntity;
-import oncare_backend.model.entity.InquiryCategoryEntity;
 
 @NoArgsConstructor @AllArgsConstructor @Data @Builder 
 public class GuardianInquiryDto {
@@ -26,12 +24,6 @@ public class GuardianInquiryDto {
 
     public GuardianInquiryEntity dtoToEntity(){
         return GuardianInquiryEntity.builder()
-        .guardianEntity(this.guardianNo == null ? null : GuardianEntity.builder()
-            .guardianNo(this.guardianNo)
-            .build())
-        .inquiryCategoryEntity(this.inquiryCategoryNo == null ? null : InquiryCategoryEntity.builder()
-            .inquiryCategoryNo(this.inquiryCategoryNo)
-            .build())
         .wishDate(this.wishDate)
         .wishStartTime(this.wishStartTime)
         .wishEndTime(this.wishEndTime)
@@ -42,9 +34,8 @@ public class GuardianInquiryDto {
     public static GuardianInquiryDto entityToDto(GuardianInquiryEntity entity){
        return GuardianInquiryDto.builder()
     .inquiryNo(entity.getInquiryNo())
-        .guardianNo(entity.getGuardianEntity() == null ? null : entity.getGuardianEntity().getGuardianNo())
-        .inquiryCategoryNo(entity.getInquiryCategoryEntity() == null
-            ? null : entity.getInquiryCategoryEntity().getInquiryCategoryNo())
+        .guardianNo(entity.getGuardianEntity().getGuardianNo())
+        .inquiryCategoryNo(entity.getInquiryCategoryEntity().getInquiryCategoryNo())
     .wishDate(entity.getWishDate())
     .wishStartTime(entity.getWishStartTime())
     .wishEndTime(entity.getWishEndTime())

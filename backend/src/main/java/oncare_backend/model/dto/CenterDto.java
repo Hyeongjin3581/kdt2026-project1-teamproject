@@ -23,9 +23,9 @@ public class CenterDto {
 
     public CenterEntity dtoToEntity(){
         return CenterEntity.builder()
-                .centerName(centerName)
-                .centerAddress(centerAddress)
-                .centerPhonenumber(centerPhonenumber).build();
+            .centerName(this.centerName)
+            .centerAddress(this.centerAddress)
+            .centerPhonenumber(this.centerPhonenumber).build();
     }
 
     public static CenterDto entityToDto(CenterEntity center){

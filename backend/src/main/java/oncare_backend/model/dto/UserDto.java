@@ -5,7 +5,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import oncare_backend.model.entity.UserEntity;
-import oncare_backend.model.entity.UserCategoryEntity;
 
 @Data @NoArgsConstructor @AllArgsConstructor @Builder
 public class UserDto {
@@ -14,7 +13,8 @@ public class UserDto {
     private String userId;
     private String userPassword;
     private String phoneNumber;
-
+    private String email;
+    
     private Integer userCategoryNo;
     private String userCategoryName;
 
@@ -22,7 +22,9 @@ public class UserDto {
         return UserEntity.builder()
                 .userId(this.userId)
                 .userPassword(this.userPassword)
-                .phoneNumber(this.phoneNumber).build();
+                .email(this.email)
+                .phoneNumber(this.phoneNumber)
+                .build();
     }
 
     public static UserDto entityToDto(UserEntity user){
@@ -31,6 +33,9 @@ public class UserDto {
                 .userId(user.getUserId())
                 .userPassword(user.getUserPassword())
                 .phoneNumber(user.getPhoneNumber())
-                .userCategoryName(user.getUserCategoryEntity().getUserCategoryName()).build();
+                .email(user.getEmail())
+                .userCategoryNo(user.getUserCategoryEntity().getUserCategoryNo())
+                .userCategoryName(user.getUserCategoryEntity().getUserCategoryName())
+                .build();
     }
 }

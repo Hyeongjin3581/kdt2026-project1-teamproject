@@ -78,9 +78,12 @@ public class GuardianInquiryService {
 
 	// 3. 보호자 문의 삭제
 	@Transactional
-	public boolean GuardianInquiryDelete(GuardianInquiryDto guardianInquiryDto) {
+	public boolean GuardianInquiryDelete(Integer inquiryNo) {
+		if (inquiryNo == null) {
+			return false;
+		}
 		Optional<GuardianInquiryEntity> optional = guardianInquiryRepository
-				.findById(guardianInquiryDto.getInquiryNo());
+				.findById(inquiryNo);
 		if (optional.isPresent()) {
 			guardianInquiryRepository.delete(optional.get());
 			return true;
