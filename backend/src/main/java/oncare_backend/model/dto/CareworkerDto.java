@@ -1,5 +1,7 @@
 package oncare_backend.model.dto;
 
+import java.time.LocalDateTime;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -19,6 +21,9 @@ public class CareworkerDto {
 
     private Integer centerNo;
     private Integer userNo;
+
+    private LocalDateTime createDate;
+    private LocalDateTime updateDate;
 
     // DTO -> Entity
     public CareworkerEntity dtoToEntity(){
