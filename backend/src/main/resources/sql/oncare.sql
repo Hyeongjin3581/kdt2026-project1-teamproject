@@ -1,4 +1,4 @@
-/*-- Active: 1785826856181@@127.0.0.1@3306@oncare
+-- Active: 1785826856181@@127.0.0.1@3306@oncare
 -- =========================================================
 -- =========================================================
 -- ONCARE 통합 DB + 샘플 데이터
@@ -15,7 +15,7 @@ CREATE DATABASE IF NOT EXISTS oncare;
 USE oncare;
 
 
--- 기존 camelCase/구 테이블이 있을 때만 Entity 테이블명으로 이전합니다.
+/*-- 기존 camelCase/구 테이블이 있을 때만 Entity 테이블명으로 이전합니다.
 SET @oncare_migration = IF(
     EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'usercategory')
     AND NOT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'user_category'),
@@ -46,6 +46,7 @@ PREPARE oncare_migration_stmt FROM @oncare_migration;
 EXECUTE oncare_migration_stmt;
 DEALLOCATE PREPARE oncare_migration_stmt;
 
+*/
 
 -- =========================================================
 -- 1. 사용자 카테고리
@@ -270,6 +271,42 @@ CREATE TABLE IF NOT EXISTS guardian_inquiry (
 );
 
 -- 기존 테이블에는 CREATE TABLE IF NOT EXISTS가 컬럼을 추가하지 않으므로 누락 컬럼만 보정합니다.
+SET @oncare_migration = IF(
+    NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'user' AND column_name = 'email'),
+    'ALTER TABLE `user` ADD COLUMN email VARCHAR(100) NULL',
+    'SELECT 1'
+);
+PREPARE oncare_migration_stmt FROM @oncare_migration;
+EXECUTE oncare_migration_stmt;
+DEALLOCATE PREPARE oncare_migration_stmt;
+
+SET @oncare_migration = IF(
+    (SELECT CHARACTER_MAXIMUM_LENGTH FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'user' AND column_name = 'user_password') < 255,
+    'ALTER TABLE `user` MODIFY COLUMN user_password VARCHAR(255) NOT NULL',
+    'SELECT 1'
+);
+PREPARE oncare_migration_stmt FROM @oncare_migration;
+EXECUTE oncare_migration_stmt;
+DEALLOCATE PREPARE oncare_migration_stmt;
+
+SET @oncare_migration = IF(
+    NOT EXISTS (SELECT 1 FROM information_schema.statistics WHERE table_schema = DATABASE() AND table_name = 'user' AND index_name = 'uk_user_email'),
+    'ALTER TABLE `user` ADD UNIQUE KEY uk_user_email (email)',
+    'SELECT 1'
+);
+PREPARE oncare_migration_stmt FROM @oncare_migration;
+EXECUTE oncare_migration_stmt;
+DEALLOCATE PREPARE oncare_migration_stmt;
+
+SET @oncare_migration = IF(
+    NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'requests' AND column_name = 'request_created_at'),
+    'ALTER TABLE requests ADD COLUMN request_created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP',
+    'SELECT 1'
+);
+PREPARE oncare_migration_stmt FROM @oncare_migration;
+EXECUTE oncare_migration_stmt;
+DEALLOCATE PREPARE oncare_migration_stmt;
+
 SET @oncare_migration = IF(
     NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'guardians' AND column_name = 'create_date'),
     'ALTER TABLE guardians ADD COLUMN create_date DATETIME NULL',
