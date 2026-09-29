@@ -2,7 +2,6 @@ package oncare_backend.model.dto;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -18,8 +17,8 @@ public class GuardianInquiryDto {
     private Integer guardianNo;                 // 보호자 번호 FK
     private Integer inquiryCategoryNo;    // 문의 카테고리 FK
     private LocalDate wishDate;                // 희망 날짜
-    private LocalTime wishStartTime;      // 희망 시작시간
-    private LocalTime wishEndTime;       // 희망 종료시간
+    private Integer wishStartTime;      // 희망 시작시간
+    private Integer wishEndTime;       // 희망 종료시간
     private String inquiryContent;           // 요청 내용
 
     private LocalDateTime createDate;

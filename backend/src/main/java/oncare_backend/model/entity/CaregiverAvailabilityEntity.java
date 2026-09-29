@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDate;
 
 @Entity
-@Table(name = "caregiverAvailability")
+@Table(name = "caregiveravailability")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -28,5 +28,5 @@ public class CaregiverAvailabilityEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "caregiver_no")
     private CareworkerEntity careworkerEntity;
-
+    
 }

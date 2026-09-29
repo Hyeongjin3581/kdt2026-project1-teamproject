@@ -1,7 +1,6 @@
 package oncare_backend.model.entity;
 
 import java.time.LocalDate;
-import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -34,8 +33,8 @@ public class RequestEntity {
     @Column private String preferredGender;
     @Column private String requestState;
     @Column private LocalDate visitDate;
-    @Column private LocalTime visitStartTime;
-    @Column private LocalTime visitEndTime;
+    @Column private Integer visitStartTime;
+    @Column private Integer visitEndTime;
     @Column private String requestContent;
 
     // 수급자번호 연결

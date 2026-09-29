@@ -1,8 +1,6 @@
 package oncare_backend.model.entity;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.List;
 
 import jakarta.persistence.Column;
@@ -34,8 +32,8 @@ public class CareworkerReportEntity {
     private Integer careworkersReportNo;
     
     @Column private LocalDate workDate;
-    @Column private LocalTime workStartTime;
-    @Column private LocalTime workEndTime;
+    @Column private Integer workStartTime;
+    @Column private Integer workEndTime;
     @Column private String workStatus;
 
     
