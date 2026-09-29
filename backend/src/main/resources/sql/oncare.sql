@@ -1,4 +1,4 @@
--- Active: 1785826856181@@127.0.0.1@3306@oncare
+/*-- Active: 1785826856181@@127.0.0.1@3306@oncare
 -- =========================================================
 -- 온케어 스케줄 - 구글시트 "DB 샘플링" 기준 CREATE TABLE
 -- (시트에 적힌 테이블·속성명·타입 그대로. 실행 오류 나는 부분만 최소 수정, 주석 표시)
@@ -134,3 +134,23 @@ CREATE TABLE guardian_inquiry (
     FOREIGN KEY (guardian_no) REFERENCES guardians (guardian_no),
     FOREIGN KEY (inquiry_category_no) REFERENCES inquiry_category (inquiry_category_no)
 );*/
+
+-- 사용자 카테고리
+INSERT INTO usercategory (user_category_name) VALUES
+                                                  ('보호자'),
+                                                  ('요양보호사'),
+                                                  ('센터 관리자'),
+                                                  ('시스템 관리자');
+
+-- 센터목록
+INSERT INTO center (center_name, center_address, center_phonenumber) VALUES
+                                                                         ('안양 온케어 방문요양센터', '경기도 안양시 동안구 시민대로 180', '031-380-1001'),
+                                                                         ('시흥 온케어 방문요양센터', '경기도 시흥시 능곡로 120', '031-310-2001'),
+                                                                         ('수원 온케어 방문요양센터', '경기도 수원시 팔달구 효원로 250', '031-240-3001');
+
+-- 사용자 목록 (user_category_no: 1=보호자, 2=요양보호사, 3=센터관리자, 4=시스템관리자)
+INSERT INTO user (user_id, user_password, user_category_no, phone_number) VALUES
+                                                                              ('admin4', '1q2w3e4r!', 4, '010-1234-5678'),
+                                                                              ('center01', 'gimozzi1', 3, '010-1235-1235'),
+                                                                              ('careworker01', 'qzz', 2, '010-8766-2342'),
+                                                                              ('guardian02', 'guard2222', 1, '010-8888-4884');
