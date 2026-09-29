@@ -22,34 +22,29 @@ public class RequestDto {
     private LocalTime visitEndTime;
     private String requestContent;
 
-    private Integer careRecipientNo;
+    private Integer carerecipientNo;
 
     public RequestEntity dtoToEntity(){
         return RequestEntity.builder()
-                            .preferredGender(this.preferredGender != null && this.preferredGender)
+                            .preferredGender(this.preferredGender)
                             .requestState(this.requestState)
                             .visitDate(this.visitDate)
                             .visitStartTime(this.visitStartTime)
                             .visitEndTime(this.visitEndTime)
                             .requestContent(this.requestContent)
-                                .careRecipientEntity(this.careRecipientNo == null ? null : CareRecipientEntity.builder()
-                                    .careRecipientNo(this.careRecipientNo)
-                                    .build())
                             .build();
     }
 
     public static RequestDto entityToDto(RequestEntity entity){
         return RequestDto.builder()
                         .requestNo(entity.getRequestNo())
-                        .carerecipientNo(entity.getCarerecipientsEntity().getCareRecipientNo())
-                        .preferredGender(entity.isPreferredGender())
+                        .carerecipientNo(entity.getCarerecipientEntity().getCareRecipientNo())
+                        .preferredGender(entity.getPreferredGender())
                         .requestState(entity.getRequestState())
                         .visitDate(entity.getVisitDate())
                         .visitStartTime(entity.getVisitStartTime())
                         .visitEndTime(entity.getVisitEndTime())
                         .requestContent(entity.getRequestContent())
-                        .careRecipientNo(entity.getCareRecipientEntity() == null
-                            ? null : entity.getCareRecipientEntity().getCareRecipientNo())
                         .build();
     }
 }

@@ -11,15 +11,15 @@ import oncare_backend.model.entity.CareworkerEntity;
 import oncare_backend.model.entity.CenterEntity;
 import oncare_backend.model.entity.UserEntity;
 import oncare_backend.model.repository.CareworkersRepository;
-import oncare_backend.repository.CenterRepository;
-import oncare_backend.repository.UserRepository;
+import oncare_backend.model.repository.CenterRepository;
+import oncare_backend.model.repository.UserRepository;
 
 @Service
 public class CareworkersService {
     @Autowired 
     private CareworkersRepository careworkerRepository;
 
-    @Autowired 
+    @Autowired
     private CenterRepository centerRepository;
 
     @Autowired 

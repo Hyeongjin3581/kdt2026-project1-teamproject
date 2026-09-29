@@ -31,7 +31,7 @@ public class RequestService {
         // 수급자 번호
         CareRecipientEntity careRecipientEntity = careRecipientRepository.findById(carerecipientNo).orElse(null);
         if (careRecipientEntity == null) return false;
-        entity.setCarerecipientsEntity(careRecipientEntity);
+        entity.setCarerecipientEntity(careRecipientEntity);
 
         // 3. 저장
         RequestEntity saved = requestRepository.save(entity);
