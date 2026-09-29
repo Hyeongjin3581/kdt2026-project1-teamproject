@@ -2,7 +2,6 @@ package oncare_backend.model.dto;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -19,8 +18,8 @@ public class CaregiverAvailabilityDto {
     private Integer availabilityNo;
 
     private LocalDate availableDate;
-    private LocalTime startTime;
-    private LocalTime endTime;
+    private Integer startTime;
+    private Integer endTime;
     private String status;
     private Integer caregiverNo;
 

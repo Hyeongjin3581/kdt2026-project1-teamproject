@@ -80,9 +80,7 @@ public class CaregiverAvailabilityService {
         caregiverAvailabilityEntity.setStartTime(caregiverAvailabilityDto.getStartTime());
         caregiverAvailabilityEntity.setEndTime(caregiverAvailabilityDto.getEndTime());
         caregiverAvailabilityEntity.setStatus(caregiverAvailabilityDto.getStatus());
-
         caregiverAvailabilityEntity.setCareworkerEntity(careworkerEntity);
-
         caregiverAvailabilityRepository.save(caregiverAvailabilityEntity);
 
         return true;

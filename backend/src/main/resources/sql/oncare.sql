@@ -1,11 +1,11 @@
-/*-- =========================================================
+-- =========================================================
 -- 온케어 스케줄 - 구글시트 "DB 샘플링" 기준 CREATE TABLE
 -- (시트에 적힌 테이블·속성명·타입 그대로. 실행 오류 나는 부분만 최소 수정, 주석 표시)
 -- =========================================================
 
--- DROP DATABASE IF EXISTS oncare;
--- CREATE DATABASE oncare DEFAULT CHARACTER SET utf8mb4;
--- USE oncare;
+DROP DATABASE IF EXISTS oncare;
+CREATE DATABASE oncare DEFAULT CHARACTER SET utf8mb4;
+USE oncare;
 
 -- 유저 카테고리
 CREATE TABLE usercategory (
@@ -132,4 +132,4 @@ CREATE TABLE guardian_inquiry (
     PRIMARY KEY (inquiry_no),
     FOREIGN KEY (guardian_no) REFERENCES guardians (guardian_no),
     FOREIGN KEY (inquiry_category_no) REFERENCES inquiry_category (inquiry_category_no)
-);*/
+);
