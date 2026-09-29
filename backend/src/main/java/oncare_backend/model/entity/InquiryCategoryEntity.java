@@ -12,7 +12,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity 
-@Table (name="inquiry_category")
+@Table (name="inquirycategory")
 @NoArgsConstructor @AllArgsConstructor @Data @Builder 
 public class InquiryCategoryEntity {
     @Id 

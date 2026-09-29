@@ -2,3 +2,6 @@
 DROP DATABASE IF EXISTS oncare;
 create DATABASE oncare;
 USE oncare;
+
+
+INSERT INTO usercategory (user_category_name) VALUES ('요양보호사');

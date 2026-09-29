@@ -1,7 +1,6 @@
 package oncare_backend.model.dto;
 
 import java.time.LocalDate;
-import java.time.LocalTime;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -18,8 +17,8 @@ public class RequestDto {
     private String preferredGender;
     private String requestState;
     private LocalDate visitDate;
-    private LocalTime visitStartTime;
-    private LocalTime visitEndTime;
+    private Integer visitStartTime;
+    private Integer visitEndTime;
     private String requestContent;
 
     private Integer carerecipientNo;

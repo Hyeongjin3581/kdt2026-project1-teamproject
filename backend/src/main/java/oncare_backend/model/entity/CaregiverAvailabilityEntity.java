@@ -22,12 +22,12 @@ public class CaregiverAvailabilityEntity {
     private Integer availabilityNo;
 
     private LocalDate availableDate;
-    private LocalTime startTime;
-    private LocalTime endTime;
+    private Integer startTime;
+    private Integer endTime;
     private String status;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "caregiver_no")
     private CareworkerEntity careworkerEntity;
-
+    
 }
