@@ -1,8 +1,10 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import AppMark from "../../components/common/AppMark";
 import { roleMeta } from "./roleMeta";
 
-export default function Login({ login, toSignup }) {
+export default function Login({ login }) {
+  const navigate = useNavigate();
   const [role, setRole] = useState("admin");
   const meta = roleMeta[role];
   return (
@@ -36,7 +38,7 @@ export default function Login({ login, toSignup }) {
           <input className="mt-2 w-full rounded-lg border border-slate-200 px-3 py-3 text-sm outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-100" type="password" defaultValue="oncare" />
           <button onClick={() => login(role)} className="mt-7 w-full rounded-lg bg-teal-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-teal-700">{meta.cta}</button>
           <p className="mt-4 text-center text-[11px] text-slate-400">{meta.note}</p>
-          <div className="mt-5 border-t border-slate-100 pt-4 text-center text-xs text-slate-500">아직 계정이 없으신가요? <button onClick={toSignup} className="font-bold text-teal-600 hover:underline">회원가입</button></div>
+          <div className="mt-5 border-t border-slate-100 pt-4 text-center text-xs text-slate-500">아직 계정이 없으신가요? <button onClick={() => navigate("/signup")} className="font-bold text-teal-600 hover:underline">회원가입</button></div>
         </div>
       </div>
     </main>

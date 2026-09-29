@@ -1,15 +1,52 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import axios from "axios";
 import SectionTitle from "../../../components/common/SectionTitle";
 import Panel from "../../../components/common/Panel";
 import Badge from "../../../components/common/Badge";
 import { useCenter, inCenter } from "../../../context/CenterContext";
-import { centers } from "../../../data/centers";
-import { vacancyEvents } from "../../../data/schedules";
+import LoadStatus from "../../../components/common/LoadStatus";
+import { buildAdminModel, emptyModel, emptyRaw } from "../../../utils/adminAdapters";
 
 export default function Vacancy() {
   const center = useCenter();
+  const [model, setModel] = useState(emptyModel);
+  const [status, setStatus] = useState("loading");
+
+  // 결원 관리 화면에 필요한 목록을 axios로 조회 : axios.get("통신할주소", { 옵션 }) → response.data
+  async function loadData() {
+    setStatus("loading");
+    try {
+      const [centersRes, careworkersRes, guardiansRes, recipientsRes] = await Promise.all([
+        axios.get("http://localhost:8080/center", { withCredentials: true }),
+        axios.get("http://localhost:8080/api/careworkers", { withCredentials: true }),
+        axios.get("http://localhost:8080/guardian", { withCredentials: true }),
+        axios.get("http://localhost:8080/carerecipient", { withCredentials: true }),
+      ]);
+      // 수급자별 방문 요청, 센터별 근무기록
+      const [requestLists, reportLists] = await Promise.all([
+        Promise.all(recipientsRes.data.map((r) =>
+          axios.get("http://localhost:8080/request/carerecipient", { params: { carerecipient_no: r.careRecipientNo }, withCredentials: true }).catch(() => ({ data: [] }))
+        )),
+        Promise.all(centersRes.data.map((c) => c.centerNo).map((no) =>
+          axios.get("http://localhost:8080/careworkerreport/center", { params: { center_no: no }, withCredentials: true }).catch(() => ({ data: [] }))
+        )),
+      ]);
+      setModel(buildAdminModel({
+        ...emptyRaw,
+        centers: centersRes.data, careworkers: careworkersRes.data, guardians: guardiansRes.data, recipients: recipientsRes.data,
+        requests: requestLists.flatMap((res) => res.data),
+        reports: reportLists.flatMap((res) => res.data),
+      }));
+      setStatus("ok");
+    } catch (error) {
+      console.error("결원 관리 조회 실패:", error);
+      setStatus("error");
+    }
+  }
+  useEffect(() => { loadData(); }, []);
+  const { centers, vacancyEvents } = model;
   const events = vacancyEvents.filter(inCenter(center));
-  const [selected, setSelected] = useState(23);
+  const [selected, setSelected] = useState(null);
   const [sent, setSent] = useState(null);
   const first = new Date(2026, 8, 1).getDay(); // 9월 1일 요일
   const daysInMonth = 30;
@@ -17,6 +54,7 @@ export default function Vacancy() {
   const eventOf = (d) => events.find((e) => e.date === d);
   const ev = eventOf(selected) ?? events[0];
 
+  if (status !== "ok") return <LoadStatus status={status} onRetry={loadData} />;
   return (
     <div className="space-y-5">
       <SectionTitle title="결원 관리" subtitle="결원 발생 시 해당 시간에 근무 가능한 미배정 요양보호사를 재검색하고, 기존 담당 경험·지역·업무량을 다시 계산해 대체 후보를 추천합니다." />
@@ -54,7 +92,7 @@ export default function Vacancy() {
             <Panel className="p-5">
               <div className="flex items-center justify-between">
                 <Badge tone={ev.kind === "vacancy" ? "danger" : "warning"}>{ev.kind === "vacancy" ? "결원 발생" : "미배정"}</Badge>
-                <span className="rounded-lg bg-red-50 px-3 py-1.5 font-mono text-xs font-bold text-red-600">{ev.deadline}</span>
+                {ev.deadline && <span className="rounded-lg bg-red-50 px-3 py-1.5 font-mono text-xs font-bold text-red-600">{ev.deadline}</span>}
               </div>
               <h2 className="mt-4 font-display text-xl font-bold text-slate-900">{ev.recipient} 수급자 방문</h2>
               <p className="mt-1 text-sm text-slate-500">{ev.dateLabel} {ev.time} · {ev.area}{center === "all" && ` · ${centers.find((c) => c.id === ev.center)?.short}`}</p>
@@ -68,6 +106,7 @@ export default function Vacancy() {
             <Panel className="overflow-hidden">
               <div className="border-b border-slate-100 px-5 py-4"><h2 className="font-display font-bold text-slate-900">대체 후보 재추천 <span className="text-sm font-normal text-slate-400">· 추천점수 순</span></h2></div>
               <div className="divide-y divide-slate-100">
+                {ev.subs.length === 0 && <p className="px-5 py-6 text-center text-sm text-slate-400">추천할 대체 후보가 없습니다.</p>}
                 {ev.subs.map((c, i) => (
                   <div key={c.name} className="px-5 py-4">
                     <div className="flex flex-wrap items-center gap-3">

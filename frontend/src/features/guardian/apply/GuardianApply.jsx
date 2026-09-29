@@ -1,10 +1,15 @@
 import { useState } from "react";
+import axios from "axios";
 import Panel from "../../../components/common/Panel";
 import Badge from "../../../components/common/Badge";
 import { TODAY } from "../../../constants";
+import { nextDateOf } from "../../../utils/guardianAdapters";
 
 export default function GuardianApply({ recipient, recipients, onSelectRecipient, onDone, onRegisterRecipient }) {
   const [applySent, setApplySent] = useState(false);
+  const [content, setContent] = useState("");
+  const [sentCount, setSentCount] = useState(0);
+  const [message, setMessage] = useState("");
   const DAY_ORDER = ["월", "화", "수", "목", "금", "토", "일"];
   const [selectedDays, setSelectedDays] = useState([]);
   const [dayTimes, setDayTimes] = useState({});
@@ -20,6 +25,25 @@ export default function GuardianApply({ recipient, recipients, onSelectRecipient
     });
   const setDayTime = (d, key, value) =>
     setDayTimes((t) => ({ ...t, [d]: { ...(t[d] ?? { start: "09:00", end: "12:00" }), [key]: value } }));
+  // 선택한 요일마다 방문 요청 1건씩 등록 : axios.post("통신할주소", { body }, { 옵션 }) → 컨트롤러가 boolean 을 반환
+  const submitApply = async () => {
+    if (orderedDays.length === 0) { setMessage("희망 요일을 하나 이상 선택해주세요."); return; }
+    try {
+      const results = await Promise.all(orderedDays.map((d) => {
+        const t = dayTimes[d] ?? { start: "09:00", end: "12:00" };
+        return axios.post(
+          "http://localhost:8080/request",
+          { preferredGender: "무관", requestState: "신청", visitDate: nextDateOf(d), visitStartTime: t.start, visitEndTime: t.end, requestContent: content.trim() || "방문요양 서비스 신청" },
+          { params: { carerecipient_no: recipient.id }, withCredentials: true }
+        );
+      }));
+      if (results.every((res) => res.data)) { setSentCount(results.length); setMessage(""); setApplySent(true); }
+      else setMessage("신청에 실패했습니다. 입력 정보를 확인해주세요.");
+    } catch (error) {
+      console.error(error);
+      setMessage("서버 통신 오류가 발생했습니다.");
+    }
+  };
   const field = "mt-1.5 w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100";
 
   if (!recipient) {
@@ -51,7 +75,7 @@ export default function GuardianApply({ recipient, recipients, onSelectRecipient
           <h2 className="mt-5 font-display text-2xl font-extrabold text-slate-900">신청이 접수되었습니다</h2>
           <p className="mt-3 text-sm leading-6 text-slate-500">담당 사회복지사가 접수 내용을 검토한 뒤 1~2일 내 유선으로 상담을 진행합니다.</p>
           <div className="mx-auto mt-6 max-w-sm rounded-lg bg-slate-50 p-4 text-left text-sm">
-            {[["접수번호", "ONC-20260921-014"], ["신청 대상", `${recipient.name} 어르신`], ["희망 요일", selectedDays.join(", ") || "미선택"]].map(([l, v]) => (
+            {[["접수 건수", `${sentCount}건`], ["신청 대상", `${recipient.name} 어르신`], ["희망 요일", selectedDays.join(", ") || "미선택"]].map(([l, v]) => (
               <div key={l} className="flex justify-between border-b border-slate-100 py-2 last:border-0"><span className="text-slate-400">{l}</span><b className="text-slate-700">{v}</b></div>
             ))}
             <div className="flex items-center justify-between py-2"><span className="text-slate-400">진행 상태</span><Badge tone="info">접수 완료 · 검토 대기</Badge></div>
@@ -131,14 +155,15 @@ export default function GuardianApply({ recipient, recipients, onSelectRecipient
 
       <Panel className="p-5">
         <h2 className="font-display font-bold text-slate-900">요청 사항</h2>
-        <textarea rows={3} className={`${field} mt-3`} placeholder="어르신 건강 상태, 특이사항, 선호하는 돌봄 방식 등을 자유롭게 적어주세요." />
+        <textarea rows={3} value={content} onChange={(e) => setContent(e.target.value)} className={`${field} mt-3`} placeholder="어르신 건강 상태, 특이사항, 선호하는 돌봄 방식 등을 자유롭게 적어주세요." />
       </Panel>
 
+      {message && <p className="text-xs font-semibold text-rose-600">{message}</p>}
       <div className="flex items-center justify-between">
         <label className="flex items-center gap-2 text-xs text-slate-500">
           <input type="checkbox" className="h-4 w-4 accent-teal-600" /> 개인정보 수집·이용 및 장기요양 서비스 상담을 위한 정보 제공에 동의합니다.
         </label>
-        <button onClick={() => setApplySent(true)} className="rounded-lg bg-teal-600 px-6 py-3 text-sm font-bold text-white transition hover:bg-teal-700">신청서 제출하기 →</button>
+        <button onClick={submitApply} className="rounded-lg bg-teal-600 px-6 py-3 text-sm font-bold text-white transition hover:bg-teal-700">신청서 제출하기 →</button>
       </div>
     </div>
   );
