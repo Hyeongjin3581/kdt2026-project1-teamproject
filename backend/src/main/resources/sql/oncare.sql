@@ -1,381 +1,4 @@
-/*-- Active: 1785826856181@@127.0.0.1@3306@oncare
--- =========================================================
--- =========================================================
--- ONCARE 통합 DB + 샘플 데이터
--- MySQL / Spring Boot / Talend API Tester 테스트용
--- 자동매칭 결과 테이블 제외
---
--- 샘플 사용자 비밀번호
--- 평문 : 1234
--- BCrypt : $2a$10$69bMrChodVYxOcvM/cUo7evsho3hw6YBJT9yepHudwBlIvi7KlV0.
--- =========================================================
 
--- DB를 삭제하지 않고, 없을 때만 생성합니다.
-CREATE DATABASE IF NOT EXISTS oncare;
-USE oncare;
-
-
--- 기존 camelCase/구 테이블이 있을 때만 Entity 테이블명으로 이전합니다.
-SET @oncare_migration = IF(
-    EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'usercategory')
-    AND NOT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'user_category'),
-    'RENAME TABLE usercategory TO user_category',
-    'SELECT 1'
-);
-PREPARE oncare_migration_stmt FROM @oncare_migration;
-EXECUTE oncare_migration_stmt;
-DEALLOCATE PREPARE oncare_migration_stmt;
-
-SET @oncare_migration = IF(
-    EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'careRecipients')
-    AND NOT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'care_recipients'),
-    'RENAME TABLE careRecipients TO care_recipients',
-    'SELECT 1'
-);
-PREPARE oncare_migration_stmt FROM @oncare_migration;
-EXECUTE oncare_migration_stmt;
-DEALLOCATE PREPARE oncare_migration_stmt;
-
-SET @oncare_migration = IF(
-    EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'caregiverAvailability')
-    AND NOT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'caregiver_availability'),
-    'RENAME TABLE caregiverAvailability TO caregiver_availability',
-    'SELECT 1'
-);
-PREPARE oncare_migration_stmt FROM @oncare_migration;
-EXECUTE oncare_migration_stmt;
-DEALLOCATE PREPARE oncare_migration_stmt;
-
-
--- =========================================================
--- 1. 사용자 카테고리
--- =========================================================
-
-CREATE TABLE IF NOT EXISTS user_category (
-    user_category_no INT NOT NULL AUTO_INCREMENT,
-    user_category_name VARCHAR(50) NOT NULL,
-
-    PRIMARY KEY (user_category_no)
-);
-
-
-
--- =========================================================
--- 2. 센터
--- =========================================================
-
-CREATE TABLE IF NOT EXISTS center (
-    center_no INT NOT NULL AUTO_INCREMENT,
-    center_name VARCHAR(50) NOT NULL,
-    center_address VARCHAR(255) NOT NULL,
-    center_phonenumber VARCHAR(20) NOT NULL,
-
-    PRIMARY KEY (center_no)
-);
-
-
-
--- =========================================================
--- 3. 사용자
--- =========================================================
-
-CREATE TABLE IF NOT EXISTS `user` (
-    user_no INT NOT NULL AUTO_INCREMENT,
-    user_id VARCHAR(50) NOT NULL,
-    user_password VARCHAR(255) NOT NULL,
-    user_category_no INT NOT NULL,
-    phone_number VARCHAR(20) NOT NULL,
-    email VARCHAR(100) NOT NULL,
-
-    PRIMARY KEY (user_no),
-
-    UNIQUE KEY uk_user_id (user_id),
-    UNIQUE KEY uk_user_email (email),
-
-    FOREIGN KEY (user_category_no)
-        REFERENCES user_category(user_category_no)
-);
-
-
-
--- =========================================================
--- 4. 보호자
--- =========================================================
-
-CREATE TABLE IF NOT EXISTS guardians (
-    guardian_no INT NOT NULL AUTO_INCREMENT,
-    user_no INT NOT NULL UNIQUE,
-    guardian_name VARCHAR(10) NOT NULL,
-    guardian_relationship VARCHAR(20) NOT NULL,
-    create_date DATETIME NULL,
-    update_date DATETIME NULL,
-
-    PRIMARY KEY (guardian_no),
-
-    FOREIGN KEY (user_no)
-        REFERENCES `user`(user_no)
-);
-
--- =========================================================
--- 5. 수급자
--- =========================================================
-
-CREATE TABLE IF NOT EXISTS care_recipients (
-    carerecipient_no INT NOT NULL AUTO_INCREMENT,
-    guardian_no INT NULL,
-    carerecipient_name VARCHAR(50) NOT NULL,
-    carerecipient_age INT NOT NULL,
-    carerecipient_address VARCHAR(255) NOT NULL,
-    carerecipient_gender CHAR(2) NOT NULL,
-    care_recipient_content VARCHAR(255),
-    create_date DATETIME NULL,
-    update_date DATETIME NULL,
-
-    PRIMARY KEY (carerecipient_no),
-
-    FOREIGN KEY (guardian_no)
-        REFERENCES guardians(guardian_no)
-);
-
-
-
--- =========================================================
--- 6. 요양보호사
--- =========================================================
-
-CREATE TABLE IF NOT EXISTS careworkers (
-    careworker_no INT NOT NULL AUTO_INCREMENT,
-    careworker_name VARCHAR(50) NOT NULL,
-    careworker_address VARCHAR(255) NOT NULL,
-    careworker_gender CHAR(2) NOT NULL,
-    hour_wage INT NOT NULL,
-    careworker_age INT NOT NULL,
-    careworker_state VARCHAR(10) NOT NULL,
-    center_no INT NOT NULL,
-    user_no INT NOT NULL UNIQUE,
-
-    PRIMARY KEY (careworker_no),
-
-    FOREIGN KEY (center_no)
-        REFERENCES center(center_no),
-
-    FOREIGN KEY (user_no)
-        REFERENCES `user`(user_no)
-);
-
-
-
--- =========================================================
--- 7. 요양보호사 근무 가능 시간
--- =========================================================
-
-CREATE TABLE IF NOT EXISTS caregiver_availability (
-    availability_no INT NOT NULL AUTO_INCREMENT,
-    caregiver_no INT NOT NULL,
-    available_date DATE NOT NULL,
-    start_time TIME NULL,
-    end_time TIME NULL,
-    status VARCHAR(20) NOT NULL,
-
-    PRIMARY KEY (availability_no),
-
-    FOREIGN KEY (caregiver_no)
-        REFERENCES careworkers(careworker_no)
-);
-
-
-
--- =========================================================
--- 8. 매칭 서비스 요청
--- =========================================================
-
-CREATE TABLE IF NOT EXISTS requests (
-    request_no INT NOT NULL AUTO_INCREMENT,
-    carerecipient_no INT NOT NULL,
-    preferred_gender VARCHAR(5),
-    request_state VARCHAR(20) NOT NULL,
-    visit_date DATE NOT NULL,
-    visit_start_time TIME NOT NULL,
-    visit_end_time TIME NOT NULL,
-    request_content VARCHAR(255),
-    request_created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    PRIMARY KEY (request_no),
-
-    FOREIGN KEY (carerecipient_no)
-        REFERENCES care_recipients(carerecipient_no)
-);
-
-
-
--- =========================================================
--- 9. 요양보호사 근무 기록
--- =========================================================
-
-CREATE TABLE IF NOT EXISTS careworkersreport (
-    careworkers_report_no INT NOT NULL AUTO_INCREMENT,
-    careworker_no INT NOT NULL,
-    request_no INT NOT NULL,
-    work_date DATE NOT NULL,
-    work_start_time TIME NOT NULL,
-    work_end_time TIME NOT NULL,
-    work_status VARCHAR(50) NOT NULL,
-
-    PRIMARY KEY (careworkers_report_no),
-
-    FOREIGN KEY (careworker_no)
-        REFERENCES careworkers(careworker_no),
-
-    FOREIGN KEY (request_no)
-        REFERENCES requests(request_no)
-);
-
-
-
--- =========================================================
--- 10. 문의 카테고리
--- =========================================================
-
-CREATE TABLE IF NOT EXISTS inquiry_category (
-    inquiry_category_no INT NOT NULL AUTO_INCREMENT,
-    inquiry_category_name VARCHAR(50) NOT NULL,
-
-    PRIMARY KEY (inquiry_category_no)
-);
-
-
-
--- =========================================================
--- 11. 보호자 문의
--- =========================================================
-
-CREATE TABLE IF NOT EXISTS guardian_inquiry (
-    inquiry_no INT NOT NULL AUTO_INCREMENT,
-    guardian_no INT NOT NULL,
-    inquiry_category_no INT NOT NULL,
-    wish_date DATE NULL,
-    wish_start_time TIME NULL,
-    wish_end_time TIME NULL,
-    inquiry_content VARCHAR(1000),
-    create_date DATETIME NULL,
-    update_date DATETIME NULL,
-
-    PRIMARY KEY (inquiry_no),
-
-    FOREIGN KEY (guardian_no)
-        REFERENCES guardians(guardian_no),
-
-    FOREIGN KEY (inquiry_category_no)
-        REFERENCES inquiry_category(inquiry_category_no)
-);
-
--- 기존 테이블에는 CREATE TABLE IF NOT EXISTS가 컬럼을 추가하지 않으므로 누락 컬럼만 보정합니다.
-SET @oncare_migration = IF(
-    NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'guardians' AND column_name = 'create_date'),
-    'ALTER TABLE guardians ADD COLUMN create_date DATETIME NULL',
-    'SELECT 1'
-);
-PREPARE oncare_migration_stmt FROM @oncare_migration;
-EXECUTE oncare_migration_stmt;
-DEALLOCATE PREPARE oncare_migration_stmt;
-
-SET @oncare_migration = IF(
-    NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'guardians' AND column_name = 'update_date'),
-    'ALTER TABLE guardians ADD COLUMN update_date DATETIME NULL',
-    'SELECT 1'
-);
-PREPARE oncare_migration_stmt FROM @oncare_migration;
-EXECUTE oncare_migration_stmt;
-DEALLOCATE PREPARE oncare_migration_stmt;
-
-SET @oncare_migration = IF(
-    EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'care_recipients' AND column_name = 'careRecipient_content')
-    AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'care_recipients' AND column_name = 'care_recipient_content'),
-    'ALTER TABLE care_recipients CHANGE COLUMN careRecipient_content care_recipient_content VARCHAR(255) NULL',
-    IF(
-        NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'care_recipients' AND column_name = 'care_recipient_content'),
-        'ALTER TABLE care_recipients ADD COLUMN care_recipient_content VARCHAR(255) NULL',
-        'SELECT 1'
-    )
-);
-PREPARE oncare_migration_stmt FROM @oncare_migration;
-EXECUTE oncare_migration_stmt;
-DEALLOCATE PREPARE oncare_migration_stmt;
-
-SET @oncare_migration = IF(
-    NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'care_recipients' AND column_name = 'create_date'),
-    'ALTER TABLE care_recipients ADD COLUMN create_date DATETIME NULL',
-    'SELECT 1'
-);
-PREPARE oncare_migration_stmt FROM @oncare_migration;
-EXECUTE oncare_migration_stmt;
-DEALLOCATE PREPARE oncare_migration_stmt;
-
-SET @oncare_migration = IF(
-    NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'care_recipients' AND column_name = 'update_date'),
-    'ALTER TABLE care_recipients ADD COLUMN update_date DATETIME NULL',
-    'SELECT 1'
-);
-PREPARE oncare_migration_stmt FROM @oncare_migration;
-EXECUTE oncare_migration_stmt;
-DEALLOCATE PREPARE oncare_migration_stmt;
-
-SET @oncare_migration = IF(
-    NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'guardian_inquiry' AND column_name = 'create_date'),
-    'ALTER TABLE guardian_inquiry ADD COLUMN create_date DATETIME NULL',
-    'SELECT 1'
-);
-PREPARE oncare_migration_stmt FROM @oncare_migration;
-EXECUTE oncare_migration_stmt;
-DEALLOCATE PREPARE oncare_migration_stmt;
-
-SET @oncare_migration = IF(
-    NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'guardian_inquiry' AND column_name = 'update_date'),
-    'ALTER TABLE guardian_inquiry ADD COLUMN update_date DATETIME NULL',
-    'SELECT 1'
-);
-PREPARE oncare_migration_stmt FROM @oncare_migration;
-EXECUTE oncare_migration_stmt;
-DEALLOCATE PREPARE oncare_migration_stmt;
-
-
-
--- =========================================================
--- =========================================================
--- 구 테이블과 새 테이블이 모두 있으면 기존 레코드도 새 테이블로 합칩니다.
-SET @oncare_migration = IF(
-    EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'usercategory')
-    AND EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'user_category'),
-    'INSERT IGNORE INTO user_category (user_category_no, user_category_name) SELECT user_category_no, user_category_name FROM usercategory',
-    'SELECT 1'
-);
-PREPARE oncare_migration_stmt FROM @oncare_migration;
-EXECUTE oncare_migration_stmt;
-DEALLOCATE PREPARE oncare_migration_stmt;
-
-SET @oncare_migration = IF(
-    EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'caregiverAvailability')
-    AND EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'caregiver_availability'),
-    'INSERT IGNORE INTO caregiver_availability (availability_no, caregiver_no, available_date, start_time, end_time, status) SELECT availability_no, caregiver_no, available_date, start_time, end_time, status FROM caregiverAvailability',
-    'SELECT 1'
-);
-PREPARE oncare_migration_stmt FROM @oncare_migration;
-EXECUTE oncare_migration_stmt;
-DEALLOCATE PREPARE oncare_migration_stmt;
-
-SET @oncare_migration = IF(
-    EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'careRecipients')
-    AND EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'care_recipients'),
-    IF(
-        EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'careRecipients' AND column_name = 'careRecipient_content'),
-        'INSERT IGNORE INTO care_recipients (carerecipient_no, guardian_no, carerecipient_name, carerecipient_age, carerecipient_address, carerecipient_gender, care_recipient_content) SELECT carerecipient_no, guardian_no, carerecipient_name, carerecipient_age, carerecipient_address, carerecipient_gender, careRecipient_content FROM careRecipients',
-        'INSERT IGNORE INTO care_recipients (carerecipient_no, guardian_no, carerecipient_name, carerecipient_age, carerecipient_address, carerecipient_gender, care_recipient_content) SELECT carerecipient_no, guardian_no, carerecipient_name, carerecipient_age, carerecipient_address, carerecipient_gender, care_recipient_content FROM careRecipients'
-    ),
-    'SELECT 1'
-);
-PREPARE oncare_migration_stmt FROM @oncare_migration;
-EXECUTE oncare_migration_stmt;
-DEALLOCATE PREPARE oncare_migration_stmt;
 
 -- 샘플 데이터 시작
 -- =========================================================
@@ -387,22 +10,22 @@ DEALLOCATE PREPARE oncare_migration_stmt;
 -- 1. 사용자 카테고리 샘플
 -- =========================================================
 
-INSERT IGNORE INTO user_category
+INSERT IGNORE INTO usercategory
 (user_category_no, user_category_name)
 VALUES
 (1, '보호자');
 
-INSERT IGNORE INTO user_category
+INSERT IGNORE INTO usercategory
 (user_category_no, user_category_name)
 VALUES
 (2, '요양보호사');
 
-INSERT IGNORE INTO user_category
+INSERT IGNORE INTO usercategory
 (user_category_no, user_category_name)
 VALUES
 (3, '센터 관리자');
 
-INSERT IGNORE INTO user_category
+INSERT IGNORE INTO usercategory
 (user_category_no, user_category_name)
 VALUES
 (4, '시스템 관리자');
@@ -588,7 +211,7 @@ VALUES
 -- 5. 수급자 샘플
 -- =========================================================
 
-INSERT IGNORE INTO care_recipients
+INSERT IGNORE INTO carerecipients
 (carerecipient_no, guardian_no, carerecipient_name, carerecipient_age,
  carerecipient_address, carerecipient_gender, care_recipient_content)
 VALUES
@@ -596,7 +219,7 @@ VALUES
  '경기도 안양시 동안구 평촌동', '여자',
  '보행 시 지팡이 사용');
 
-INSERT IGNORE INTO care_recipients
+INSERT IGNORE INTO carerecipients
 (carerecipient_no, guardian_no, carerecipient_name, carerecipient_age,
  carerecipient_address, carerecipient_gender, care_recipient_content)
 VALUES
@@ -604,7 +227,7 @@ VALUES
  '경기도 안양시 동안구 호계동', '여자',
  '청력이 다소 좋지 않음');
 
-INSERT IGNORE INTO care_recipients
+INSERT IGNORE INTO carerecipients
 (carerecipient_no, guardian_no, carerecipient_name, carerecipient_age,
  carerecipient_address, carerecipient_gender, care_recipient_content)
 VALUES
@@ -612,7 +235,7 @@ VALUES
  '경기도 안양시 만안구 안양동', '남자',
  '당뇨 식단 관리 필요');
 
-INSERT IGNORE INTO care_recipients
+INSERT IGNORE INTO carerecipients
 (carerecipient_no, guardian_no, carerecipient_name, carerecipient_age,
  carerecipient_address, carerecipient_gender, care_recipient_content)
 VALUES
@@ -620,7 +243,7 @@ VALUES
  '경기도 시흥시 능곡동', '여자',
  '무릎 관절 불편');
 
-INSERT IGNORE INTO care_recipients
+INSERT IGNORE INTO carerecipients
 (carerecipient_no, guardian_no, carerecipient_name, carerecipient_age,
  carerecipient_address, carerecipient_gender, care_recipient_content)
 VALUES
@@ -628,7 +251,7 @@ VALUES
  '경기도 시흥시 장곡동', '여자',
  '복약 시간 확인 필요');
 
-INSERT IGNORE INTO care_recipients
+INSERT IGNORE INTO carerecipients
 (carerecipient_no, guardian_no, carerecipient_name, carerecipient_age,
  carerecipient_address, carerecipient_gender, care_recipient_content)
 VALUES
@@ -636,7 +259,7 @@ VALUES
  '경기도 시흥시 배곧동', '남자',
  '주 3회 산책 희망');
 
-INSERT IGNORE INTO care_recipients
+INSERT IGNORE INTO carerecipients
 (carerecipient_no, guardian_no, carerecipient_name, carerecipient_age,
  carerecipient_address, carerecipient_gender, care_recipient_content)
 VALUES
@@ -644,7 +267,7 @@ VALUES
  '경기도 수원시 팔달구 인계동', '여자',
  '계단 이동이 어려움');
 
-INSERT IGNORE INTO care_recipients
+INSERT IGNORE INTO carerecipients
 (carerecipient_no, guardian_no, carerecipient_name, carerecipient_age,
  carerecipient_address, carerecipient_gender, care_recipient_content)
 VALUES
@@ -652,7 +275,7 @@ VALUES
  '경기도 수원시 권선구 권선동', '남자',
  '식사 준비 도움 필요');
 
-INSERT IGNORE INTO care_recipients
+INSERT IGNORE INTO carerecipients
 (carerecipient_no, guardian_no, carerecipient_name, carerecipient_age,
  carerecipient_address, carerecipient_gender, care_recipient_content)
 VALUES
@@ -660,7 +283,7 @@ VALUES
  '경기도 수원시 영통구 매탄동', '여자',
  '장시간 보행 어려움');
 
-INSERT IGNORE INTO care_recipients
+INSERT IGNORE INTO carerecipients
 (carerecipient_no, guardian_no, carerecipient_name, carerecipient_age,
  carerecipient_address, carerecipient_gender, care_recipient_content)
 VALUES
@@ -800,121 +423,111 @@ VALUES
 INSERT IGNORE INTO requests
 (request_no, carerecipient_no, preferred_gender,
  request_state, visit_date, visit_start_time,
- visit_end_time, request_content, request_created_at)
+ visit_end_time, request_content)
 VALUES
 (
     1, 1, '여자', '완료',
     '2026-09-14', '09:00:00', '13:00:00',
-    '식사 준비 및 주변 정리',
-    '2026-09-10 09:00:00'
+    '식사 준비 및 주변 정리'
 );
 
 INSERT IGNORE INTO requests
 (request_no, carerecipient_no, preferred_gender,
  request_state, visit_date, visit_start_time,
- visit_end_time, request_content, request_created_at)
+ visit_end_time, request_content)
 VALUES
 (
     2, 2, '무관', '완료',
     '2026-09-15', '15:00:00', '19:00:00',
-    '병원 방문 동행',
-    '2026-09-10 09:10:00'
+    '병원 방문 동행'
 );
 
 INSERT IGNORE INTO requests
 (request_no, carerecipient_no, preferred_gender,
  request_state, visit_date, visit_start_time,
- visit_end_time, request_content, request_created_at)
+ visit_end_time, request_content)
 VALUES
 (
     3, 3, '여자', '취소',
     '2026-09-17', '10:00:00', '14:00:00',
-    '목욕 및 가사 지원',
-    '2026-09-11 10:00:00'
+    '목욕 및 가사 지원'
 );
 
 INSERT IGNORE INTO requests
 (request_no, carerecipient_no, preferred_gender,
  request_state, visit_date, visit_start_time,
- visit_end_time, request_content, request_created_at)
+ visit_end_time, request_content)
 VALUES
 (
     4, 4, '여자', '완료',
     '2026-09-14', '09:00:00', '13:30:00',
-    '식사 및 청소 지원',
-    '2026-09-10 11:00:00'
+    '식사 및 청소 지원'
 );
 
 INSERT IGNORE INTO requests
 (request_no, carerecipient_no, preferred_gender,
  request_state, visit_date, visit_start_time,
- visit_end_time, request_content, request_created_at)
+ visit_end_time, request_content)
 VALUES
 (
     5, 5, '무관', '완료',
     '2026-09-16', '14:30:00', '18:00:00',
-    '산책 및 말벗',
-    '2026-09-11 11:00:00'
+    '산책 및 말벗'
 );
 
 INSERT IGNORE INTO requests
 (request_no, carerecipient_no, preferred_gender,
  request_state, visit_date, visit_start_time,
- visit_end_time, request_content, request_created_at)
+ visit_end_time, request_content)
 VALUES
 (
     6, 6, '여자', '완료',
     '2026-09-18', '10:00:00', '16:00:00',
-    '복약 확인 및 주변 정리',
-    '2026-09-12 09:00:00'
+    '복약 확인 및 주변 정리'
 );
 
 INSERT IGNORE INTO requests
 (request_no, carerecipient_no, preferred_gender,
  request_state, visit_date, visit_start_time,
- visit_end_time, request_content, request_created_at)
+ visit_end_time, request_content)
 VALUES
 (
     7, 7, '남자', '완료',
     '2026-09-23', '13:00:00', '17:00:00',
-    '식사 지원 및 말벗',
-    '2026-09-19 09:00:00'
+    '식사 지원 및 말벗'
 );
 
 INSERT IGNORE INTO requests
 (request_no, carerecipient_no, preferred_gender,
  request_state, visit_date, visit_start_time,
- visit_end_time, request_content, request_created_at)
+ visit_end_time, request_content)
 VALUES
 (
     8, 8, '남자', '완료',
     '2026-09-24', '09:00:00', '13:00:00',
-    '병원 이동 및 외출 동행',
-    '2026-09-19 09:10:00'
+    '병원 이동 및 외출 동행'
 );
 
 INSERT IGNORE INTO requests
 (request_no, carerecipient_no, preferred_gender,
  request_state, visit_date, visit_start_time,
- visit_end_time, request_content, request_created_at)
+ visit_end_time, request_content)
 VALUES
 (
     9, 9, '무관', '완료',
     '2026-09-25', '15:00:00', '18:00:00',
-    '말벗 및 가사 지원',
-    '2026-09-20 10:00:00'
+    '말벗 및 가사 지원'
 );
 
 INSERT IGNORE INTO requests
 (request_no, carerecipient_no, preferred_gender,
  request_state, visit_date, visit_start_time,
- visit_end_time, request_content, request_created_at)
+ visit_end_time, request_content)
 VALUES
 (
     10, 10, '여자', '신청',
     '2026-09-30', '10:00:00', '12:00:00',
-    '복약 확인 및 식사 지원',
-    '2026-09-28 10:00:00'
+    '복약 확인 및 식사 지원'
 );
 
 
@@ -983,22 +596,22 @@ VALUES
 -- 10. 문의 카테고리
 -- =========================================================
 
-INSERT IGNORE INTO inquiry_category
+INSERT IGNORE INTO inquirycategory
 (inquiry_category_no, inquiry_category_name)
 VALUES
 (1, '방문 시간 변경 요청');
 
-INSERT IGNORE INTO inquiry_category
+INSERT IGNORE INTO inquirycategory
 (inquiry_category_no, inquiry_category_name)
 VALUES
 (2, '방문 요일 변경 요청');
 
-INSERT IGNORE INTO inquiry_category
+INSERT IGNORE INTO inquirycategory
 (inquiry_category_no, inquiry_category_name)
 VALUES
 (3, '담당자 관련 문의');
 
-INSERT IGNORE INTO inquiry_category
+INSERT IGNORE INTO inquirycategory
 (inquiry_category_no, inquiry_category_name)
 VALUES
 (4, '기타 문의');
@@ -1067,7 +680,7 @@ VALUES
 -- 12. 데이터 확인
 -- =========================================================
 
-SELECT * FROM user_category;
+SELECT * FROM usercategory;
 
 SELECT * FROM center;
 
@@ -1075,7 +688,7 @@ SELECT * FROM `user`;
 
 SELECT * FROM guardians;
 
-SELECT * FROM care_recipients;
+SELECT * FROM carerecipients;
 
 SELECT * FROM careworkers;
 
@@ -1085,6 +698,6 @@ SELECT * FROM requests;
 
 SELECT * FROM careworkersreport;
 
-SELECT * FROM inquiry_category;
+SELECT * FROM inquirycategory;
 
 SELECT * FROM guardian_inquiry;

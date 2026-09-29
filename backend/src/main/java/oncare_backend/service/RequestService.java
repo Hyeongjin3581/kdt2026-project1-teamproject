@@ -46,7 +46,7 @@ public class RequestService {
     // *** 센터별 서비스 요청은 불가능!!! (연결점 없음)
     // [2] 수급자 별 서비스요청 출력
     public List<RequestDto> findAllByCareRecipients(Integer careRecipientNo){
-        List<RequestEntity> entities = requestRepository.findByCarerecipientsEntity_CareRecipientNo(careRecipientNo);
+        List<RequestEntity> entities = requestRepository.findByCarerecipientEntity_CareRecipientNo(careRecipientNo);
 
         List<RequestDto> list = new ArrayList<>();
         for( RequestEntity entity : entities ){
@@ -60,7 +60,7 @@ public class RequestService {
     // [3] 보호자 별 서비스요청 출력
     public List<RequestDto> findAllByGuardians(Integer guardianNo){
         // 1. 보호자 고유번호로 서비스 요청 엔티티들 가져오기
-        List<RequestEntity> entities = requestRepository.findByCarerecipientsEntity_GuardianEntity_GuardianNo(guardianNo);
+        List<RequestEntity> entities = requestRepository.findByCarerecipientEntity_GuardianEntity_GuardianNo(guardianNo);
 
         // 2. entity -> dto
         List<RequestDto> list = new ArrayList<>();

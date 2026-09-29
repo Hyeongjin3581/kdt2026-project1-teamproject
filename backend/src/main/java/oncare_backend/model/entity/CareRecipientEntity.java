@@ -14,7 +14,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity 
-@Table(name = "care_recipients")
+@Table(name = "carerecipients")
 @NoArgsConstructor @AllArgsConstructor @Data @Builder 
 public class CareRecipientEntity extends BaseTime{
     @Id 

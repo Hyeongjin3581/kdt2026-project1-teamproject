@@ -10,7 +10,7 @@ import oncare_backend.model.entity.RequestEntity;
 @Repository 
 public interface RequestRepository extends JpaRepository<RequestEntity, Integer>{
     // 수급자 별 
-    List<RequestEntity> findByCarerecipientsEntity_CareRecipientNo(Integer careRecipientNo);
+    List<RequestEntity> findByCarerecipientEntity_CareRecipientNo(Integer careRecipientNo);
     
-    List<RequestEntity> findByCarerecipientsEntity_GuardianEntity_GuardianNo(Integer guardianNo);
+    List<RequestEntity> findByCarerecipientEntity_GuardianEntity_GuardianNo(Integer guardianNo);
 }
