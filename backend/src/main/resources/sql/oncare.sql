@@ -78,8 +78,8 @@ CREATE TABLE caregiverAvailability (
     availability_no INT NOT NULL AUTO_INCREMENT,
     caregiver_no INT NOT NULL,
     available_date DATE NOT NULL,
-    start_time TIME NOT NULL,
-    end_time TIME NOT NULL,
+    start_time INT NOT NULL,
+    end_time INT NOT NULL,
     status VARCHAR(20) NOT NULL,
     PRIMARY KEY (availability_no),
     FOREIGN KEY (caregiver_no) REFERENCES careworkers (careworker_no)
