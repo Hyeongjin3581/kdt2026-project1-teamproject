@@ -41,10 +41,10 @@ public class CareworkerReportDto {
                                     .workStartTime(this.workStartTime)
                                     .workEndTime(this.workEndTime)
                                     .workStatus(workStatus)
-                                        .careworker(this.careworkerNo == null ? null : CareworkerEntity.builder()
+                                        .careworkerEntity(this.careworkerNo == null ? null : CareworkerEntity.builder()
                                             .careworkerNo(this.careworkerNo)
                                             .build())
-                                        .request(this.requestNo == null ? null : RequestEntity.builder()
+                                        .requestEntity(this.requestNo == null ? null : RequestEntity.builder()
                                             .requestNo(this.requestNo)
                                             .build())
                                     .build();
@@ -53,10 +53,10 @@ public class CareworkerReportDto {
     public static CareworkerReportDto entityToDto(CareworkerReportEntity entity){
         return CareworkerReportDto.builder()
                                     .careworkersReportNo(entity.getCareworkersReportNo())
-                                        .careworkerNo(entity.getCareworker() == null
-                                            ? null : entity.getCareworker().getCareworkerNo())
-                                        .requestNo(entity.getRequest() == null
-                                            ? null : entity.getRequest().getRequestNo())
+                                        .careworkerNo(entity.getCareworkerEntity() == null
+                                            ? null : entity.getCareworkerEntity().getCareworkerNo())
+                                        .requestNo(entity.getRequestEntity() == null
+                                            ? null : entity.getRequestEntity().getRequestNo())
                                     .workDate(entity.getWorkDate())
                                     .workStartTime(entity.getWorkStartTime())
                                     .workEndTime(entity.getWorkEndTime())
