@@ -98,9 +98,9 @@ public class CareRecipientService {
 
 	// 5. 수급자 삭제
 	@Transactional
-	public boolean CareRecipientDelete(CareRecipientDto careRecipientDto) {
+	public boolean CareRecipientDelete(Integer careRecipientNo) {
 		Optional<CareRecipientEntity> optional = careRecipientRepository
-				.findById(careRecipientDto.getCareRecipientNo());
+				.findById(careRecipientNo);
 		if (optional.isPresent()) {
 			careRecipientRepository.delete(optional.get());
 			return true;

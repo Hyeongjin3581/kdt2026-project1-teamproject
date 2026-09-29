@@ -48,8 +48,8 @@ public class CareRecipientController {
 
 	// 5. 수급자 삭제
 	@DeleteMapping("")
-	public boolean CareRecipientDelete(@RequestBody CareRecipientDto careRecipientDto) {
-		return careRecipientService.CareRecipientDelete(careRecipientDto);
+	public boolean CareRecipientDelete(@RequestParam(name="carerecipient_no")Integer careRecipientNo) {
+		return careRecipientService.CareRecipientDelete(careRecipientNo);
 	}
 }
 // 수급자 기본 CRUD 

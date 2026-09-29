@@ -9,7 +9,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import oncare_backend.model.entity.CaregiverAvailabilityEntity;
-import oncare_backend.model.entity.CareworkerEntity;
 
 @Data
 @NoArgsConstructor
@@ -18,7 +17,6 @@ import oncare_backend.model.entity.CareworkerEntity;
 public class CaregiverAvailabilityDto {
 
     private Integer availabilityNo;
-
     private LocalDate availableDate;
     private Integer startTime;
     private Integer endTime;
