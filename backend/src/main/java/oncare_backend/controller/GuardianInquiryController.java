@@ -18,7 +18,6 @@ import oncare_backend.service.GuardianInquiryService;
 
 @RestController 
 @RequestMapping("/guardianinquiry")
-@CrossOrigin(origins = "*")
 public class GuardianInquiryController {
 
 	@Autowired
