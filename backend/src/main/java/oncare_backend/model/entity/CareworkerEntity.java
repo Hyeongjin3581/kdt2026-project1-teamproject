@@ -24,6 +24,8 @@ public class CareworkerEntity {
     private Integer hourWage;
     private Integer careworkerAge;
     private String careworkerState;
+    private double latitude; // 위도
+    private double longitude; // 경도
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "center_no")

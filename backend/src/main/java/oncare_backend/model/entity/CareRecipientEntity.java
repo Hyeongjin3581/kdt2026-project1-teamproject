@@ -41,4 +41,7 @@ public class CareRecipientEntity extends BaseTime{
 
     @Column(name = "care_recipient_content")
     private String careRecipientContent;
+
+    private double latitude; // 위도
+    private double longitude; // 경도
 }

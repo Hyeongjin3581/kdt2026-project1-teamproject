@@ -18,7 +18,10 @@ repositories {
 }
 
 dependencies {
-    // 8. 비크립트
+    //
+    implementation 'org.springframework.boot:spring-boot-starter-webflux'
+
+    // 비크립트
     implementation 'org.springframework.security:spring-security-crypto'
 
 	//jpa
