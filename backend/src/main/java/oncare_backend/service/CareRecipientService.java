@@ -21,6 +21,9 @@ public class CareRecipientService {
 	@Autowired
 	private GuardianRepository guardianRepository;
 
+    @Autowired
+    private GeoCodingService geoCodingService;
+
 	// 1. 수급자 등록
 	public boolean CareRecipientSave(CareRecipientDto careRecipientDto) {
 		GuardianEntity guardianEntity = null;
@@ -32,7 +35,14 @@ public class CareRecipientService {
 
 		CareRecipientEntity careRecipientEntity = careRecipientDto.dtoToEntity();
 		careRecipientEntity.setGuardianEntity(guardianEntity);
-		CareRecipientEntity savedEntity = careRecipientRepository.save(careRecipientEntity);
+
+        List<Double> geoCoding = geoCodingService.getGeoCoding(careRecipientDto.getCareRecipientAddress());
+        if (geoCoding != null) {
+            careRecipientEntity.setLatitude(geoCoding.get(0));
+            careRecipientEntity.setLongitude(geoCoding.get(1));
+        }
+
+        CareRecipientEntity savedEntity = careRecipientRepository.save(careRecipientEntity);
 		if (savedEntity.getCareRecipientNo() >= 1) { return true; }
 		return false;
 	}
@@ -72,6 +82,14 @@ public class CareRecipientService {
 			careRecipientEntity.setGuardianEntity(guardianEntity);
 			careRecipientEntity.setCareRecipientName(careRecipientDto.getCareRecipientName());
 			careRecipientEntity.setCareRecipientAge(careRecipientDto.getCareRecipientAge());
+            // 수정된 careRecipientDto 주소가 저장된 주소랑 다르면 위도, 경도 다시 변경
+            if (!careRecipientDto.getCareRecipientAddress().equals(careRecipientEntity.getCareRecipientAddress())){
+                List<Double> geoCoding = geoCodingService.getGeoCoding(careRecipientDto.getCareRecipientAddress());
+                if (geoCoding != null){
+                    careRecipientEntity.setLatitude(geoCoding.get(0));
+                    careRecipientEntity.setLongitude(geoCoding.get(1));
+                }
+            }
 			careRecipientEntity.setCareRecipientAddress(careRecipientDto.getCareRecipientAddress());
 			careRecipientEntity.setCareRecipientGender(careRecipientDto.getCareRecipientGender());
 			careRecipientEntity.setCareRecipientContent(careRecipientDto.getCareRecipientContent());
