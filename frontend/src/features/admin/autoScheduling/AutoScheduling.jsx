@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { toServerTime } from "../../../utils/timeFormat";
 import axios from "axios";
 import SectionTitle from "../../../components/common/SectionTitle";
 import Panel from "../../../components/common/Panel";
@@ -59,7 +60,7 @@ export default function AutoScheduling() {
       if (a.reportNo) await axios.delete("http://localhost:8080/careworkerreport", { params: { careworker_report_no: a.reportNo }, withCredentials: true });
       const response = await axios.post(
         "http://localhost:8080/careworkerreport",
-        { careworkerNo: Number(pickedCw), requestNo: a.requestNo, workDate: a.iso, workStartTime: a.start, workEndTime: a.end, workStatus: "예정" },
+        { careworkerNo: Number(pickedCw), requestNo: a.requestNo, workDate: a.iso, workStartTime: toServerTime(a.start), workEndTime: toServerTime(a.end), workStatus: "예정" },
         { withCredentials: true }
       );
       if (response.data) { setAssignTarget(null); loadData(); }

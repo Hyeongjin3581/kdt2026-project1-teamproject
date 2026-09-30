@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { toHhmm } from "../../../utils/timeFormat";
 import axios from "axios";
 import SectionTitle from "../../../components/common/SectionTitle";
 import Panel from "../../../components/common/Panel";
@@ -69,7 +70,7 @@ export default function Inquiries() {
                                     <td className="px-5 py-4 font-mono text-slate-500">{i.inquiryNo}</td>
                                     <td className="px-5 py-4"><b className="text-slate-800">{i.guardian?.guardianName ?? "-"}</b>{i.guardian && <span className="ml-1 text-xs text-slate-400">({i.guardian.guardianRelationship})</span>}</td>
                                     <td className="px-5 py-4"><Badge tone="info">{i.category}</Badge></td>
-                                    <td className="px-5 py-4 font-mono text-xs text-slate-600">{i.wishDate ? `${i.wishDate} ${(i.wishStartTime ?? "").slice(0, 5)}~${(i.wishEndTime ?? "").slice(0, 5)}` : "-"}</td>
+                                    <td className="px-5 py-4 font-mono text-xs text-slate-600">{i.wishDate ? `${i.wishDate} ${toHhmm(i.wishStartTime)}~${toHhmm(i.wishEndTime)}` : "-"}</td>
                                     <td className="px-5 py-4 text-slate-600">{i.inquiryContent}</td>
                                     <td className="px-5 py-4 text-right"><button onClick={() => removeInquiry(i)} className="text-xs font-bold text-red-500 hover:underline">삭제</button></td>
                                 </tr>

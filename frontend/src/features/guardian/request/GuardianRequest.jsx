@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { toHhmm, toServerTime } from "../../../utils/timeFormat";
 import axios from "axios";
 import Panel from "../../../components/common/Panel";
 import Badge from "../../../components/common/Badge";
@@ -79,8 +80,8 @@ export default function GuardianRequest({ guardian, recipients, activeRecipientI
   const startEdit = () => {
     const raw = selectedRequest.raw;
     setEditForm(selectedRequest.source === "inquiry"
-      ? { categoryNo: raw.inquiryCategoryNo, date: raw.wishDate ?? "", start: (raw.wishStartTime ?? "").slice(0, 5), end: (raw.wishEndTime ?? "").slice(0, 5), content: raw.inquiryContent ?? "" }
-      : { categoryNo: "", date: raw.visitDate ?? "", start: (raw.visitStartTime ?? "").slice(0, 5), end: (raw.visitEndTime ?? "").slice(0, 5), content: raw.requestContent ?? "" });
+      ? { categoryNo: raw.inquiryCategoryNo, date: raw.wishDate ?? "", start: toHhmm(raw.wishStartTime), end: toHhmm(raw.wishEndTime), content: raw.inquiryContent ?? "" }
+      : { categoryNo: "", date: raw.visitDate ?? "", start: toHhmm(raw.visitStartTime), end: toHhmm(raw.visitEndTime), content: raw.requestContent ?? "" });
     setEditing(true);
   };
 
@@ -91,10 +92,10 @@ export default function GuardianRequest({ guardian, recipients, activeRecipientI
       const response = selectedRequest.source === "inquiry"
         ? await axios.put("http://localhost:8080/guardianinquiry", {
             inquiryNo: raw.inquiryNo, guardianNo: raw.guardianNo, inquiryCategoryNo: Number(editForm.categoryNo),
-            wishDate: editForm.date || null, wishStartTime: editForm.start || null, wishEndTime: editForm.end || null, inquiryContent: editForm.content,
+            wishDate: editForm.date || null, wishStartTime: toServerTime(editForm.start), wishEndTime: toServerTime(editForm.end), inquiryContent: editForm.content,
           }, { withCredentials: true })
         : await axios.put("http://localhost:8080/request", {
-            visitDate: editForm.date || null, visitStartTime: editForm.start || null, visitEndTime: editForm.end || null, requestContent: editForm.content,
+            visitDate: editForm.date || null, visitStartTime: toServerTime(editForm.start), visitEndTime: toServerTime(editForm.end), requestContent: editForm.content,
           }, { params: { request_no: raw.requestNo }, withCredentials: true });
       if (response.data) { setEditing(false); setSelectedRequestId(null); loadData(); }
       else alert("수정에 실패했습니다.");
@@ -137,8 +138,8 @@ export default function GuardianRequest({ guardian, recipients, activeRecipientI
           guardianNo: guardian.guardianNo,
           inquiryCategoryNo: category.inquiryCategoryNo,
           wishDate: nextDateOf(day),
-          wishStartTime: preferredTimes[day]?.start ?? "09:00",
-          wishEndTime: preferredTimes[day]?.end ?? "12:00",
+          wishStartTime: toServerTime(preferredTimes[day]?.start ?? "09:00"),
+          wishEndTime: toServerTime(preferredTimes[day]?.end ?? "12:00"),
           inquiryContent: content,
         }))
       : [{ guardianNo: guardian.guardianNo, inquiryCategoryNo: category.inquiryCategoryNo, inquiryContent: content }];

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { toServerTime } from "../../../utils/timeFormat";
 import axios from "axios";
 import Panel from "../../../components/common/Panel";
 import Badge from "../../../components/common/Badge";
@@ -33,7 +34,7 @@ export default function GuardianApply({ recipient, recipients, onSelectRecipient
         const t = dayTimes[d] ?? { start: "09:00", end: "12:00" };
         return axios.post(
           "http://localhost:8080/request",
-          { preferredGender: "무관", requestState: "신청", visitDate: nextDateOf(d), visitStartTime: t.start, visitEndTime: t.end, requestContent: content.trim() || "방문요양 서비스 신청" },
+          { preferredGender: "무관", requestState: "신청", visitDate: nextDateOf(d), visitStartTime: toServerTime(t.start), visitEndTime: toServerTime(t.end), requestContent: content.trim() || "방문요양 서비스 신청" },
           { params: { carerecipient_no: recipient.id }, withCredentials: true }
         );
       }));

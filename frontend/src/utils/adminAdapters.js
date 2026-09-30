@@ -1,4 +1,5 @@
 import { TODAY, WEEK_LIMIT, WEEK_START } from "../constants";
+import { toHhmm } from "./timeFormat";
 
 // 백엔드 엔티티 DTO(번호로 연결된 정규화 데이터)를 화면이 쓰는 형태로 조합한다.
 const DAY_KR = ["일", "월", "화", "수", "목", "금", "토"];
@@ -8,9 +9,9 @@ const toIso = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDat
 const addDays = (iso, n) => { const d = parseDate(iso); d.setDate(d.getDate() + n); return toIso(d); };
 const mdLabel = (iso) => { const d = parseDate(iso); return `${pad(d.getMonth() + 1)}.${pad(d.getDate())} (${DAY_KR[d.getDay()]})`; };
 const koDateLabel = (iso) => { const d = parseDate(iso); return `${d.getMonth() + 1}월 ${d.getDate()}일 (${DAY_KR[d.getDay()]})`; };
-const hhmm = (t) => (t ? t.slice(0, 5) : "");
+const hhmm = toHhmm;
 const range = (a, b) => `${hhmm(a)}~${hhmm(b)}`;
-const minutes = (t) => { const [h, m] = t.split(":").map(Number); return h * 60 + m; };
+const minutes = (t) => { const [h, m] = toHhmm(t).split(":").map(Number); return h * 60 + m; };
 const hoursBetween = (a, b) => (a && b ? (minutes(b) - minutes(a)) / 60 : 0);
 const fmtHours = (h) => `${Math.round(h * 10) / 10}h`;
 const areaOf = (addr) => (addr ?? "").replace(/^경기도\s*/, "");
@@ -149,7 +150,7 @@ export function buildAdminModel(raw) {
 
   const upcoming = raw.requests
     .filter((q) => q.requestState !== "취소" && q.visitDate >= WEEK_START)
-    .sort((a, b) => `${a.visitDate}${a.visitStartTime}`.localeCompare(`${b.visitDate}${b.visitStartTime}`));
+    .sort((a, b) => `${a.visitDate}${toHhmm(a.visitStartTime)}`.localeCompare(`${b.visitDate}${toHhmm(b.visitStartTime)}`));
   const assignments = upcoming.map((q) => {
     const rp = reportByReq.get(q.requestNo);
     const cw = rp && !rp.cancelled ? rp.cw : null;

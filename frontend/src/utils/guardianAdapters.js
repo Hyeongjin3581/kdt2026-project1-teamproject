@@ -1,11 +1,12 @@
 import { TODAY } from "../constants";
+import { toHhmm } from "./timeFormat";
 
 // 보호자 화면용 데이터 변환 (axios 로 받아온 백엔드 DTO -> 화면에서 쓰는 모양)
 const DAY_KR = ["일", "월", "화", "수", "목", "금", "토"];
 const pad = (n) => String(n).padStart(2, "0");
 const parseDate = (iso) => { const [y, m, d] = iso.split("-").map(Number); return new Date(y, m - 1, d); };
 const toIso = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-const hhmm = (t) => (t ? t.slice(0, 5) : "");
+const hhmm = toHhmm;
 
 export const todayIso = TODAY.slice(0, 10).replaceAll(".", "-");
 
