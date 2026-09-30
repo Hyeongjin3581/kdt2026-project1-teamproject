@@ -34,8 +34,8 @@ public class GuardianInquiryDto {
     public static GuardianInquiryDto entityToDto(GuardianInquiryEntity entity){
        return GuardianInquiryDto.builder()
     .inquiryNo(entity.getInquiryNo())
-        .guardianNo(entity.getGuardianEntity().getGuardianNo())
-        .inquiryCategoryNo(entity.getInquiryCategoryEntity().getInquiryCategoryNo())
+    .guardianNo(entity.getGuardianEntity().getGuardianNo())
+    .inquiryCategoryNo(entity.getInquiryCategoryEntity().getInquiryCategoryNo())
     .wishDate(entity.getWishDate())
     .wishStartTime(entity.getWishStartTime())
     .wishEndTime(entity.getWishEndTime())
