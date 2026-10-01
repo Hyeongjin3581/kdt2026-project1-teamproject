@@ -37,9 +37,9 @@ public class GuardianInquiryEntity extends BaseTime{
     private LocalDate wishDate;
 
     @Column(name = "wish_start_time")
-    private LocalTime wishStartTime;
+    private Integer wishStartTime;
     @Column(name = "wish_end_time")
-    private LocalTime wishEndTime;
+    private Integer wishEndTime;
     
     @Column (length = 1000)
     private String inquiryContent;

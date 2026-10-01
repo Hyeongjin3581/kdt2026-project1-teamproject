@@ -31,8 +31,8 @@ public class CareworkerReportDto {
     private Integer requestNo = null;
 
     private LocalDate workDate;
-    private LocalTime workStartTime;
-    private LocalTime workEndTime;
+    private Integer workStartTime;
+    private Integer workEndTime;
     private String workStatus;
 
     public CareworkerReportEntity dtoToEntity(){

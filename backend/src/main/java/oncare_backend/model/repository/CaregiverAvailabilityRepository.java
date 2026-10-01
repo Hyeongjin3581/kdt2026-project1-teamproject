@@ -5,8 +5,9 @@ import org.springframework.stereotype.Repository;
 
 import oncare_backend.model.entity.CaregiverAvailabilityEntity;
 
+import java.util.List;
+
 @Repository 
 public interface CaregiverAvailabilityRepository extends JpaRepository<CaregiverAvailabilityEntity, Integer>{
-
     
 }
