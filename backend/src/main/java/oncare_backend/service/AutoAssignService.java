@@ -34,7 +34,7 @@ public class AutoAssignService {
 
         // 필수 조건 필터 메소드 호출해서 배정가능한 요양보호사 받기
         List<CareworkerEntity> careworkerEntities = filterCareworker(requestEntity);
-
+        //********************* careworkerEntities 여기부터 점수매겨서 상위 3명을 추출 ****************************
 
 
 
@@ -58,16 +58,19 @@ public class AutoAssignService {
 
         // 근무 가능 시간 테이블에서 근무가능요일 + 근무가능시간 + 근무상태 비교해서 true인 값만 필터링
         List<CareworkerEntity> availabilityList = genderMatched.stream()
-                .filter(careworkerEntity -> isWithinAvailability(careworkerEntity, requestEntity))
+                .filter(careworkerEntity -> canWork(careworkerEntity, requestEntity))
                 .toList();
 
-        availabilityList.stream()
-                .filter(careworkerEntity -> hasTimeConflict(careworkerEntity,requestEntity))
+        // 근무 기록 테이블에서 상태가 취소인거 빼고 예정된 일을 찾아서 필터링
+        List<CareworkerEntity> list = availabilityList.stream()
+                .filter(careworkerEntity -> isFree(careworkerEntity, requestEntity))
                 .toList();
+
+        return list;
     }
 
     // 근무 가능 시간 비교
-    private boolean isWithinAvailability(CareworkerEntity cw, RequestEntity request) {
+    private boolean canWork(CareworkerEntity cw, RequestEntity request) {
         // 양방향으로 안만들어서 리포지토리에 JPA추가
         // 받은 요양 보호사의 요청에 들어있는 방문 날짜에 해당하는 행들을 반환
         List<CaregiverAvailabilityEntity> date = caregiverAvailabilityRepository.findByCareworkerEntityAndAvailableDate(cw, request.getVisitDate());
@@ -83,16 +86,19 @@ public class AutoAssignService {
     }
 
     // 근무 기록 비교
-    private boolean hasTimeConflict(CareworkerEntity cw, RequestEntity request) {
+    private boolean isFree(CareworkerEntity cw, RequestEntity request) {
+        // 근무 기록에서 요청한 day랑 비교해서 근무기록 테이블에서 행 가져오기
         List<CareworkerReportEntity> date = careWorkerReportRepository.findByCareworkerEntityAndWorkDate(cw, request.getVisitDate());
         for (CareworkerReportEntity report : date) {
+            // 취소된 일정은 시간을 차지하지 않으므로 건너뜀
             if (report.getWorkStatus().equals("취소")){
                 continue;
             }
-            if (report.getWorkStartTime() )
+            // 만약 근무 기록에 예정,배정
+            if (request.getVisitStartTime() < report.getWorkEndTime() && request.getVisitEndTime() > report.getWorkStartTime()){
+                return false;
+            }
         }
-
-
-        return false;
+        return true;
     }
 }
