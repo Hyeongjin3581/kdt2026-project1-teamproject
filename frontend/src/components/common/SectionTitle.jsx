@@ -1,9 +1,26 @@
+import { useEffect, useState } from "react";
+import axios from "axios";
 import { TODAY } from "../../constants";
 import { useCenter } from "../../context/CenterContext";
-import { centerName } from "../../data/centers";
+import { buildCenters } from "../../utils/adminAdapters";
 
 export default function SectionTitle({ title, subtitle, action }) {
   const center = useCenter();
+  const [centers, setCenters] = useState(buildCenters([]));
+
+  // 선택한 센터 이름을 보여주기 위해 센터 목록을 axios로 조회
+  useEffect(() => {
+    async function loadCenters() {
+      try {
+        const response = await axios.get("http://localhost:8080/center", { withCredentials: true });
+        setCenters(buildCenters(response.data));
+      } catch (error) {
+        console.error("센터 조회 실패:", error);
+      }
+    }
+    loadCenters();
+  }, []);
+  const centerName = (id) => centers.find((c) => c.id === id)?.name ?? "전체 센터";
   return (
     <div className="flex flex-wrap items-end justify-between gap-3">
       <div>

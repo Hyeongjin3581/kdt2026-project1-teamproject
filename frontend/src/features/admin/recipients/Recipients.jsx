@@ -1,16 +1,54 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import axios from "axios";
 import SectionTitle from "../../../components/common/SectionTitle";
 import Panel from "../../../components/common/Panel";
 import Badge from "../../../components/common/Badge";
 import { useCenter, inCenter } from "../../../context/CenterContext";
-import { recipients } from "../../../data/recipients";
+import LoadStatus from "../../../components/common/LoadStatus";
+import { buildAdminModel, emptyModel, emptyRaw } from "../../../utils/adminAdapters";
 import RecipientDetail from "./RecipientDetail";
 
 export default function Recipients() {
   const [q, setQ] = useState("");
   const [detail, setDetail] = useState(null);
   const center = useCenter();
-  const visible = useMemo(() => recipients.filter(inCenter(center)).filter((r) => `${r.name}${r.area}${r.cg}${r.guardian}`.includes(q)), [q, center]);
+  const [model, setModel] = useState(emptyModel);
+  const [status, setStatus] = useState("loading");
+
+  // 수급자 관리 화면에 필요한 목록을 axios로 조회 : axios.get("통신할주소", { 옵션 }) → response.data
+  async function loadData() {
+    setStatus("loading");
+    try {
+      const [careworkersRes, guardiansRes, recipientsRes] = await Promise.all([
+        axios.get("http://localhost:8080/api/careworkers", { withCredentials: true }),
+        axios.get("http://localhost:8080/guardian", { withCredentials: true }),
+        axios.get("http://localhost:8080/carerecipient", { withCredentials: true }),
+      ]);
+      // 수급자별 방문 요청, 센터별 근무기록
+      const [requestLists, reportLists] = await Promise.all([
+        Promise.all(recipientsRes.data.map((r) =>
+          axios.get("http://localhost:8080/request/carerecipient", { params: { carerecipient_no: r.careRecipientNo }, withCredentials: true }).catch(() => ({ data: [] }))
+        )),
+        Promise.all([...new Set(careworkersRes.data.map((c) => c.centerNo))].map((no) =>
+          axios.get("http://localhost:8080/careworkerreport/center", { params: { center_no: no }, withCredentials: true }).catch(() => ({ data: [] }))
+        )),
+      ]);
+      setModel(buildAdminModel({
+        ...emptyRaw,
+        careworkers: careworkersRes.data, guardians: guardiansRes.data, recipients: recipientsRes.data,
+        requests: requestLists.flatMap((res) => res.data),
+        reports: reportLists.flatMap((res) => res.data),
+      }));
+      setStatus("ok");
+    } catch (error) {
+      console.error("수급자 관리 조회 실패:", error);
+      setStatus("error");
+    }
+  }
+  useEffect(() => { loadData(); }, []);
+  const { recipients } = model;
+  const visible = useMemo(() => recipients.filter(inCenter(center)).filter((r) => `${r.name}${r.area}${r.cg}${r.guardian}`.includes(q)), [q, center, recipients]);
+  if (status !== "ok") return <LoadStatus status={status} onRetry={loadData} />;
   return (
     <div className="space-y-5">
       <SectionTitle title="수급자 관리" subtitle="센터에서 방문요양 서비스를 제공받는 수급(어르신) 목록입니다. 로그인하는 보호자와는 별도로 관리됩니다." action={<button onClick={() => setQ("")} className="rounded-lg border border-teal-200 bg-white px-4 py-2.5 text-sm font-bold text-teal-700 transition hover:bg-teal-50">↻ 새로고침</button>} />
@@ -25,11 +63,11 @@ export default function Recipients() {
             <thead className="bg-slate-50 text-left text-[11px] uppercase tracking-wide text-slate-400"><tr>{["수급자명", "성별", "거주 지역", "방문 요일", "담당 요양보호사", "연결된 보호자", "상태", ""].map((h) => <th key={h} className="px-5 py-3">{h}</th>)}</tr></thead>
             <tbody>
               {visible.map((r) => (
-                <tr key={r.name} className="border-t border-slate-100 hover:bg-slate-50/70">
+                <tr key={r.id} className="border-t border-slate-100 hover:bg-slate-50/70">
                   <td className="px-5 py-4"><b className="text-slate-800">{r.name}</b><p className="mt-1 text-xs text-slate-400">{r.grade}</p></td>
                   <td className="px-5 py-4 text-slate-600">{r.gender}</td>
                   <td className="px-5 py-4 text-slate-600">{r.area}</td>
-                  <td className="px-5 py-4"><div className="space-y-0.5">{r.schedule.map(([d, t]) => <p key={d} className="text-xs text-slate-600"><b className="text-slate-700">{d}</b> <span className="font-mono text-slate-500">{t}</span></p>)}</div></td>
+                  <td className="px-5 py-4"><div className="space-y-0.5">{r.schedule.map(([d, t]) => <p key={d + t} className="text-xs text-slate-600"><b className="text-slate-700">{d}</b> <span className="font-mono text-slate-500">{t}</span></p>)}</div></td>
                   <td className="px-5 py-4 text-slate-700">{r.cg}</td>
                   <td className="px-5 py-4 text-slate-600">{r.guardian}</td>
                   <td className="px-5 py-4"><Badge tone={r.tone}>{r.status}</Badge></td>
@@ -41,7 +79,7 @@ export default function Recipients() {
           </table>
         </div>
       </Panel>
-      {detail && <RecipientDetail r={detail} onClose={() => setDetail(null)} />}
+      {detail && <RecipientDetail r={detail} onClose={() => setDetail(null)} onChanged={() => { setDetail(null); loadData(); }} />}
     </div>
   );
 }

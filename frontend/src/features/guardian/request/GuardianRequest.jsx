@@ -1,15 +1,25 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import axios from "axios";
 import Panel from "../../../components/common/Panel";
 import Badge from "../../../components/common/Badge";
+import LoadStatus from "../../../components/common/LoadStatus";
 import { TODAY } from "../../../constants";
+import { buildHistory, buildVisits, nextDateOf } from "../../../utils/guardianAdapters";
 
-export default function GuardianRequest({ recipients, activeRecipientId, onSelectRecipient }) {
+export default function GuardianRequest({ guardian, recipients, activeRecipientId, onSelectRecipient }) {
   const [reqSent, setReqSent] = useState(false);
-  const [requestType, setRequestType] = useState("방문 시간 변경 요청");
+  const [categories, setCategories] = useState([]);
+  const [requestType, setRequestType] = useState("");
   const [requestContent, setRequestContent] = useState("");
-  const [requestHistory, setRequestHistory] = useState({});
-  const [selectedDays, setSelectedDays] = useState([]);
-  const [preferredTimes, setPreferredTimes] = useState({});
+  const [history, setHistory] = useState([]);
+  const [visits, setVisits] = useState([]);
+  const [status, setStatus] = useState("loading");
+  const [selectedDays, setSelectedDays] = useState(["월"]);
+  const [preferredTimes, setPreferredTimes] = useState({
+    월: { start: "09:00", end: "12:00" },
+  });
+  const [selectedRequestId, setSelectedRequestId] = useState(null);
+  const [selectedVisitId, setSelectedVisitId] = useState(null);
   const field = "mt-1.5 w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-600 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100";
   const weekdays = ["월", "화", "수", "목", "금", "토", "일"];
   const toggleDay = (day) => {
@@ -24,42 +34,130 @@ export default function GuardianRequest({ recipients, activeRecipientId, onSelec
   const updateTime = (day, key, value) => {
     setPreferredTimes((current) => ({ ...current, [day]: { ...current[day], [key]: value } }));
   };
-  const needsSchedule = requestType !== "담당자 관련 문의";
+  const needsSchedule = requestType !== "담당자 관련 문의" && requestType !== "기타 문의";
   const selectedRecipient = recipients.find((recipient) => recipient.id === activeRecipientId) ?? recipients[0];
-  const history = requestHistory[selectedRecipient?.id] ?? [];
-  const visits = [];
-  const [selectedRequestId, setSelectedRequestId] = useState(null);
-  const [selectedVisitId, setSelectedVisitId] = useState(null);
   const selectedRequest = history.find((request) => request.id === selectedRequestId);
   const selectedVisit = visits.find((visit) => visit.id === selectedVisitId);
+
+  // 문의 카테고리 + 보호자 문의 + 수급자의 방문 요청/근무기록/요양보호사를 axios로 조회
+  async function loadData() {
+    setStatus("loading");
+    try {
+      const [categoriesRes, inquiriesRes, careworkersRes] = await Promise.all([
+        axios.get("http://localhost:8080/inquirycategory", { withCredentials: true }),
+        axios.get("http://localhost:8080/guardianinquiry", { withCredentials: true }),
+        axios.get("http://localhost:8080/api/careworkers", { withCredentials: true }),
+      ]);
+      const requestsRes = selectedRecipient
+        ? await axios.get("http://localhost:8080/request/carerecipient", { params: { carerecipient_no: selectedRecipient.id }, withCredentials: true })
+        : { data: [] };
+      const reportLists = await Promise.all([...new Set(careworkersRes.data.map((c) => c.centerNo))].map((no) =>
+        axios.get("http://localhost:8080/careworkerreport/center", { params: { center_no: no }, withCredentials: true }).catch(() => ({ data: [] }))
+      ));
+      setCategories(categoriesRes.data);
+      setRequestType((current) => current || categoriesRes.data[0]?.inquiryCategoryName || "");
+      setVisits(buildVisits({ requests: requestsRes.data, reports: reportLists.flatMap((res) => res.data), careworkers: careworkersRes.data }).filter((v) => !v.cancelled));
+      setHistory(buildHistory({
+        inquiries: inquiriesRes.data.filter((i) => i.guardianNo === guardian?.guardianNo),
+        categories: categoriesRes.data,
+        requests: requestsRes.data,
+      }));
+      setStatus("ok");
+    } catch (error) {
+      console.error("요청·문의 조회 실패:", error);
+      setStatus("error");
+    }
+  }
+  useEffect(() => { loadData(); }, [selectedRecipient?.id, guardian?.guardianNo]);
+
+  // 선택한 내역(문의/서비스 신청) 수정·삭제 : 문의는 진행 상태가 없어 항상, 서비스 신청은 "신청" 상태일 때만 가능
+  const [editing, setEditing] = useState(false);
+  const [editForm, setEditForm] = useState({ categoryNo: "", date: "", start: "", end: "", content: "" });
+  const canManage = selectedRequest && (selectedRequest.source === "inquiry" || selectedRequest.raw.requestState === "신청");
+  const updateEdit = (key, value) => setEditForm((current) => ({ ...current, [key]: value }));
+
+  const startEdit = () => {
+    const raw = selectedRequest.raw;
+    setEditForm(selectedRequest.source === "inquiry"
+      ? { categoryNo: raw.inquiryCategoryNo, date: raw.wishDate ?? "", start: (raw.wishStartTime ?? "").slice(0, 5), end: (raw.wishEndTime ?? "").slice(0, 5), content: raw.inquiryContent ?? "" }
+      : { categoryNo: "", date: raw.visitDate ?? "", start: (raw.visitStartTime ?? "").slice(0, 5), end: (raw.visitEndTime ?? "").slice(0, 5), content: raw.requestContent ?? "" });
+    setEditing(true);
+  };
+
+  // 문의 수정 : PUT /guardianinquiry (body), 서비스 신청 수정 : PUT /request?request_no=번호 (body)
+  const saveEdit = async () => {
+    const raw = selectedRequest.raw;
+    try {
+      const response = selectedRequest.source === "inquiry"
+        ? await axios.put("http://localhost:8080/guardianinquiry", {
+            inquiryNo: raw.inquiryNo, guardianNo: raw.guardianNo, inquiryCategoryNo: Number(editForm.categoryNo),
+            wishDate: editForm.date || null, wishStartTime: editForm.start || null, wishEndTime: editForm.end || null, inquiryContent: editForm.content,
+          }, { withCredentials: true })
+        : await axios.put("http://localhost:8080/request", {
+            visitDate: editForm.date || null, visitStartTime: editForm.start || null, visitEndTime: editForm.end || null, requestContent: editForm.content,
+          }, { params: { request_no: raw.requestNo }, withCredentials: true });
+      if (response.data) { setEditing(false); setSelectedRequestId(null); loadData(); }
+      else alert("수정에 실패했습니다.");
+    } catch (error) {
+      console.error(error);
+      alert("서버 통신 오류가 발생했습니다.");
+    }
+  };
+
+  // 문의 삭제 : DELETE /guardianinquiry (body 에 { inquiryNo }), 서비스 신청 취소 : DELETE /request?request_no=번호
+  const removeItem = async () => {
+    const raw = selectedRequest.raw;
+    if (!window.confirm(selectedRequest.source === "inquiry" ? "이 문의를 삭제할까요?" : "이 서비스 신청을 취소할까요?")) return;
+    try {
+      const response = selectedRequest.source === "inquiry"
+        ? await axios.delete("http://localhost:8080/guardianinquiry", { data: { inquiryNo: raw.inquiryNo }, withCredentials: true })
+        : await axios.delete("http://localhost:8080/request", { params: { request_no: raw.requestNo }, withCredentials: true });
+      if (response.data) { setEditing(false); setSelectedRequestId(null); loadData(); }
+      else alert("처리에 실패했습니다.");
+    } catch (error) {
+      console.error(error);
+      alert("서버 통신 오류가 발생했습니다.");
+    }
+  };
+
   const selectRecipient = (id) => {
     onSelectRecipient(id);
     setSelectedRequestId(null);
     setSelectedVisitId(null);
   };
-  const sendRequest = () => {
-    if (!selectedRecipient || !selectedVisit) return;
-    const date = new Date().toISOString().slice(0, 10);
-    const newRequest = {
-      id: `ONC-${Date.now()}`,
-      date,
-      kind: requestType === "담당자 관련 문의" ? "문의" : "요청",
-      type: requestType,
-      service: selectedVisit.service,
-      status: "접수 완료",
-      tone: "info",
-      summary: `${selectedVisit.date} 방문 일정에 대한 ${requestType}`,
-      details: [
-        ["연결된 신청", selectedVisit.service],
-        ["대상 방문", `${selectedVisit.date} · ${selectedVisit.time} · ${selectedVisit.caregiver}`],
-        ["요청 내용", requestContent.trim() || "별도 내용 없이 일정 관련 요청을 전달했습니다."],
-        ["접수 일시", new Date().toLocaleString("ko-KR")],
-      ],
-    };
-    setRequestHistory((current) => ({ ...current, [selectedRecipient.id]: [newRequest, ...(current[selectedRecipient.id] ?? [])] }));
-    setRequestContent("");
-    setReqSent(true);
+
+  // 요청 보내기 : 선택한 요일마다 문의 1건씩 등록 (POST /guardianinquiry), 요일이 필요 없는 유형은 1건
+  const sendRequest = async () => {
+    if (!selectedRecipient || !selectedVisit || !guardian) return;
+    const category = categories.find((c) => c.inquiryCategoryName === requestType);
+    if (!category) return;
+    const content = `[${selectedRecipient.name} 어르신 · ${selectedVisit.date} ${selectedVisit.time}] ${requestContent.trim()}`.trim();
+    const bodies = needsSchedule && selectedDays.length > 0
+      ? selectedDays.map((day) => ({
+          guardianNo: guardian.guardianNo,
+          inquiryCategoryNo: category.inquiryCategoryNo,
+          wishDate: nextDateOf(day),
+          wishStartTime: preferredTimes[day]?.start ?? "09:00",
+          wishEndTime: preferredTimes[day]?.end ?? "12:00",
+          inquiryContent: content,
+        }))
+      : [{ guardianNo: guardian.guardianNo, inquiryCategoryNo: category.inquiryCategoryNo, inquiryContent: content }];
+    try {
+      const results = await Promise.all(bodies.map((body) => axios.post("http://localhost:8080/guardianinquiry", body, { withCredentials: true })));
+      if (results.every((res) => res.data)) {
+        setRequestContent("");
+        setReqSent(true);
+        loadData();
+      } else {
+        alert("요청 전달에 실패했습니다. 입력 정보를 확인해주세요.");
+      }
+    } catch (error) {
+      console.error(error);
+      alert("서버 통신 오류가 발생했습니다.");
+    }
   };
+  if (status !== "ok") return <LoadStatus status={status} onRetry={loadData} />;
+
   return (
     <div className="space-y-5">
       <div>
@@ -81,7 +179,26 @@ export default function GuardianRequest({ recipients, activeRecipientId, onSelec
             <dl className="mt-1 divide-y divide-slate-100">
               {selectedRequest.details.map(([label, value]) => <div key={label} className="grid gap-2 py-4 sm:grid-cols-[110px_1fr]"><dt className="text-xs font-bold text-slate-400">{label}</dt><dd className="text-sm leading-6 text-slate-700">{value}</dd></div>)}
             </dl>
-            <div className="mt-2 flex justify-end"><button type="button" onClick={() => setSelectedRequestId(null)} className="rounded-lg border border-slate-200 px-4 py-2 text-xs font-bold text-slate-600 transition hover:bg-slate-50">새 요청 작성</button></div>
+            {editing && <div className="mt-3 grid gap-3 rounded-xl border border-slate-100 bg-slate-50/60 p-4 sm:grid-cols-2">
+              {selectedRequest.source === "inquiry" && <label className="block text-xs font-semibold text-slate-600 sm:col-span-2">문의 유형
+                <select value={editForm.categoryNo} onChange={(e) => updateEdit("categoryNo", e.target.value)} className={field}>{categories.map((c) => <option key={c.inquiryCategoryNo} value={c.inquiryCategoryNo}>{c.inquiryCategoryName}</option>)}</select>
+              </label>}
+              <label className="block text-xs font-semibold text-slate-600 sm:col-span-2">{selectedRequest.source === "inquiry" ? "희망 날짜" : "방문 날짜"}<input type="date" value={editForm.date} onChange={(e) => updateEdit("date", e.target.value)} className={field} /></label>
+              <label className="block text-xs font-semibold text-slate-600">시작 시간<input type="time" value={editForm.start} onChange={(e) => updateEdit("start", e.target.value)} className={field} /></label>
+              <label className="block text-xs font-semibold text-slate-600">종료 시간<input type="time" value={editForm.end} onChange={(e) => updateEdit("end", e.target.value)} className={field} /></label>
+              <label className="block text-xs font-semibold text-slate-600 sm:col-span-2">내용<textarea rows={3} value={editForm.content} onChange={(e) => updateEdit("content", e.target.value)} className={`${field} resize-none`} /></label>
+              <div className="flex justify-end gap-2 sm:col-span-2">
+                <button type="button" onClick={() => setEditing(false)} className="rounded-lg border border-slate-200 px-4 py-2 text-xs font-bold text-slate-600 transition hover:bg-white">취소</button>
+                <button type="button" onClick={saveEdit} className="rounded-lg bg-teal-600 px-4 py-2 text-xs font-bold text-white transition hover:bg-teal-700">수정 저장</button>
+              </div>
+            </div>}
+            <div className="mt-2 flex flex-wrap justify-end gap-2">
+              {canManage && !editing && <>
+                <button type="button" onClick={startEdit} className="rounded-lg border border-teal-200 px-4 py-2 text-xs font-bold text-teal-700 transition hover:bg-teal-50">수정</button>
+                <button type="button" onClick={removeItem} className="rounded-lg border border-red-200 px-4 py-2 text-xs font-bold text-red-600 transition hover:bg-red-50">{selectedRequest.source === "inquiry" ? "삭제" : "신청 취소"}</button>
+              </>}
+              <button type="button" onClick={() => { setEditing(false); setSelectedRequestId(null); }} className="rounded-lg border border-slate-200 px-4 py-2 text-xs font-bold text-slate-600 transition hover:bg-slate-50">새 요청 작성</button>
+            </div>
           </> : <>
           <h2 className="font-display font-bold text-slate-900">요청 보내기</h2>
           <p className="mt-1 text-xs text-slate-400">{selectedRecipient ? `${selectedRecipient.name} 어르신` : "수급자"}의 방문 일정에 대한 요청을 센터에 전달합니다.</p>
@@ -102,7 +219,7 @@ export default function GuardianRequest({ recipients, activeRecipientId, onSelec
           ) : (
             <div className="mt-4 space-y-3">
               <label className="block text-xs font-semibold text-slate-600">요청 유형
-                <select value={requestType} onChange={(event) => setRequestType(event.target.value)} className={field}><option>방문 시간 변경 요청</option><option>방문 요일 변경 요청</option><option>담당자 관련 문의</option><option>방문 취소</option></select>
+                <select value={requestType} onChange={(event) => setRequestType(event.target.value)} className={field}>{categories.map((c) => <option key={c.inquiryCategoryNo}>{c.inquiryCategoryName}</option>)}</select>
               </label>
               {needsSchedule && <section className="rounded-xl border border-slate-100 bg-slate-50/50 p-4">
                 <h3 className="text-sm font-bold text-slate-800">희망 방문 일정</h3>
@@ -141,10 +258,9 @@ export default function GuardianRequest({ recipients, activeRecipientId, onSelec
             <div className="mt-3 grid gap-2">
               {recipients.map((recipient) => {
                 const isSelected = recipient.id === selectedRecipient?.id;
-                const count = (requestHistory[recipient.id] ?? []).length;
                 return <button key={recipient.id} type="button" onClick={() => selectRecipient(recipient.id)} className={`flex items-center gap-3 rounded-lg border px-3 py-3 text-left transition ${isSelected ? "border-teal-200 bg-teal-50" : "border-transparent hover:bg-slate-50"}`}>
                   <span className={`grid h-8 w-8 place-items-center rounded-full text-xs font-bold ${isSelected ? "bg-teal-600 text-white" : "bg-slate-100 text-slate-600"}`}>{recipient.name[0]}</span>
-                  <span className="min-w-0 flex-1"><span className="block text-sm font-bold text-slate-800">{recipient.name} 어르신</span><span className="block text-[11px] text-slate-400">{recipient.id === 1 ? "서비스 신청 내역" : `접수 내역 ${count}건`}</span></span>
+                  <span className="min-w-0 flex-1"><span className="block text-sm font-bold text-slate-800">{recipient.name} 어르신</span><span className="block text-[11px] text-slate-400">{isSelected ? `접수 내역 ${history.length}건` : "선택하면 내역을 확인합니다"}</span></span>
                   <span className="text-slate-300">›</span>
                 </button>;
               })}

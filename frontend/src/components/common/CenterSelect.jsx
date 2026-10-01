@@ -1,9 +1,9 @@
 import { useState } from "react";
-import { centers } from "../../data/centers";
 
-export default function CenterSelect({ center, setCenter, dark = false }) {
+// centers : AdminApp 이 axios(GET /center)로 조회해서 내려주는 센터 목록
+export default function CenterSelect({ centers, center, setCenter, dark = false }) {
   const [open, setOpen] = useState(false);
-  const cur = centers.find((c) => c.id === center);
+  const cur = centers.find((c) => c.id === center) ?? centers[0];
   return (
     <div className="relative">
       <button onClick={() => setOpen((o) => !o)} onBlur={() => setTimeout(() => setOpen(false), 150)}

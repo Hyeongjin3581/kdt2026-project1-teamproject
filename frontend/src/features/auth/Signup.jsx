@@ -1,10 +1,20 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import AppMark from "../../components/common/AppMark";
 import { roleMeta } from "./roleMeta";
+import axios from "axios";
 
-export default function Signup({ toLogin }) {
+export default function Signup() {
+  const navigate = useNavigate();
+  const toLogin = () => navigate("/login");
   const [role, setRole] = useState("guardian");
   const [done, setDone] = useState(false);
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [password, setPassword] = useState("");
+  const [passwordConfirm, setPasswordConfirm] = useState("");
+  const [submitError, setSubmitError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
   const [email, setEmail] = useState("");
   const [verificationCode, setVerificationCode] = useState("");
   const [emailSent, setEmailSent] = useState(false);
@@ -49,7 +59,8 @@ export default function Signup({ toLogin }) {
     }
     setAdminMessage("관리자 인증코드가 일치하지 않습니다.");
   };
-  const submitSignup = () => {
+  const submitSignup = async () => {
+    setSubmitError("");
     if (role === "guardian" && !emailVerified) {
       setVerificationMessage("가입 전 Gmail 인증을 완료해주세요.");
       return;
@@ -58,7 +69,39 @@ export default function Signup({ toLogin }) {
       setAdminMessage("가입 전 관리자 인증을 완료해주세요.");
       return;
     }
-    setDone(true);
+    if (!email || !password) {
+      setSubmitError("아이디(이메일)와 비밀번호를 입력해주세요.");
+      return;
+    }
+    if (password.length < 8) {
+      setSubmitError("비밀번호는 8자 이상이어야 합니다.");
+      return;
+    }
+    if (password !== passwordConfirm) {
+      setSubmitError("비밀번호 확인이 일치하지 않습니다.");
+      return;
+    }
+    // 백엔드 usercategory 테이블: 1 = 보호자, 2 = 요양보호사
+    const userCategoryNo = { guardian: 1 }[role];
+    if (!userCategoryNo) {
+      setSubmitError("관리자 계정 가입은 아직 백엔드에서 지원되지 않습니다.");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      // axios.post("통신할주소", { body }, { 옵션 }) → 컨트롤러가 boolean 을 반환
+      const response = await axios.post(
+        "http://localhost:8080/user",
+        { userId: email, userPassword: password, email, phoneNumber: phone, userCategoryNo },
+        { withCredentials: true }
+      );
+      if (response.data) setDone(true);
+      else setSubmitError("가입에 실패했습니다. 입력 정보를 확인해주세요.");
+    } catch {
+      setSubmitError("서버와 통신할 수 없습니다. 백엔드(localhost:8080) 실행 상태를 확인해주세요.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -99,8 +142,8 @@ export default function Signup({ toLogin }) {
                 ))}
               </div>
               <div className="mt-5 grid gap-4 sm:grid-cols-2">
-                <label className="text-xs font-semibold text-slate-600">이름<input className={field} placeholder="이름 입력" /></label>
-                <label className="text-xs font-semibold text-slate-600">연락처<input className={field} placeholder="010-0000-0000" /></label>
+                <label className="text-xs font-semibold text-slate-600">이름<input value={name} onChange={(event) => setName(event.target.value)} className={field} placeholder="홍길동" /></label>
+                <label className="text-xs font-semibold text-slate-600">연락처<input value={phone} onChange={(event) => setPhone(event.target.value)} className={field} placeholder="010-0000-0000" /></label>
                 <div className="text-xs font-semibold text-slate-600 sm:col-span-2">아이디 (이메일)
                   <div className="mt-1.5 flex gap-2">
                     <input type="email" value={email} onChange={(event) => { setEmail(event.target.value); setEmailVerified(false); }} disabled={role === "guardian" && emailVerified} className="min-w-0 flex-1 rounded-lg border border-slate-200 px-3 py-2.5 text-sm font-normal outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-100 disabled:bg-slate-50" placeholder="you@gmail.com" />
@@ -116,8 +159,8 @@ export default function Signup({ toLogin }) {
                   </div>
                   {verificationMessage && <p className={`mt-1.5 text-[11px] ${emailVerified ? "text-emerald-600" : "text-slate-500"}`}>{verificationMessage}</p>}
                 </div>}
-                <label className="text-xs font-semibold text-slate-600">비밀번호<input type="password" className={field} placeholder="8자 이상" /></label>
-                <label className="text-xs font-semibold text-slate-600">비밀번호 확인<input type="password" className={field} placeholder="다시 입력" /></label>
+                <label className="text-xs font-semibold text-slate-600">비밀번호<input type="password" value={password} onChange={(event) => setPassword(event.target.value)} className={field} placeholder="8자 이상" /></label>
+                <label className="text-xs font-semibold text-slate-600">비밀번호 확인<input type="password" value={passwordConfirm} onChange={(event) => setPasswordConfirm(event.target.value)} className={field} placeholder="다시 입력" /></label>
                 {role === "admin" && <div className="sm:col-span-2">
                   <div className="flex items-end gap-2">
                     <label className="min-w-0 flex-1 text-xs font-semibold text-slate-600">관리자 인증코드
@@ -129,7 +172,8 @@ export default function Signup({ toLogin }) {
                 </div>}
               </div>
               <label className="mt-5 flex items-start gap-2 text-xs text-slate-500"><input type="checkbox" className="mt-0.5 h-4 w-4 accent-teal-600" /><span>서비스 이용약관 및 개인정보 처리방침에 동의합니다. (필수)</span></label>
-              <button onClick={submitSignup} disabled={(role === "guardian" && !emailVerified) || (role === "admin" && !adminVerified)} className="mt-6 w-full rounded-lg bg-teal-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-teal-700 disabled:cursor-not-allowed disabled:bg-slate-300">가입하기</button>
+              {submitError && <p className="mt-4 text-xs font-semibold text-rose-600">{submitError}</p>}
+              <button onClick={submitSignup} disabled={submitting || (role === "guardian" && !emailVerified) || (role === "admin" && !adminVerified)} className="mt-6 w-full rounded-lg bg-teal-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-teal-700 disabled:cursor-not-allowed disabled:bg-slate-300">{submitting ? "가입 중..." : "가입하기"}</button>
               <div className="mt-5 border-t border-slate-100 pt-4 text-center text-xs text-slate-500">이미 계정이 있으신가요? <button onClick={toLogin} className="font-bold text-teal-600 hover:underline">로그인</button></div>
             </>
           )}

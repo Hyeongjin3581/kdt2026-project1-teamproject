@@ -1,14 +1,52 @@
+import { useEffect, useState } from "react";
+import axios from "axios";
 import SectionTitle from "../../../components/common/SectionTitle";
 import Panel from "../../../components/common/Panel";
 import { useCenter, inCenter } from "../../../context/CenterContext";
-import { centers } from "../../../data/centers";
-import { scheduleDays, weekTable } from "../../../data/schedules";
+import LoadStatus from "../../../components/common/LoadStatus";
+import { buildAdminModel, emptyModel, emptyRaw } from "../../../utils/adminAdapters";
 import { toMin, conflictSet } from "../../../utils/scheduleUtils";
 
 export default function Schedule() {
   const center = useCenter();
+  const [model, setModel] = useState(emptyModel);
+  const [status, setStatus] = useState("loading");
+
+  // 방문 일정 화면에 필요한 목록을 axios로 조회 : axios.get("통신할주소", { 옵션 }) → response.data
+  async function loadData() {
+    setStatus("loading");
+    try {
+      const [centersRes, careworkersRes, recipientsRes] = await Promise.all([
+        axios.get("http://localhost:8080/center", { withCredentials: true }),
+        axios.get("http://localhost:8080/api/careworkers", { withCredentials: true }),
+        axios.get("http://localhost:8080/carerecipient", { withCredentials: true }),
+      ]);
+      // 수급자별 방문 요청, 센터별 근무기록
+      const [requestLists, reportLists] = await Promise.all([
+        Promise.all(recipientsRes.data.map((r) =>
+          axios.get("http://localhost:8080/request/carerecipient", { params: { carerecipient_no: r.careRecipientNo }, withCredentials: true }).catch(() => ({ data: [] }))
+        )),
+        Promise.all(centersRes.data.map((c) => c.centerNo).map((no) =>
+          axios.get("http://localhost:8080/careworkerreport/center", { params: { center_no: no }, withCredentials: true }).catch(() => ({ data: [] }))
+        )),
+      ]);
+      setModel(buildAdminModel({
+        ...emptyRaw,
+        centers: centersRes.data, careworkers: careworkersRes.data, recipients: recipientsRes.data,
+        requests: requestLists.flatMap((res) => res.data),
+        reports: reportLists.flatMap((res) => res.data),
+      }));
+      setStatus("ok");
+    } catch (error) {
+      console.error("방문 일정 조회 실패:", error);
+      setStatus("error");
+    }
+  }
+  useEffect(() => { loadData(); }, []);
+  const { centers, scheduleDays, weekTable } = model;
   const rows = weekTable.filter(inCenter(center));
   const conflictCount = rows.reduce((n, r) => n + r.cells.reduce((m, cell) => m + (conflictSet(cell).size > 0 ? 1 : 0), 0), 0);
+  if (status !== "ok") return <LoadStatus status={status} onRetry={loadData} />;
   return (
     <div className="space-y-5">
       <SectionTitle title="방문 일정" subtitle="요양보호사별 주간 타임테이블입니다. 같은 시간대에도 여러 요양보호사가 각각 다른 수급자를 방문할 수 있습니다." />
@@ -30,8 +68,8 @@ export default function Schedule() {
             <div className="px-3 py-3 text-left">요양보호사</div>
             {scheduleDays.map((d) => <div key={d} className="px-3 py-3">{d}</div>)}
           </div>
-            {rows.map((row) => (
-            <div key={row.cg} className="grid grid-cols-[132px_repeat(7,1fr)] border-b border-slate-100 last:border-0">
+          {rows.map((row) => (
+            <div key={row.id} className="grid grid-cols-[132px_repeat(6,1fr)] border-b border-slate-100 last:border-0">
               <div className="flex items-center gap-2 border-r border-slate-100 px-3 py-4">
                 <div className="grid h-8 w-8 place-items-center rounded-full bg-teal-100 text-xs font-bold text-teal-700">{row.cg[0]}</div>
                 <div><b className="block text-xs text-slate-700">{row.cg}</b>{center === "all" && <span className="text-[10px] text-slate-400">{centers.find((c) => c.id === row.center)?.short ?? "센터 정보 없음"}</span>}</div>

@@ -1,7 +1,10 @@
+import { useState } from "react";
 import Panel from "../../../components/common/Panel";
+import RecipientEditModal from "../../../components/common/RecipientEditModal";
 import Badge from "../../../components/common/Badge";
 
-export default function RecipientDetail({ r, onClose }) {
+export default function RecipientDetail({ r, onClose, onChanged }) {
+  const [editing, setEditing] = useState(false);
   return (
     <div className="fixed inset-0 z-40 flex justify-end bg-slate-900/40" onClick={onClose}>
       <div className="h-full w-full max-w-md overflow-y-auto bg-[#f4f8f7] p-5 shadow-2xl" onClick={(e) => e.stopPropagation()}>
@@ -14,6 +17,7 @@ export default function RecipientDetail({ r, onClose }) {
           <div><h2 className="font-display text-xl font-bold text-slate-900">{r.name}</h2><p className="text-xs text-slate-400">{r.gender} · {r.grade}</p></div>
           <Badge tone={r.tone}>{r.status}</Badge>
         </div>
+        <div className="mt-3"><button onClick={() => setEditing(true)} className="rounded-lg border border-teal-200 bg-white px-4 py-2 text-xs font-bold text-teal-700 transition hover:bg-teal-50">✎ 정보 수정 · 삭제</button></div>
         <Panel className="mt-4 p-4">
           <h3 className="text-xs font-bold uppercase tracking-wide text-slate-400">기본 정보</h3>
           <div className="mt-3 space-y-2 text-sm">
@@ -26,7 +30,7 @@ export default function RecipientDetail({ r, onClose }) {
           <h3 className="text-xs font-bold uppercase tracking-wide text-slate-400">요일별 방문 일정</h3>
           <div className="mt-3 space-y-2">
             {r.schedule.map(([d, t]) => (
-              <div key={d} className="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2.5 text-sm"><b className="text-slate-700">{d}</b><span className="font-mono text-slate-600">{t}</span></div>
+              <div key={d + t} className="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2.5 text-sm"><b className="text-slate-700">{d}</b><span className="font-mono text-slate-600">{t}</span></div>
             ))}
           </div>
         </Panel>
@@ -34,7 +38,7 @@ export default function RecipientDetail({ r, onClose }) {
           <h3 className="text-xs font-bold uppercase tracking-wide text-slate-400">방문 이력</h3>
           <div className="mt-3 space-y-3">
             {r.history.map(([date, cg, note]) => (
-              <div key={date} className="border-b border-slate-100 pb-3 last:border-0">
+              <div key={date + note} className="border-b border-slate-100 pb-3 last:border-0">
                 <div className="flex items-center justify-between"><b className="font-mono text-xs text-slate-500">{date}</b><span className="text-xs text-slate-600">{cg} 요양보호사</span></div>
                 <p className="mt-1 text-xs leading-5 text-slate-500">{note}</p>
               </div>
@@ -42,6 +46,7 @@ export default function RecipientDetail({ r, onClose }) {
           </div>
         </Panel>
       </div>
+      {editing && <RecipientEditModal recipient={r.raw} onClose={() => setEditing(false)} onChanged={() => { setEditing(false); onChanged(); }} />}
     </div>
   );
 }
