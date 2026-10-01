@@ -46,6 +46,8 @@ public class CaregiverAvailabilityDto {
                 .availabilityNo(availability.getAvailabilityNo())
                 .availableDate(availability.getAvailableDate())
                 .startTime(availability.getStartTime())
+                .availabilityNo(availability.getAvailabilityNo())
+                .caregiverNo(availability.getCareworkerEntity().getCareworkerNo())
                 .endTime(availability.getEndTime())
                 .status(availability.getStatus())
                 .build();
