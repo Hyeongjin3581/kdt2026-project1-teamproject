@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import oncare_backend.model.dto.AssignmentActionDto;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 import org.springframework.stereotype.Service;
@@ -113,4 +114,37 @@ public class CareWorkerReportService{
 
         return true;
     }
+
+    // 요양보호사 : 배정 수락
+    public boolean acceptAssignment(AssignmentActionDto assignmentActionDto) {
+        // 근무기록에서 넘버로 조회해서 요양보호사가 수락하면 근무기록의 상태는 확정, 요청의 상태는 배정완료
+        CareworkerReportEntity reportEntity = careWorkerReportRepository.findById(assignmentActionDto.getCareworkersReportNo()).orElse(null);
+        if (reportEntity == null){
+            return false;
+        }
+        // 수락을 기다리는 "배정" 상태일 때만 수락할 수 있음
+        if (!"배정".equals(reportEntity.getWorkStatus())){
+            return false;
+        }
+        reportEntity.setWorkStatus("확정");                           // 근무기록
+        reportEntity.getRequestEntity().setRequestState("배정완료");   // 요청
+        return true;
+    }
+
+    // 요양보호사 : 배정 거절
+    public boolean rejectAssignment(AssignmentActionDto assignmentActionDto) {
+        // 근무기록에서 넘버로 조회해서 요양보호사가 거절하면 근무기록은 취소, 요청은 신청으로 복귀
+        CareworkerReportEntity reportEntity = careWorkerReportRepository.findById(assignmentActionDto.getCareworkersReportNo()).orElse(null);
+        if (reportEntity == null){
+            return false;
+        }
+        // 수락을 기다리는 "배정" 상태일 때만 취소할 수 있음
+        if (!"배정".equals(reportEntity.getWorkStatus())){
+            return false;
+        }
+        reportEntity.setWorkStatus("취소");                           // 근무기록
+        reportEntity.getRequestEntity().setRequestState("신청");   // 요청
+        return true;
+    }
+
 }

@@ -2,6 +2,7 @@ package oncare_backend.controller;
 
 import java.util.List;
 
+import oncare_backend.model.dto.AssignmentActionDto;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -51,4 +52,17 @@ public class CareWorkerReportController {
     public boolean deleteReport( @RequestParam(name="careworker_report_no")Integer careworkersReportNo ){
         return careWorkerReportService.deleteReport(careworkersReportNo);
     }
+
+    // 요양보호사 : 배정 수락
+    @PutMapping("/accept")
+    public boolean acceptAssignment(@RequestBody AssignmentActionDto assignmentActionDto){
+        return careWorkerReportService.acceptAssignment(assignmentActionDto);
+    }
+
+    // 요양보호사 : 배정 거절
+    @PutMapping("/reject")
+    public boolean rejectAssignment(@RequestBody AssignmentActionDto assignmentActionDto){
+        return careWorkerReportService.rejectAssignment(assignmentActionDto);
+    }
+
 }
