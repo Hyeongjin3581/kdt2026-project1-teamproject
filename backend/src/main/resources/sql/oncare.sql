@@ -174,8 +174,8 @@ CREATE TABLE IF NOT EXISTS caregiver_availability (
     availability_no INT NOT NULL AUTO_INCREMENT,
     caregiver_no INT NOT NULL,
     available_date DATE NOT NULL,
-    start_time TIME NULL,
-    end_time TIME NULL,
+    start_time INT NOT NULL,
+    end_time INT NOT NULL,
     status VARCHAR(20) NOT NULL,
 
     PRIMARY KEY (availability_no),
