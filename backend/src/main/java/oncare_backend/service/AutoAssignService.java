@@ -14,7 +14,6 @@ import oncare_backend.service.CareWorkerRecommendationService.CareWorkerRecommen
 
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -27,27 +26,21 @@ public class AutoAssignService {
     private final CareWorkerReportRepository careWorkerReportRepository;
     private final CareWorkerRecommendationService careWorkerRecommendationService;
 
-    // 상위 3명 추출 메소드
-    public List<CareWorkerRecommendation> top3Careworkers(Integer requestNo){
-        // requesNo값으로 requestEntity 찾고 없으면 빈 배열 리턴
+    // 필수 조건 후보를 추천 서비스에 전달하고 상위 3명을 반환
+    public List<CareWorkerRecommendation> top3Careworkers(Integer requestNo) {
         RequestEntity requestEntity = requestRepository.findById(requestNo).orElse(null);
-        if (requestEntity == null){
-            return new ArrayList<>();
-        }
-        // 필수 조건 필터 메소드 호출해서 배정가능한 요양보호사 받기
-        List<CareworkerEntity> careworkerEntities = filterCareworker(requestEntity);
-        if (careworkerEntities.isEmpty()) {
+        if (requestEntity == null) {
             return List.of();
         }
-
-        Integer careRecipientNo = requestEntity.getCarerecipientEntity().getCareRecipientNo();
-        return careWorkerRecommendationService.recommendCandidates(careRecipientNo, careworkerEntities);
+        // 필수 조건 필터 메소드에서 근무 상태, 선호 성별, 근무 가능 날짜·시간, 일정 중복 여부를 확인한 요양보호사 후보 목록을 가져옴
+        List<CareworkerEntity> careworkerEntity = filterCareworker(requestEntity);
+        if (careworkerEntity.isEmpty()) {
+            return List.of();
         }
-
-
-    // 1. 위에 List<CareworkerEntity> careworkerEntities = filterCareworker(requestEntity); 
-    // 를 사용하여 필수조건 필터 메소드가 참일시 해당 메소드 수행 후 반환. 
-
+        // recommendCandidates에 인자로 전달하고, 추천 결과 목록을 반환
+        Integer careRecipientNo = requestEntity.getCarerecipientEntity().getCareRecipientNo();
+        return careWorkerRecommendationService.recommendCandidates(careRecipientNo, careworkerEntity);
+    }
 
     // 필수 조건 필터 메소드
     private List<CareworkerEntity> filterCareworker(RequestEntity requestEntity){
