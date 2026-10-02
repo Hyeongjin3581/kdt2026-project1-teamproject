@@ -31,7 +31,7 @@ public class UserDto {
         return UserDto.builder()
                 .userNo(user.getUserNo())
                 .userId(user.getUserId())
-                .userPassword(user.getUserPassword())
+                // .userPassword(user.getUserPassword()) // 뭐가 됐든 userDto들을 조회해버리면 비밀번호까지 노출돼서 주석처리 해 놓음
                 .phoneNumber(user.getPhoneNumber())
                 .email(user.getEmail())
                 .userCategoryNo(user.getUserCategoryEntity().getUserCategoryNo())

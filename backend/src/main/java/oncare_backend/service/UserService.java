@@ -91,4 +91,21 @@ public class UserService {
         }
         return true;
     }
+
+    // 회원 로그인
+    public UserDto login( UserDto userDto ){
+        // 매개변수 -> ID, 비번등 입력된 DTO
+
+        // 1. 입력받은 아이디 존재여부 확인
+        UserEntity userEntity = userRepository.findByUserId(userDto.getUserId());
+        if (userEntity == null) { return null; }
+
+        // 2. 아이디 존재 시 평문 - 암호문 비교
+        boolean isPasswordCorrect = passwordEncoder.matches(userDto.getUserPassword(),userEntity.getUserPassword());
+        if (!isPasswordCorrect) { return null; }
+        System.out.println(userDto.getUserId() + "님 로그인함");
+
+        // 3. entity -> dto로 변환 및 반환
+        return UserDto.entityToDto(userEntity);
+    }
 }
