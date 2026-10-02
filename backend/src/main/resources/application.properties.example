@@ -42,6 +42,5 @@ spring.sql.init.encoding=UTF-8
 # kakao rest api key - 임준희가 발급한 키로 교체
 kakao.rest-api-key=앙기모띠
 
-
 # JWT 서명 키 (32자 이상 문자열 입력)
 jwt.secret = ***
