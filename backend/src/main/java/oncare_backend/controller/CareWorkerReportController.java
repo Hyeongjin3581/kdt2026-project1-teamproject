@@ -2,6 +2,7 @@ package oncare_backend.controller;
 
 import java.util.List;
 
+import oncare_backend.model.dto.AssignCareworkerDto;
 import oncare_backend.model.dto.AssignmentActionDto;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RestController;
@@ -65,4 +66,15 @@ public class CareWorkerReportController {
         return careWorkerReportService.rejectAssignment(assignmentActionDto);
     }
 
+    // 관리자가 상위 3명 중 한 명을 눌러 "배정하기"를 했을 때
+    @PostMapping("/assign")
+    public boolean assignCareworker(@RequestBody AssignCareworkerDto assignCareworkerDto){
+        return careWorkerReportService.assignCareworker(assignCareworkerDto);
+    }
+
+    // 요양보호사가 자기 페이지를 열었을 때 수락 대기 중인 배정을 보여 주는 조회
+    @GetMapping("/myRequest")
+    public List<CareworkerReportDto> myRequest(@RequestParam Integer careworkNo){
+        return careWorkerReportService.myRequest(careworkNo);
+    }
 }

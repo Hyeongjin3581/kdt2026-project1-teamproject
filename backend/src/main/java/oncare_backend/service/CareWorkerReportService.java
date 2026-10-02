@@ -2,15 +2,12 @@ package oncare_backend.service;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
+import oncare_backend.model.dto.AssignCareworkerDto;
 import oncare_backend.model.dto.AssignmentActionDto;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Repository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 
 
 import oncare_backend.model.dto.CareworkerReportDto;
@@ -28,7 +25,7 @@ public class CareWorkerReportService{
     @Autowired private CareWorkerReportRepository careWorkerReportRepository;
     @Autowired private CareWorkerRepository careWorkerRepository;
     @Autowired private RequestRepository requestRepository;
-    
+
 
     // [1] 근무기록 생성
     public boolean saveReport(CareworkerReportDto careworkerReportDto) {
@@ -147,4 +144,37 @@ public class CareWorkerReportService{
         return true;
     }
 
+    // 상위 3명중 1명 선택하면 상태가 배정인 근무기록 만들기
+    public boolean assignCareworker(AssignCareworkerDto assignCareworkerDto) {
+        // 받은 요청, 요양보호사가 없으면 false
+        CareworkerEntity findCareworker = careWorkerRepository.findById(assignCareworkerDto.getCareworkerNo()).orElse(null);
+        RequestEntity findRequest = requestRepository.findById(assignCareworkerDto.getRequestNo()).orElse(null);
+        if (findCareworker == null || findRequest == null){
+            return false;
+        }
+
+        if (!"신청".equals(findRequest.getRequestState())){
+            return false;
+        }
+
+        // 찾은 요청,요양보호사를 토대로 상태가 배정인 근무기록 만들기
+        CareworkerReportEntity reportEntity = new CareworkerReportEntity();
+        reportEntity.setCareworkerEntity(findCareworker);
+        reportEntity.setRequestEntity(findRequest);
+        reportEntity.setWorkStatus("배정");
+        reportEntity.setWorkDate(findRequest.getVisitDate());
+        reportEntity.setWorkStartTime(findRequest.getVisitStartTime());
+        reportEntity.setWorkEndTime(findRequest.getVisitEndTime());
+
+        careWorkerReportRepository.save(reportEntity);
+
+        // 요청의 상태는 배정중으로 변경
+        findRequest.setRequestState("배정중");
+
+        return true;
+    }
+
+    public List<CareworkerReportDto> myRequest(Integer careworkNo) {
+        return null;
+    }
 }
