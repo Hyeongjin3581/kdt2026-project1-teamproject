@@ -39,5 +39,5 @@ spring.sql.init.continue-on-error=false
 # 한글 인코딩
 spring.sql.init.encoding=UTF-8
 
-# kakao rest api key - 임준희가 발급한 키로 교체
-kakao.rest-api-key=앙기모띠
+# kakao rest api key - 임준희가 파업 선언
+kakao.rest-api-key= 4조 다음주 파업 선언

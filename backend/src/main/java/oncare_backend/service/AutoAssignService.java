@@ -10,6 +10,8 @@ import oncare_backend.model.repository.CareWorkerReportRepository;
 import oncare_backend.model.repository.CaregiverAvailabilityRepository;
 import oncare_backend.model.repository.CareworkersRepository;
 import oncare_backend.model.repository.RequestRepository;
+import oncare_backend.service.CareWorkerRecommendationService.CareWorkerRecommendation;
+
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -23,23 +25,29 @@ public class AutoAssignService {
     private final CareworkersRepository careworkersRepository;
     private final CaregiverAvailabilityRepository caregiverAvailabilityRepository;
     private final CareWorkerReportRepository careWorkerReportRepository;
+    private final CareWorkerRecommendationService careWorkerRecommendationService;
 
     // 상위 3명 추출 메소드
-    public List<CareworkerEntity> top3Careworkers(Integer requestNo){
+    public List<CareWorkerRecommendation> top3Careworkers(Integer requestNo){
         // requesNo값으로 requestEntity 찾고 없으면 빈 배열 리턴
         RequestEntity requestEntity = requestRepository.findById(requestNo).orElse(null);
         if (requestEntity == null){
             return new ArrayList<>();
         }
-
         // 필수 조건 필터 메소드 호출해서 배정가능한 요양보호사 받기
         List<CareworkerEntity> careworkerEntities = filterCareworker(requestEntity);
+        if (careworkerEntities.isEmpty()) {
+            return List.of();
+        }
+
+        Integer careRecipientNo = requestEntity.getCarerecipientEntity().getCareRecipientNo();
+        return careWorkerRecommendationService.recommendCandidates(careRecipientNo, careworkerEntities);
+        }
 
 
+    // 1. 위에 List<CareworkerEntity> careworkerEntities = filterCareworker(requestEntity); 
+    // 를 사용하여 필수조건 필터 메소드가 참일시 해당 메소드 수행 후 반환. 
 
-
-        return new ArrayList<>();
-    }
 
     // 필수 조건 필터 메소드
     private List<CareworkerEntity> filterCareworker(RequestEntity requestEntity){
@@ -61,8 +69,8 @@ public class AutoAssignService {
                 .filter(careworkerEntity -> isWithinAvailability(careworkerEntity, requestEntity))
                 .toList();
 
-        availabilityList.stream()
-                .filter(careworkerEntity -> hasTimeConflict(careworkerEntity,requestEntity))
+        return availabilityList.stream()
+            .filter(careworkerEntity -> !hasTimeConflict(careworkerEntity, requestEntity))
                 .toList();
     }
 
@@ -86,12 +94,14 @@ public class AutoAssignService {
     private boolean hasTimeConflict(CareworkerEntity cw, RequestEntity request) {
         List<CareworkerReportEntity> date = careWorkerReportRepository.findByCareworkerEntityAndWorkDate(cw, request.getVisitDate());
         for (CareworkerReportEntity report : date) {
-            if (report.getWorkStatus().equals("취소")){
+            if ("취소".equals(report.getWorkStatus())){
                 continue;
             }
-            if (report.getWorkStartTime() )
+            if (request.getVisitStartTime() < report.getWorkEndTime()
+                    && request.getVisitEndTime() > report.getWorkStartTime()) {
+                return true;
+            }
         }
-
 
         return false;
     }
