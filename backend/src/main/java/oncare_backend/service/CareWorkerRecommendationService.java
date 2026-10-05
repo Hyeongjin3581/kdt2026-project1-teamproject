@@ -1,5 +1,7 @@
 package oncare_backend.service;
 
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -58,7 +60,7 @@ public class CareWorkerRecommendationService {
         return recommendCandidates(careRecipientNo, careworkerEntities);
     }
 
-    // [1] 석암 타이쵸우의 필수조건을 통과하면 점수를 계산.  + 상위 3명만 반환함.
+    // [1] 석암 타이쵸우의 필수조건을 통과한 후보를 받아 점수를 계산하고 상위 3명을 반환함.
     public List<CareWorkerRecommendationDto> recommendCandidates(Integer careRecipientNo, List<CareworkerEntity> careworkerEntities) {
 
         // 추천 대상 수급자를 찾습니다. 번호에 해당하는 수급자가 없으면 404 오류를 반환합니다. ** 
@@ -113,16 +115,88 @@ public class CareWorkerRecommendationService {
             return List.of();
         }
 
-        // 다음 단계에서 계발.
-        throw new UnsupportedOperationException(
-                "추천점수 계산단계 구성중이지롱."
-        );
+        // [2] 수급자와 보호사의 좌표를 HaversineService에 전달해 거리를 계산
+        Map<Integer, Double> distanceMap = new HashMap<>();
+        for (CareworkerEntity careworker : geocodedCareworkers) {
+            Coordinates workerCoordinates =
+                    candidateCoordinates.get(careworker.getCareworkerNo());
+            double distanceKm = haversineService.distanceKm(
+                    recipientCoordinates.latitude(),
+                    recipientCoordinates.longitude(),
+                    workerCoordinates.latitude(),
+                    workerCoordinates.longitude()
+            );
+            distanceMap.put(careworker.getCareworkerNo(), distanceKm);
+        }
+
+        List<Integer> workerNos = new ArrayList<>();
+        for (CareworkerEntity careworker : geocodedCareworkers) {
+            workerNos.add(careworker.getCareworkerNo());
+        }
+
+        // [3] 각 보호사의 최근 30일 완료 근무 횟수를 조회
+        Map<Integer, Long> workCountMap = getWorkCountMap(workerNos);
+
+        // [4] 보호사마다 거리점수를 계산
+        List<CareWorkerRecommendationDto> recommendations = new ArrayList<>();
+        for (CareworkerEntity worker : geocodedCareworkers) {
+            double distanceKm = distanceMap.get(worker.getCareworkerNo());
+
+            // 근무 기록이 없으면 0회로 처리
+            long workCount = workCountMap.getOrDefault(
+                    worker.getCareworkerNo(),
+                    0L
+            );
+
+            double distanceScore = calculateDistanceScore(distanceKm);
+            double workScore = calculateWorkScore(workCount);
+            double totalScore = distanceScore + workScore;
+
+            recommendations.add(new CareWorkerRecommendationDto(
+                    worker.getCareworkerNo(),
+                    worker.getCareworkerName(),
+                    distanceKm,
+                    workCount,
+                    distanceScore,
+                    workScore,
+                    totalScore
+            ));
+        }
+
+        // [5] 총점이 높은 순으로 정렬
+        // 중첩 for문을 사용하여 상위 3명의 후보들을 하나씩 확인. 
+        for (int i = 0; i < recommendations.size(); i++) { // 1 2 3등
+            for (int j = i + 1; j < recommendations.size(); j++) { // 개별 후보들
+                if (shouldComeBefore(recommendations.get(j), recommendations.get(i))) {
+                    CareWorkerRecommendationDto temp = recommendations.get(i);
+                    recommendations.set(i, recommendations.get(j));
+                    recommendations.set(j, temp);
+                }
+            }
+        }
+
+        // [6] 상위 3명만 소수 둘째 자리까지 반올림 / 일단은 
+        List<CareWorkerRecommendationDto> topRecommendations = new ArrayList<>();
+        for (int i = 0; i < recommendations.size() && i <  3; i++) {
+            CareWorkerRecommendationDto item = recommendations.get(i);
+            topRecommendations.add(new CareWorkerRecommendationDto(
+                    item.getCareworkerNo(),
+                    item.getCareworkerName(),
+                    round2(item.getDistanceKm()),
+                    item.getWorkCount(),
+                    round2(item.getDistanceScore()),
+                    round2(item.getWorkScore()),
+                    round2(item.getTotalScore())
+            ));
+        }
+
+        return topRecommendations;
     }
 
-    // 주소를 GeoCodingService에 전달해 좌표를 가져옵니다.
+    // [1] 주소를 GeoCodingService에 전달해 좌표를 가져옵니다.
     // 같은 주소는 캐시에서 재사용하고, 유효하지 않은 좌표 응답은 오류로 처리합니다. ** 중요한데 진짜 모르겠음. 
     // 캐시를 배운적이 있나요..? 
-    
+
     // 카카오 API 호출 횟수를 줄이기 위한 것. 이 캐시는 한 번의 추천 요청 안에서 같은 주소가 반복될 때 지오코딩 API를 다시 호출하지 않고 저장된 좌표를 재사용
     private Coordinates geocodeAddress(String address, Map<String, Coordinates> coordinateCache) {
 
@@ -139,7 +213,7 @@ public class CareWorkerRecommendationService {
         }
 
         if (geocoding.size() < 2 || !hasCoordinates(geocoding.get(0), geocoding.get(1))) {
-            throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "주소 검색 서비스가 유효하지 않은 좌표를 반환했습니다.");
+            throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "유효하지 않은 좌표");
         }
 
         Coordinates coordinates = new Coordinates(geocoding.get(0), geocoding.get(1));
@@ -147,7 +221,7 @@ public class CareWorkerRecommendationService {
         return coordinates;
     }
 
-    // 위도와 경도가 유효한 좌표 범위인지 확인합니다.
+    // [1] 위도와 경도가 유효한 좌표 범위인지 확인
     private boolean hasCoordinates(Double latitude, Double longitude) {
         return latitude != null
                 && longitude != null
@@ -159,7 +233,67 @@ public class CareWorkerRecommendationService {
                 && longitude <= 180;
     }
 
-    // 위도와 경도를 한 쌍으로 담아두는 자료형입니다.
+    // [1] 위도와 경도 한 쌍
     private record Coordinates(double latitude, double longitude) {
     }
-}
+
+    // [3] 30일 근무 조회
+    // API추천 요청 때마다 그 기록 중 최근 30일치만 조회해 횟수를 계산
+    private Map<Integer, Long> getWorkCountMap(List<Integer> workerNos) {
+        // 날짜 범위 지정 오늘을 포함한 30일 경계
+        LocalDate today = LocalDate.now(ZoneId.of("Asia/Seoul"));
+        LocalDate startDate = today.minusDays(29);
+        LocalDate endDate = today.plusDays(1);
+
+        List<CareWorkerReportRepository.WorkCount> counts =
+                careWorkerReportRepository.countCompletedWork(
+                        workerNos,
+                        startDate,
+                        endDate
+                );
+
+        Map<Integer, Long> workCountMap = new HashMap<>();
+        for (CareWorkerReportRepository.WorkCount count : counts) {
+            //조회한 결과는 이 메서드 안에서 보호사 번호별로 정리
+            workCountMap.put(count.getCareworkerNo(), count.getWorkCount());
+        }
+
+        return workCountMap;
+    } 
+
+    // [4] 설정한 거리(10km) 이상이면 0
+    private double calculateDistanceScore(double distanceKm) {
+        double remainingRatio =
+                Math.max(0.0, 1.0 - distanceKm / DISTANCE_LIMIT_KM);
+        return MAX_DISTANCE_SCORE * remainingRatio;
+    }
+
+    // [4] 설정한 횟수 이상(20일)이면 0점
+    private double calculateWorkScore(long workCount) {
+        double remainingRatio =
+                Math.max(0.0, 1.0 - workCount / WORK_COUNT_LIMIT);
+        return MAX_WORK_SCORE * remainingRatio;
+    }
+
+    // [5] 총점비교
+    private boolean shouldComeBefore(
+            CareWorkerRecommendationDto first,
+            CareWorkerRecommendationDto second) {
+        if (first.getTotalScore() != second.getTotalScore()) {
+            return first.getTotalScore() > second.getTotalScore();
+        }
+        if (first.getDistanceKm() != second.getDistanceKm()) {
+            return first.getDistanceKm() < second.getDistanceKm();
+        }
+        if (first.getWorkCount() != second.getWorkCount()) {
+            return first.getWorkCount() < second.getWorkCount();
+        }
+        return first.getCareworkerNo() < second.getCareworkerNo();
+    }
+
+    // [6] 소수 둘째 자리까지 반올림 / 일단 소수점 반올림 후 , 추후에 필요없으면 리액트에서 소수점 제거.
+    private double round2(double number) {
+        return Math.round(number * 100.0) / 100.0;
+    }
+
+}   // end

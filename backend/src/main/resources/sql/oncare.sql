@@ -1,5 +1,5 @@
 -- ONCARE 전체 DB 스크립트 (MySQL 8.0.16 이상)
--- 신규 배포/개발 DB의 스키마, 서비스 샘플 데이터, API 테스트 계정과 좌표 보정을 한 번에 준비합니다.
+-- 신규 배포/개발 DB의 스키마, 서비스 샘플 데이터와 API 테스트 계정을 준비합니다.
 -- MySQL Workbench/SQLTools 또는 mysql 클라이언트에서 빈 DB 대상으로 한 번 실행하세요.
 -- 기존 테이블이 있으면 CREATE TABLE에서 중단됩니다. 기존 DB에 재실행하거나 데이터를 초기화하지 마세요.
 -- Spring 시작 시 자동 실행하지 않습니다. application.properties의 spring.sql.init.mode=never를 유지하세요.
@@ -205,8 +205,7 @@ CREATE TABLE guardianinquiry (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- 샘플 입력: 아래 데이터는 개발/추천 로직 검증용입니다.
--- 좌표는 실제 주소 지오코딩 결과가 아닌 테스트용 근사 좌표입니다.
--- 수급자·보호사 샘플 좌표는 각 센터 주소 기준 10km 이내에 배치합니다.
+-- 추천 기능은 주소를 지오코딩하므로 샘플 좌표값은 입력하지 않습니다.
 START TRANSACTION;
 
 -- 사용자 카테고리 샘플
@@ -323,34 +322,34 @@ VALUES
 
 INSERT INTO carerecipients
 (carerecipient_no, guardian_no, carerecipient_name, carerecipient_age, carerecipient_address,
- carerecipient_gender, care_recipient_content, latitude, longitude)
+ carerecipient_gender, care_recipient_content)
 VALUES
-(1, 1, '김영자', 82, '경기도 안양시 동안구 시민대로 180', '여자', '추천 거리·근무횟수 테스트 수급자', 37.3926, 126.951),
-(2, 1, '이순자', 87, '경기도 시흥시 능곡로 120', '여자', '추천 거리 테스트 수급자', 37.37, 126.806),
-(3, 2, '박영수', 79, '경기도 수원시 팔달구 효원로 250', '남자', '추천 거리 테스트 수급자', 37.2636, 127.0286),
-(4, 3, '최정숙', 84, '경기도 안양시 동안구 평촌대로 239', '여자', '추천 거리 테스트 수급자', 37.3902, 126.9634),
-(5, 2, '이복희', 81, '경기도 시흥시 장곡동', '여자', '복약 시간 확인 필요', 37.3690, 126.7880),
-(6, 2, '강영호', 77, '경기도 시흥시 배곧동', '남자', '주 3회 산책 희망', 37.3690, 126.7350),
-(7, 3, '윤정자', 86, '경기도 수원시 팔달구 인계동', '여자', '계단 이동이 어려움', 37.2650, 127.0320),
-(8, 3, '박철수', 80, '경기도 수원시 권선구 권선동', '남자', '식사 준비 도움 필요', 37.2570, 126.9710),
-(9, 3, '송복자', 83, '경기도 수원시 영통구 매탄동', '여자', '장시간 보행 어려움', 37.2520, 127.0600),
-(10, 3, '임영길', 78, '경기도 수원시 장안구 정자동', '남자', '정기적인 혈압 확인 필요', 37.3020, 127.0080);
+(1, 1, '김영자', 82, '경기도 안양시 동안구 시민대로 180', '여자', '추천 거리·근무횟수 테스트 수급자'),
+(2, 1, '이순자', 87, '경기도 시흥시 능곡로 120', '여자', '추천 거리 테스트 수급자'),
+(3, 2, '박영수', 79, '경기도 수원시 팔달구 권광로 173', '남자', '추천 거리 테스트 수급자'),
+(4, 3, '최정숙', 84, '경기도 안양시 동안구 평촌대로 239', '여자', '추천 거리 테스트 수급자'),
+(5, 2, '이복희', 81, '경기도 시흥시 장곡동', '여자', '복약 시간 확인 필요'),
+(6, 2, '강영호', 77, '경기도 시흥시 배곧동', '남자', '주 3회 산책 희망'),
+(7, 3, '윤정자', 86, '경기도 수원시 팔달구 인계동', '여자', '계단 이동이 어려움'),
+(8, 3, '박철수', 80, '경기도 수원시 권선구 권선동', '남자', '식사 준비 도움 필요'),
+(9, 3, '송복자', 83, '경기도 수원시 영통구 매탄동', '여자', '장시간 보행 어려움'),
+(10, 3, '임영길', 78, '경기도 수원시 장안구 정자동', '남자', '정기적인 혈압 확인 필요');
 
 -- 요양보호사 샘플
 
 INSERT INTO careworkers
 (careworker_no, careworker_name, careworker_address, careworker_gender, hour_wage,
- careworker_age, careworker_state, latitude, longitude, center_no, user_no)
+ careworker_age, careworker_state, center_no, user_no)
 VALUES
-(1, '정미숙', '경기도 안양시 동안구 시민대로 155', '여자', 13000, 58, '근무중', 37.3914, 126.9497, 1, 5),
-(2, '김영희', '경기도 시흥시 능곡로 143', '여자', 13500, 55, '근무중', 37.3690, 126.8082, 2, 6),
-(3, '박성호', '경기도 수원시 팔달구 권광로 184', '남자', 14000, 58, '근무중', 37.2630, 127.0317, 3, 7),
-(4, '최은희', '경기도 안양시 동안구 시민대로 245', '여자', 14500, 57, '근무중', 37.3940, 126.9560, 1, 11),
-(5, '강민지', '경기도 안양시 동안구 평촌대로 212', '여자', 13000, 54, '근무중', 37.3920, 126.9605, 1, 12),
-(6, '조현우', '경기도 시흥시 능곡로 178', '남자', 13500, 49, '근무중', 37.3668, 126.8065, 2, 13),
-(7, '윤서연', '경기도 수원시 팔달구 권광로 173', '여자', 14000, 53, '근무중', 37.2633, 127.0309, 3, 14),
-(8, '김도윤', '경기도 시흥시 승지로 60', '남자', 14500, 51, '근무중', 37.3635, 126.8120, 2, 15),
-(9, '한지은', '경기도 수원시 팔달구 효원로 307', '여자', 15000, 56, '근무중', 37.2634, 127.0338, 3, 16);
+(1, '정미숙', '경기도 안양시 동안구 시민대로 155', '여자', 13000, 58, '근무중', 1, 5),
+(2, '김영희', '경기도 시흥시 능곡로 143', '여자', 13500, 55, '근무중', 2, 6),
+(3, '박성호', '경기도 수원시 팔달구 권광로 184', '남자', 14000, 58, '근무중', 3, 7),
+(4, '최은희', '경기도 안양시 동안구 시민대로 245', '여자', 14500, 57, '근무중', 1, 11),
+(5, '강민지', '경기도 안양시 동안구 평촌대로 212', '여자', 13000, 54, '근무중', 1, 12),
+(6, '조현우', '경기도 시흥시 능곡로 178', '남자', 13500, 49, '근무중', 2, 13),
+(7, '윤서연', '경기도 수원시 팔달구 권광로 173', '여자', 14000, 53, '근무중', 3, 14),
+(8, '김도윤', '경기도 시흥시 승지로 60', '남자', 14500, 51, '근무중', 2, 15),
+(9, '한지은', '경기도 수원시 팔달구 효원로 307', '여자', 15000, 56, '근무중', 3, 16);
 
 -- 근무 가능 시간 샘플
 
@@ -487,10 +486,13 @@ INSERT INTO careworkersreport
 SELECT
 1000 + seq,
     CASE
-        WHEN seq <= 3 OR seq = 39 THEN 1
-        WHEN seq <= 8 OR seq = 40 THEN 2
-        WHEN seq <= 18 OR seq = 41 THEN 3
-        ELSE 4
+        WHEN seq <= 2 OR seq = 39 THEN 1
+        WHEN seq <= 6 OR seq = 40 THEN 2
+        WHEN seq <= 17 OR seq = 41 THEN 3
+        WHEN seq <= 22 THEN 4
+        WHEN seq <= 28 THEN 5
+        WHEN seq <= 36 THEN 6
+        ELSE 7
     END,
     1000 + seq,
     CASE WHEN seq = 41
@@ -537,33 +539,6 @@ VALUES
 
 COMMIT;
 
--- 추천 API 테스트 좌표 보정.
--- 기본 샘플에는 좌표가 이미 포함되어 있으며, 좌표가 0인 동일한 테스트 행만 보정합니다.
-UPDATE carerecipients
-SET
-    latitude = CASE carerecipient_no
-        WHEN 5 THEN 37.3690
-        WHEN 6 THEN 37.3690
-        WHEN 7 THEN 37.2650
-        WHEN 8 THEN 37.2570
-        WHEN 9 THEN 37.2520
-        WHEN 10 THEN 37.3020
-    END,
-    longitude = CASE carerecipient_no
-        WHEN 5 THEN 126.7880
-        WHEN 6 THEN 126.7350
-        WHEN 7 THEN 127.0320
-        WHEN 8 THEN 126.9710
-        WHEN 9 THEN 127.0600
-        WHEN 10 THEN 127.0080
-    END
-WHERE (carerecipient_no = 5 AND carerecipient_name = '이복희' AND latitude = 0 AND longitude = 0)
-   OR (carerecipient_no = 6 AND carerecipient_name = '강영호' AND latitude = 0 AND longitude = 0)
-   OR (carerecipient_no = 7 AND carerecipient_name = '윤정자' AND latitude = 0 AND longitude = 0)
-   OR (carerecipient_no = 8 AND carerecipient_name = '박철수' AND latitude = 0 AND longitude = 0)
-   OR (carerecipient_no = 9 AND carerecipient_name = '송복자' AND latitude = 0 AND longitude = 0)
-   OR (carerecipient_no = 10 AND carerecipient_name = '임영길' AND latitude = 0 AND longitude = 0);
-
 -- 확인 1: 테이블별 입력 건수
 -- 기대값: 4 / 3 / 16 / 3 / 10 / 9 / 10 / 52 / 51 / 4 / 4
 SELECT 'usercategory' AS table_name, COUNT(*) AS row_count FROM usercategory
@@ -579,7 +554,7 @@ UNION ALL SELECT 'inquirycategory', COUNT(*) FROM inquirycategory
 UNION ALL SELECT 'guardianinquiry', COUNT(*) FROM guardianinquiry;
 
 -- 확인 2: 실행 기준 오늘 포함 최근 30일 완료 방문 수
--- 보호사 1~9의 기대값: 3, 5, 10, 20, 0, 0, 0, 0, 0
+-- 보호사 1~9의 기대값: 2, 4, 11, 5, 6, 8, 2, 0, 0
 -- 보고서 1042는 요청 1001의 중복 보고서로, COUNT(DISTINCT request_no)로 한 번만 집계합니다.
 -- 취소/진행중/미래 기록은 제외합니다. 기간 경계: 오늘-29일 이상, 내일 미만.
 SELECT cw.careworker_no, cw.careworker_name,
@@ -653,10 +628,10 @@ SET @oncare_api_test_user_no = (
 
 INSERT INTO careworkers (
     careworker_name, careworker_address, careworker_gender, hour_wage,
-    careworker_age, careworker_state, latitude, longitude, center_no, user_no
+    careworker_age, careworker_state, center_no, user_no
 )
 SELECT '김테스트', '테스트센터 인근', '여자', 12000,
-       50, '근무가능', 37.3926, 126.951,
+       50, '근무가능',
        @oncare_api_test_center_no, @oncare_api_test_user_no
 WHERE @oncare_api_test_center_no IS NOT NULL
   AND @oncare_api_test_user_no IS NOT NULL
