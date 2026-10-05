@@ -1,10 +1,8 @@
--- ONCARE 새 DB 생성 + 샘플 데이터 (MySQL 8.0.16 이상)
--- 용도: MySQL Workbench/SQLTools 등에서 빈 DB에 한 번 실행하는 개발용 스크립트.
--- 전체를 같은 연결에서 실행하고, 오류가 발생하면 중단하세요.
--- 기존 테이블이 있으면 CREATE TABLE에서 오류가 나므로 그대로 이어서 실행하지 마세요.
--- 기존 oncare를 완전히 지우고 다시 만들 때만 아래 DROP 줄의 주석을 해제하세요.
--- 주석을 해제하면 oncare의 모든 테이블과 데이터가 삭제됩니다.
--- DROP DATABASE IF EXISTS oncare;
+-- ONCARE 전체 DB 스크립트 (MySQL 8.0.16 이상)
+-- 신규 배포/개발 DB의 스키마, 서비스 샘플 데이터, API 테스트 계정과 좌표 보정을 한 번에 준비합니다.
+-- MySQL Workbench/SQLTools 또는 mysql 클라이언트에서 빈 DB 대상으로 한 번 실행하세요.
+-- 기존 테이블이 있으면 CREATE TABLE에서 중단됩니다. 기존 DB에 재실행하거나 데이터를 초기화하지 마세요.
+-- Spring 시작 시 자동 실행하지 않습니다. application.properties의 spring.sql.init.mode=never를 유지하세요.
 
 CREATE DATABASE IF NOT EXISTS oncare
     CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -207,8 +205,8 @@ CREATE TABLE guardianinquiry (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- 샘플 입력: 아래 데이터는 개발/추천 로직 검증용입니다.
--- 좌표는 원본 파일의 테스트 좌표이며 실제 주소 지오코딩 결과가 아닙니다.
--- 좌표가 0인 수급자는 좌표 미등록 상태로 보고 거리 추천에서 제외하세요.
+-- 좌표는 실제 주소 지오코딩 결과가 아닌 테스트용 근사 좌표입니다.
+-- 수급자·보호사 샘플 좌표는 각 센터 주소 기준 10km 이내에 배치합니다.
 START TRANSACTION;
 
 -- 사용자 카테고리 샘플
@@ -331,12 +329,12 @@ VALUES
 (2, 1, '이순자', 87, '경기도 시흥시 능곡로 120', '여자', '추천 거리 테스트 수급자', 37.37, 126.806),
 (3, 2, '박영수', 79, '경기도 수원시 팔달구 효원로 250', '남자', '추천 거리 테스트 수급자', 37.2636, 127.0286),
 (4, 3, '최정숙', 84, '경기도 안양시 동안구 평촌대로 239', '여자', '추천 거리 테스트 수급자', 37.3902, 126.9634),
-(5, 2, '이복희', 81, '경기도 시흥시 장곡동', '여자', '복약 시간 확인 필요', 0, 0),
-(6, 2, '강영호', 77, '경기도 시흥시 배곧동', '남자', '주 3회 산책 희망', 0, 0),
-(7, 3, '윤정자', 86, '경기도 수원시 팔달구 인계동', '여자', '계단 이동이 어려움', 0, 0),
-(8, 3, '박철수', 80, '경기도 수원시 권선구 권선동', '남자', '식사 준비 도움 필요', 0, 0),
-(9, 3, '송복자', 83, '경기도 수원시 영통구 매탄동', '여자', '장시간 보행 어려움', 0, 0),
-(10, 3, '임영길', 78, '경기도 수원시 장안구 정자동', '남자', '정기적인 혈압 확인 필요', 0, 0);
+(5, 2, '이복희', 81, '경기도 시흥시 장곡동', '여자', '복약 시간 확인 필요', 37.3690, 126.7880),
+(6, 2, '강영호', 77, '경기도 시흥시 배곧동', '남자', '주 3회 산책 희망', 37.3690, 126.7350),
+(7, 3, '윤정자', 86, '경기도 수원시 팔달구 인계동', '여자', '계단 이동이 어려움', 37.2650, 127.0320),
+(8, 3, '박철수', 80, '경기도 수원시 권선구 권선동', '남자', '식사 준비 도움 필요', 37.2570, 126.9710),
+(9, 3, '송복자', 83, '경기도 수원시 영통구 매탄동', '여자', '장시간 보행 어려움', 37.2520, 127.0600),
+(10, 3, '임영길', 78, '경기도 수원시 장안구 정자동', '남자', '정기적인 혈압 확인 필요', 37.3020, 127.0080);
 
 -- 요양보호사 샘플
 
@@ -539,6 +537,33 @@ VALUES
 
 COMMIT;
 
+-- 추천 API 테스트 좌표 보정.
+-- 기본 샘플에는 좌표가 이미 포함되어 있으며, 좌표가 0인 동일한 테스트 행만 보정합니다.
+UPDATE carerecipients
+SET
+    latitude = CASE carerecipient_no
+        WHEN 5 THEN 37.3690
+        WHEN 6 THEN 37.3690
+        WHEN 7 THEN 37.2650
+        WHEN 8 THEN 37.2570
+        WHEN 9 THEN 37.2520
+        WHEN 10 THEN 37.3020
+    END,
+    longitude = CASE carerecipient_no
+        WHEN 5 THEN 126.7880
+        WHEN 6 THEN 126.7350
+        WHEN 7 THEN 127.0320
+        WHEN 8 THEN 126.9710
+        WHEN 9 THEN 127.0600
+        WHEN 10 THEN 127.0080
+    END
+WHERE (carerecipient_no = 5 AND carerecipient_name = '이복희' AND latitude = 0 AND longitude = 0)
+   OR (carerecipient_no = 6 AND carerecipient_name = '강영호' AND latitude = 0 AND longitude = 0)
+   OR (carerecipient_no = 7 AND carerecipient_name = '윤정자' AND latitude = 0 AND longitude = 0)
+   OR (carerecipient_no = 8 AND carerecipient_name = '박철수' AND latitude = 0 AND longitude = 0)
+   OR (carerecipient_no = 9 AND carerecipient_name = '송복자' AND latitude = 0 AND longitude = 0)
+   OR (carerecipient_no = 10 AND carerecipient_name = '임영길' AND latitude = 0 AND longitude = 0);
+
 -- 확인 1: 테이블별 입력 건수
 -- 기대값: 4 / 3 / 16 / 3 / 10 / 9 / 10 / 52 / 51 / 4 / 4
 SELECT 'usercategory' AS table_name, COUNT(*) AS row_count FROM usercategory
@@ -582,3 +607,88 @@ FROM guardianinquiry ORDER BY inquiry_no;
 -- 참고: 이 파일은 수동 1회 생성용이므로 Spring 재시작 때마다 반복 실행하지 마세요.
 -- 엔티티/DTO의 테이블·컬럼 매핑과 Integer 시간 타입을 대조한 개발용 샘플입니다.
 -- CHECK 문법 기준: https://dev.mysql.com/doc/refman/8.0/en/create-table-check-constraints.html
+
+-- 요양보호사 API 검증용 계정.
+-- AUTO_INCREMENT를 사용해 기본 샘플 데이터와 충돌하지 않게 합니다.
+-- NOT_FOR_LOGIN 계정은 API 등록 검증 전용이며 로그인에 사용할 수 없습니다.
+START TRANSACTION;
+
+INSERT INTO `user` (user_id, user_password, user_category_no, phone_number, email)
+SELECT 'dummy_careworker_04', 'NOT_FOR_LOGIN', uc.user_category_no,
+       '000-0000-0004', 'dummy_careworker_04@example.com'
+FROM usercategory uc
+WHERE uc.user_category_name = '요양보호사'
+  AND NOT EXISTS (
+      SELECT 1 FROM `user` WHERE user_id = 'dummy_careworker_04'
+  )
+ORDER BY uc.user_category_no
+LIMIT 1;
+
+INSERT INTO `user` (user_id, user_password, user_category_no, phone_number, email)
+SELECT 'dummy_careworker_05', 'NOT_FOR_LOGIN', uc.user_category_no,
+       '000-0000-0005', 'dummy_careworker_05@example.com'
+FROM usercategory uc
+WHERE uc.user_category_name = '요양보호사'
+  AND NOT EXISTS (
+      SELECT 1 FROM `user` WHERE user_id = 'dummy_careworker_05'
+  )
+ORDER BY uc.user_category_no
+LIMIT 1;
+
+INSERT INTO `user` (user_id, user_password, user_category_no, phone_number, email)
+SELECT 'dummy_careworker_06', 'NOT_FOR_LOGIN', uc.user_category_no,
+       '000-0000-0006', 'dummy_careworker_06@example.com'
+FROM usercategory uc
+WHERE uc.user_category_name = '요양보호사'
+  AND NOT EXISTS (
+      SELECT 1 FROM `user` WHERE user_id = 'dummy_careworker_06'
+  )
+ORDER BY uc.user_category_no
+LIMIT 1;
+
+SET @oncare_api_test_center_no = (SELECT MIN(center_no) FROM center);
+SET @oncare_api_test_user_no = (
+    SELECT user_no FROM `user` WHERE user_id = 'dummy_careworker_04' LIMIT 1
+);
+
+INSERT INTO careworkers (
+    careworker_name, careworker_address, careworker_gender, hour_wage,
+    careworker_age, careworker_state, latitude, longitude, center_no, user_no
+)
+SELECT '김테스트', '테스트센터 인근', '여자', 12000,
+       50, '근무가능', 37.3926, 126.951,
+       @oncare_api_test_center_no, @oncare_api_test_user_no
+WHERE @oncare_api_test_center_no IS NOT NULL
+  AND @oncare_api_test_user_no IS NOT NULL
+  AND NOT EXISTS (
+      SELECT 1 FROM careworkers WHERE user_no = @oncare_api_test_user_no
+  );
+
+COMMIT;
+
+-- API 테스트 계정/센터 번호 확인. 비밀번호는 출력하지 않습니다.
+SELECT u.user_no, u.user_id, u.user_category_no,
+       @oncare_api_test_center_no AS test_center_no,
+       EXISTS (
+           SELECT 1 FROM careworkers cw WHERE cw.user_no = u.user_no
+       ) AS has_careworker_profile
+FROM `user` u
+WHERE u.user_id IN (
+    'dummy_careworker_04', 'dummy_careworker_05', 'dummy_careworker_06'
+)
+ORDER BY u.user_id;
+
+-- 목록/상세 API: GET /api/careworkers, GET /api/careworkers/detail?careworkerNo=<목록의 번호>
+-- 등록 API: POST /api/careworkers, userNo에는 dummy_careworker_05의 user_no를 사용합니다.
+-- Content-Type: application/json
+-- {
+--   "careworkerName": "박영희",
+--   "careworkerAddress": "테스트센터 인근",
+--   "careworkerGender": "여자",
+--   "hourWage": 13000,
+--   "careworkerAge": 55,
+--   "careworkerState": "근무가능",
+--   "centerNo": 1,
+--   "userNo": <dummy_careworker_05의 user_no>
+-- }
+-- 아래 테이블 정의에서 근무 시작/종료 시간은 NULL을 허용하므로 별도 ALTER TABLE은 적용하지 않습니다.
