@@ -23,6 +23,7 @@ public class CareWorkerRecommendationController {
     @GetMapping("")
     public List<CareWorkerRecommendationDto> recommendCareworkers(
             @RequestParam(name = "careRecipientNo") Integer careRecipientNo) {
+         //  Service가 계산한 결과를 HTTP 응답으로 반환
         return recommendationService.recommendCareworkers(careRecipientNo);
     }
 }
