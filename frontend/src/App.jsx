@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import axios from "axios";
 import { Navigate, Route, Routes } from "react-router-dom";
 import Login from "./features/auth/Login";
 import Signup from "./features/auth/Signup";
@@ -15,12 +16,58 @@ import Inquiries from "./features/admin/inquiries/Inquiries";
 import GuardianApp from "./features/guardian/GuardianApp";
 
 function OncareApp() {
-  const [role, setRole] = useState(null);
-  const logout = () => setRole(null);
+  // 2026. 10. 05 변경 전 내용 시작부분 -> 프론트엔드 만든 사람과 이야기할 것 ========
+  //
+  // const [role, setRole] = useState(null);
+  // const logout = () => setRole(null);
+  //
+  // 2026. 10. 05 변경 전 내용 끝부분 =============================================
+
+
+
+  // 2026. 10. 05 변경 후 내용 시작(회의하고 이 주석을 삭제할 것) =======================================================
+
+  // 로그인한 사용자 정보 (백엔드 UserDto). 비로그인이면 null
+  const [user, setUser] = useState(null);
+  // /user/me 응답을 기다리는 중인지
+  const [loading, setLoading] = useState(true);
+
+  // userCategoryNo → 화면 구분 (1 보호자, 3 센터 관리자, 4 시스템 관리자)
+  const role = user
+    ? ([3, 4].includes(user.userCategoryNo) ? "admin"
+      : user.userCategoryNo === 1 ? "guardian"
+        : null)
+    : null;
+
+  // 앱이 처음 켜질 때(새로고침 포함) 쿠키로 로그인 상태 복원
+  useEffect(() => {
+    axios.get("http://localhost:8080/user/me", { withCredentials: true })
+      .then((res) => setUser(res.data || null))
+      .catch(() => setUser(null))
+      .finally(() => setLoading(false));
+  }, []);
+
+  // 로그아웃: 백엔드에서 Redis·쿠키 삭제 후 화면 상태 비우기
+  const logout = async () => {
+    try {
+      await axios.post("http://localhost:8080/user/logout", {}, { withCredentials: true });
+    } catch (e) {
+      console.error("로그아웃 실패:", e);
+    }
+    setUser(null);
+  };
+
+  // 로딩중 화면
+  if (loading) {
+    return <div className="grid min-h-screen place-items-center text-sm text-slate-500">로그인 확인 중...</div>;
+  }
+  
+  // 2026. 10. 05 변경 후 내용 끝(회의하고 이 주석을 삭제할 것) =======================================================
+  
   return (
     <Routes>
       {/* 로그인 상태면 각 역할의 첫 화면으로, 아니면 로그인/회원가입 화면 */}
-      <Route path="/login" element={role ? <Navigate to={`/${role}`} replace /> : <Login login={setRole} />} />
+      <Route path="/login" element={role ? <Navigate to={`/${role}`} replace /> : <Login login={setUser} />} />   {/* <Login login={setRole} /> 에서 변경 (2026. 10. 05) */}
       <Route path="/signup" element={role ? <Navigate to={`/${role}`} replace /> : <Signup />} />
       {/* 관리자: AdminApp이 공통 레이아웃(사이드바·헤더)이고 하위 화면은 Outlet에 렌더링 */}
       <Route path="/admin" element={role === "admin" ? <AdminApp logout={logout} /> : <Navigate to="/login" replace />}>
