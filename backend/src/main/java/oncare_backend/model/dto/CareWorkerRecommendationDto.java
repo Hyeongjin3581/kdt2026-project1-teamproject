@@ -5,7 +5,6 @@ import lombok.Builder;
 import lombok.Data;
 
 
-// 해당 내용은 추천 결과를 Controller 응답으로 전달
 @AllArgsConstructor@Builder@Data
 public class CareWorkerRecommendationDto {
 
@@ -18,3 +17,6 @@ public class CareWorkerRecommendationDto {
     private final double workScore;
     private final double totalScore;
 }
+
+// 추천 API 요청을 받아 Service에 전달하고 결과를 반환"만"함.
+//  Entity/Repository를 직접 사용하지 않으며, 추천 결과를 저장하지 않아도 도미.
