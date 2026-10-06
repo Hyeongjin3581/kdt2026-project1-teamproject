@@ -1,3 +1,4 @@
+//
 // "HH:MM" → 분(minute) 변환
 export const toMin = (hhmm) => { const [h, m] = hhmm.split(":").map(Number); return h * 60 + m; };
 

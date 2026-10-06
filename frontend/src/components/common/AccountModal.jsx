@@ -1,3 +1,4 @@
+//
 import { useEffect, useState } from "react";
 import axios from "axios";
 import RecipientEditModal from "./RecipientEditModal";
@@ -21,7 +22,7 @@ export default function AccountModal({ guardian, recipients = [], onClose, onLog
     async function loadUser() {
       if (!guardian?.userNo) return;
       try {
-        const response = await axios.get("http://localhost:8080/user", { params: { no: guardian.userNo }, withCredentials: true });
+        const response = await axios.get("/user", { params: { no: guardian.userNo }, withCredentials: true });
         setUser(response.data);
         setForm((current) => ({ ...current, email: response.data.email ?? "", phone: response.data.phoneNumber ?? "" }));
       } catch (error) {
@@ -40,7 +41,7 @@ export default function AccountModal({ guardian, recipients = [], onClose, onLog
     if (form.password !== form.passwordConfirm) { setMessage("비밀번호 확인이 일치하지 않습니다."); return; }
     try {
       const response = await axios.put(
-        "http://localhost:8080/user",
+        "/user",
         { userNo: user.userNo, userId: user.userId, email: form.email, phoneNumber: form.phone, userPassword: form.password || null },
         { withCredentials: true }
       );
@@ -57,7 +58,7 @@ export default function AccountModal({ guardian, recipients = [], onClose, onLog
     setMessage("");
     if (confirmText !== "탈퇴합니다") { setMessage("확인 문구를 정확히 입력해주세요."); return; }
     try {
-      const response = await axios.delete("http://localhost:8080/user", { params: { no: guardian.userNo }, withCredentials: true });
+      const response = await axios.delete("/user", { params: { no: guardian.userNo }, withCredentials: true });
       if (response.data) onLogout();
       else setMessage("탈퇴 처리에 실패했습니다.");
     } catch (error) {

@@ -1,12 +1,15 @@
+//
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import AppMark from "../../components/common/AppMark";
 import { roleMeta } from "./roleMeta";
 import axios from "axios";
+import CaregiverLoginForm from "./CaregiverLoginForm"; // 요양보호사 전용 로그인 폼 (2026. 10. 06 병합)
 
 export default function Login({ login }) {
   const navigate = useNavigate();
-  const [role, setRole] = useState("admin");
+  const location = useLocation();
+  const [role, setRole] = useState(location.state?.role === "caregiver" ? "caregiver" : "admin");
   const meta = roleMeta[role];
 
   //입력한 아이디, 비밀번호 상태
@@ -26,7 +29,7 @@ export default function Login({ login }) {
         return;
       }
       if (res.data.userCategoryNo === 2) {
-        alert("요양보호사 계정은 현재 지원하지 않습니다.");
+        alert("요양보호사 계정은 '요양보호사' 탭에서 로그인해주세요.");
         return;
       }
       login(res.data);                 // App.jsx의 setUser → 화면 이동
@@ -53,7 +56,7 @@ export default function Login({ login }) {
           <p className="font-mono text-[11px] font-bold tracking-[.15em] text-teal-600">SIGN IN</p>
           <h2 className="mt-2 font-display text-3xl font-extrabold text-slate-900">방문요양 일정 관리 시스템</h2>
           <p className="mt-2 text-sm text-slate-500">로그인할 계정 유형을 선택하세요.</p>
-          <div className="mt-6 grid grid-cols-2 gap-2 rounded-xl bg-slate-100 p-1">
+          <div className="mt-6 grid grid-cols-3 gap-2 rounded-xl bg-slate-100 p-1">
             {Object.keys(roleMeta).map((r) => (
               <button key={r} onClick={() => setRole(r)} className={`rounded-lg px-2 py-2.5 text-center transition ${role === r ? "bg-white shadow-sm" : "hover:bg-white/50"}`}>
                 <span className={`block text-sm font-bold ${role === r ? "text-teal-700" : "text-slate-500"}`}>{roleMeta[r].label.split(" / ")[0]}</span>
@@ -62,6 +65,8 @@ export default function Login({ login }) {
             ))}
           </div>
 
+          {/* 요양보호사 탭이면 전용 로그인 폼, 그 외(관리자·보호자)는 아래 공용 폼 (2026. 10. 06 병합) */}
+          {role === "caregiver" ? <CaregiverLoginForm login={login} /> : <>
           {/* 아이디 입력 칸 */}
           <label className="mt-6 block text-xs font-semibold text-slate-600">아이디</label>
           <input className="mt-2 w-full rounded-lg border border-slate-200 px-3 py-3 text-sm outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-100" value={userId} onChange={(e) => setUserId(e.target.value)} placeholder="아이디" />
@@ -79,7 +84,8 @@ export default function Login({ login }) {
           <button onClick={handleLogin} className="mt-7 w-full rounded-lg bg-teal-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-teal-700">{meta.cta}</button>
 
           <p className="mt-4 text-center text-[11px] text-slate-400">{meta.note}</p>
-          <div className="mt-5 border-t border-slate-100 pt-4 text-center text-xs text-slate-500">아직 계정이 없으신가요? <button onClick={() => navigate("/signup")} className="font-bold text-teal-600 hover:underline">회원가입</button></div>
+          </>}
+          <div className="mt-5 border-t border-slate-100 pt-4 text-center text-xs text-slate-500">아직 계정이 없으신가요? <button onClick={() => role === "caregiver" ? navigate("/signup", { state: { role: "caregiver" } }) : navigate("/signup")} className="font-bold text-teal-600 hover:underline">회원가입</button></div>
         </div>
       </div>
     </main>

@@ -11,24 +11,25 @@ export default function Vacancy() {
   const center = useCenter();
   const [model, setModel] = useState(emptyModel);
   const [status, setStatus] = useState("loading");
+  const [loadError, setLoadError] = useState(null);
 
   // 결원 관리 화면에 필요한 목록을 axios로 조회 : axios.get("통신할주소", { 옵션 }) → response.data
   async function loadData() {
     setStatus("loading");
     try {
       const [centersRes, careworkersRes, guardiansRes, recipientsRes] = await Promise.all([
-        axios.get("http://localhost:8080/center", { withCredentials: true }),
-        axios.get("http://localhost:8080/api/careworkers", { withCredentials: true }),
+        axios.get("/center", { withCredentials: true }),
+        axios.get("/api/careworkers", { withCredentials: true }),
         axios.get("http://localhost:8080/guardian", { withCredentials: true }),
         axios.get("http://localhost:8080/carerecipient", { withCredentials: true }),
       ]);
       // 수급자별 방문 요청, 센터별 근무기록
       const [requestLists, reportLists] = await Promise.all([
         Promise.all(recipientsRes.data.map((r) =>
-          axios.get("http://localhost:8080/request/carerecipient", { params: { carerecipient_no: r.careRecipientNo }, withCredentials: true }).catch(() => ({ data: [] }))
+          axios.get("/request/carerecipient", { params: { carerecipient_no: r.careRecipientNo }, withCredentials: true }).catch(() => ({ data: [] }))
         )),
         Promise.all(centersRes.data.map((c) => c.centerNo).map((no) =>
-          axios.get("http://localhost:8080/careworkerreport/center", { params: { center_no: no }, withCredentials: true }).catch(() => ({ data: [] }))
+          axios.get("/careworkerreport/center", { params: { center_no: no }, withCredentials: true }).catch(() => ({ data: [] }))
         )),
       ]);
       setModel(buildAdminModel({
@@ -40,6 +41,7 @@ export default function Vacancy() {
       setStatus("ok");
     } catch (error) {
       console.error("결원 관리 조회 실패:", error);
+      setLoadError(error);
       setStatus("error");
     }
   }
@@ -54,7 +56,7 @@ export default function Vacancy() {
   const eventOf = (d) => events.find((e) => e.date === d);
   const ev = eventOf(selected) ?? events[0];
 
-  if (status !== "ok") return <LoadStatus status={status} onRetry={loadData} />;
+  if (status !== "ok") return <LoadStatus status={status} onRetry={loadData} error={loadError} />;
   return (
     <div className="space-y-5">
       <SectionTitle title="결원 관리" subtitle="결원 발생 시 해당 시간에 근무 가능한 미배정 요양보호사를 재검색하고, 기존 담당 경험·지역·업무량을 다시 계산해 대체 후보를 추천합니다." />

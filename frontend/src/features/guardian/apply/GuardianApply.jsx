@@ -1,3 +1,4 @@
+//
 import { useState } from "react";
 import HourSelect from "../../../components/common/HourSelect";
 import { toServerTime } from "../../../utils/timeFormat";
@@ -110,7 +111,7 @@ export default function GuardianApply({ recipient, recipients, onSelectRecipient
               </select>
             </div>
           </div>
-          <p className="text-xs text-slate-500">{recipient.address} · {recipient.age}세 · {recipient.gender === "female" ? "여성" : "남성"}</p>
+          <p className="text-xs text-slate-500">{recipient.address} · {recipient.age}세 · {recipient.gender === "female" ? "여성" : recipient.gender === "male" ? "남성" : "성별 미확인"}</p>
         </div>
         <div className="pt-5">
           <div className="flex items-center justify-between">

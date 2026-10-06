@@ -1,3 +1,5 @@
+//
+//
 import { useEffect, useState } from "react";
 import axios from "axios";
 import SectionTitle from "../../../components/common/SectionTitle";
@@ -22,8 +24,8 @@ function CenterForm({ center, onClose, onSaved }) {
         const body = { centerName: form.name.trim(), centerAddress: form.address.trim(), centerPhonenumber: form.phone.trim() };
         try {
             const response = isEdit
-                ? await axios.put("http://localhost:8080/center", { ...body, centerNo: center.centerNo }, { withCredentials: true })
-                : await axios.post("http://localhost:8080/center", body, { withCredentials: true });
+                ? await axios.put("/center", { ...body, centerNo: center.centerNo }, { withCredentials: true })
+                : await axios.post("/center", body, { withCredentials: true });
             if (response.data) onSaved();
             else setMessage("저장에 실패했습니다. 입력 정보를 확인해주세요.");
         } catch (error) {
@@ -57,17 +59,19 @@ function CenterForm({ center, onClose, onSaved }) {
 export default function Centers() {
     const [centers, setCenters] = useState([]);
     const [status, setStatus] = useState("loading");
+    const [loadError, setLoadError] = useState(null);
     const [formTarget, setFormTarget] = useState(null); // null: 닫힘, "new": 등록, 센터 DTO: 수정
 
     // 센터 목록을 axios로 조회 : axios.get("통신할주소", { 옵션 }) → response.data
     async function loadData() {
         setStatus("loading");
         try {
-            const response = await axios.get("http://localhost:8080/center", { withCredentials: true });
+            const response = await axios.get("/center", { withCredentials: true });
             setCenters(response.data);
             setStatus("ok");
         } catch (error) {
             console.error("센터 조회 실패:", error);
+            setLoadError(error);
             setStatus("error");
         }
     }
@@ -77,7 +81,7 @@ export default function Centers() {
     const removeCenter = async (c) => {
         if (!window.confirm(`${c.centerName}을(를) 삭제할까요? 이 작업은 되돌릴 수 없습니다.`)) return;
         try {
-            const response = await axios.delete("http://localhost:8080/center", { params: { no: c.centerNo }, withCredentials: true });
+            const response = await axios.delete("/center", { params: { no: c.centerNo }, withCredentials: true });
             if (response.data) loadData();
             else alert("삭제에 실패했습니다.");
         } catch (error) {
@@ -86,7 +90,7 @@ export default function Centers() {
         }
     };
 
-    if (status !== "ok") return <LoadStatus status={status} onRetry={loadData} />;
+    if (status !== "ok") return <LoadStatus status={status} onRetry={loadData} error={loadError} />;
     return (
         <div className="space-y-5">
             <SectionTitle title="센터 관리" subtitle="방문요양 센터를 등록하고 정보를 수정합니다." action={<button onClick={() => setFormTarget("new")} className="rounded-lg bg-teal-600 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-teal-700">+ 센터 등록</button>} />

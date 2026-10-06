@@ -17,6 +17,7 @@ export default function GuardianRequest({ guardian, recipients, activeRecipientI
   const [history, setHistory] = useState([]);
   const [visits, setVisits] = useState([]);
   const [status, setStatus] = useState("loading");
+  const [loadError, setLoadError] = useState(null); // 병합 중 빠진 선언 복구 (2026. 10. 06)
   const dates = upcomingDates(7); // 오늘부터 7일
   const [selectedDates, setSelectedDates] = useState([]); // 선택한 날짜 (yyyy-MM-dd)
   const [preferredTimes, setPreferredTimes] = useState({}); // 날짜별 { start, end }
@@ -45,13 +46,13 @@ export default function GuardianRequest({ guardian, recipients, activeRecipientI
       const [categoriesRes, inquiriesRes, careworkersRes] = await Promise.all([
         axios.get("http://localhost:8080/inquirycategory", { withCredentials: true }),
         axios.get("http://localhost:8080/guardianinquiry", { withCredentials: true }),
-        axios.get("http://localhost:8080/api/careworkers", { withCredentials: true }),
+        axios.get("/api/careworkers", { withCredentials: true }),
       ]);
       const requestsRes = selectedRecipient
-        ? await axios.get("http://localhost:8080/request/carerecipient", { params: { carerecipient_no: selectedRecipient.id }, withCredentials: true })
+        ? await axios.get("/request/carerecipient", { params: { carerecipient_no: selectedRecipient.id }, withCredentials: true })
         : { data: [] };
       const reportLists = await Promise.all([...new Set(careworkersRes.data.map((c) => c.centerNo))].map((no) =>
-        axios.get("http://localhost:8080/careworkerreport/center", { params: { center_no: no }, withCredentials: true }).catch(() => ({ data: [] }))
+        axios.get("/careworkerreport/center", { params: { center_no: no }, withCredentials: true }).catch(() => ({ data: [] }))
       ));
       setCategories(categoriesRes.data);
       setRequestType((current) => current || categoriesRes.data[0]?.inquiryCategoryName || "");
@@ -64,6 +65,7 @@ export default function GuardianRequest({ guardian, recipients, activeRecipientI
       setStatus("ok");
     } catch (error) {
       console.error("요청·문의 조회 실패:", error);
+      setLoadError(error);
       setStatus("error");
     }
   }
@@ -110,7 +112,7 @@ export default function GuardianRequest({ guardian, recipients, activeRecipientI
     try {
       const response = selectedRequest.source === "inquiry"
         ? await axios.delete("http://localhost:8080/guardianinquiry", { data: { inquiryNo: raw.inquiryNo }, withCredentials: true })
-        : await axios.delete("http://localhost:8080/request", { params: { request_no: raw.requestNo }, withCredentials: true });
+        : await axios.delete("/request", { params: { request_no: raw.requestNo }, withCredentials: true });
       if (response.data) { setEditing(false); setSelectedRequestId(null); loadData(); }
       else alert("처리에 실패했습니다.");
     } catch (error) {
@@ -157,7 +159,7 @@ export default function GuardianRequest({ guardian, recipients, activeRecipientI
       alert("서버 통신 오류가 발생했습니다.");
     }
   };
-  if (status !== "ok") return <LoadStatus status={status} onRetry={loadData} />;
+  if (status !== "ok") return <LoadStatus status={status} onRetry={loadData} error={loadError} />;
 
   return (
     <div className="space-y-5">

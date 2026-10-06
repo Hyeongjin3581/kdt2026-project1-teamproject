@@ -1,3 +1,4 @@
+//
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { Navigate, Route, Routes } from "react-router-dom";
@@ -14,6 +15,7 @@ import Vacancy from "./features/admin/vacancy/Vacancy";
 import Centers from "./features/admin/centers/Centers";
 import Inquiries from "./features/admin/inquiries/Inquiries";
 import GuardianApp from "./features/guardian/GuardianApp";
+import CaregiverApp from "./features/caregiver/CaregiverApp";
 
 function OncareApp() {
 
@@ -21,9 +23,14 @@ function OncareApp() {
   const [user, setUser] = useState(null);
   // /user/me 응답을 기다리는 중인지
   const [loading, setLoading] = useState(true);
+  // 요양보호사 포털(박현민 브랜치) : 인증 응답의 본인 번호·승인 상태·개발용 더미 API
+  const [caregiverNo, setCaregiverNo] = useState(null);
+  const [caregiverApproval, setCaregiverApproval] = useState(null);
+  const [caregiverDemoApi, setCaregiverDemoApi] = useState(null);
 
   // userCategoryNo → 화면 구분 (1 보호자, 3 센터 관리자, 4 시스템 관리자)
-  const role = user
+  // 요양보호사는 caregiverNo 가 있으면 "caregiver"
+  const role = caregiverNo ? "caregiver" : user
     ? ([3, 4].includes(user.userCategoryNo) ? "admin"
       : user.userCategoryNo === 1 ? "guardian"
         : null)
@@ -45,6 +52,25 @@ function OncareApp() {
       console.error("로그아웃 실패:", e);
     }
     setUser(null);
+    setCaregiverNo(null);
+    setCaregiverApproval(null);
+    setCaregiverDemoApi(null);
+  };
+
+  // 로그인 처리 (2026. 10. 06 병합)
+  // - 관리자·보호자 : Login.jsx 가 백엔드 UserDto 객체를 넘김 → login(userDto)
+  // - 요양보호사 : CaregiverLoginForm 이 login("caregiver", 번호, 승인정보, 더미API) 형태로 호출
+  const login = (next, careworkerNo = null, approval = null, demoApi = null) => {
+    if (next === "caregiver") {
+      if (demoApi && !import.meta.env.DEV) return false;
+      if (!Number.isInteger(careworkerNo) || careworkerNo < 1 || approval?.approved !== true || approval?.canUse === false) return false;
+      setCaregiverNo(careworkerNo);
+      setCaregiverApproval(approval);
+      setCaregiverDemoApi(demoApi);
+      return true;
+    }
+    setUser(next);
+    return true;
   };
 
   // 로딩중 화면
@@ -56,7 +82,7 @@ function OncareApp() {
   return (
     <Routes>
       {/* 로그인 상태면 각 역할의 첫 화면으로, 아니면 로그인/회원가입 화면 */}
-      <Route path="/login" element={role ? <Navigate to={`/${role}`} replace /> : <Login login={setUser} />} />   {/* <Login login={setRole} /> 에서 변경 (2026. 10. 05) */}
+      <Route path="/login" element={role ? <Navigate to={`/${role}`} replace /> : <Login login={login} />} />   {/* 관리자·보호자·요양보호사 공용 login (2026. 10. 06 병합) */}
       <Route path="/signup" element={role ? <Navigate to={`/${role}`} replace /> : <Signup />} />
       {/* 관리자: AdminApp이 공통 레이아웃(사이드바·헤더)이고 하위 화면은 Outlet에 렌더링 */}
       <Route path="/admin" element={role === "admin" ? <AdminApp logout={logout} /> : <Navigate to="/login" replace />}>
@@ -72,7 +98,8 @@ function OncareApp() {
         <Route path="inquiries" element={<Inquiries />} />
       </Route>
       {/* 보호자: 화면 간에 공유하는 상태(수급자 목록)가 있어 GuardianApp 안에서 하위 Routes를 정의 */}
-      <Route path="/guardian/*" element={role === "guardian" ? <GuardianApp user={user} logout={logout} /> : <Navigate to="/login" replace />} />
+      <Route path="/guardian/*" element={role === "guardian" ? <GuardianApp logout={logout} /> : <Navigate to="/login" replace />} />
+      <Route path="/caregiver/*" element={role === "caregiver" && caregiverNo && caregiverApproval?.approved === true && caregiverApproval?.canUse !== false ? <CaregiverApp careworkerNo={caregiverNo} approval={caregiverApproval} api={caregiverDemoApi ?? undefined} logout={logout} /> : <Navigate to="/login" replace />} />
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   );

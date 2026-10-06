@@ -14,23 +14,24 @@ export default function Recipients() {
   const center = useCenter();
   const [model, setModel] = useState(emptyModel);
   const [status, setStatus] = useState("loading");
+  const [loadError, setLoadError] = useState(null);
 
   // 수급자 관리 화면에 필요한 목록을 axios로 조회 : axios.get("통신할주소", { 옵션 }) → response.data
   async function loadData() {
     setStatus("loading");
     try {
       const [careworkersRes, guardiansRes, recipientsRes] = await Promise.all([
-        axios.get("http://localhost:8080/api/careworkers", { withCredentials: true }),
+        axios.get("/api/careworkers", { withCredentials: true }),
         axios.get("http://localhost:8080/guardian", { withCredentials: true }),
         axios.get("http://localhost:8080/carerecipient", { withCredentials: true }),
       ]);
       // 수급자별 방문 요청, 센터별 근무기록
       const [requestLists, reportLists] = await Promise.all([
         Promise.all(recipientsRes.data.map((r) =>
-          axios.get("http://localhost:8080/request/carerecipient", { params: { carerecipient_no: r.careRecipientNo }, withCredentials: true }).catch(() => ({ data: [] }))
+          axios.get("/request/carerecipient", { params: { carerecipient_no: r.careRecipientNo }, withCredentials: true }).catch(() => ({ data: [] }))
         )),
         Promise.all([...new Set(careworkersRes.data.map((c) => c.centerNo))].map((no) =>
-          axios.get("http://localhost:8080/careworkerreport/center", { params: { center_no: no }, withCredentials: true }).catch(() => ({ data: [] }))
+          axios.get("/careworkerreport/center", { params: { center_no: no }, withCredentials: true }).catch(() => ({ data: [] }))
         )),
       ]);
       setModel(buildAdminModel({
@@ -42,13 +43,14 @@ export default function Recipients() {
       setStatus("ok");
     } catch (error) {
       console.error("수급자 관리 조회 실패:", error);
+      setLoadError(error);
       setStatus("error");
     }
   }
   useEffect(() => { loadData(); }, []);
   const { recipients } = model;
   const visible = useMemo(() => recipients.filter(inCenter(center)).filter((r) => `${r.name}${r.area}${r.cg}${r.guardian}`.includes(q)), [q, center, recipients]);
-  if (status !== "ok") return <LoadStatus status={status} onRetry={loadData} />;
+  if (status !== "ok") return <LoadStatus status={status} onRetry={loadData} error={loadError} />;
   return (
     <div className="space-y-5">
       <SectionTitle title="수급자 관리" subtitle="센터에서 방문요양 서비스를 제공받는 수급(어르신) 목록입니다. 로그인하는 보호자와는 별도로 관리됩니다." action={<button onClick={() => setQ("")} className="rounded-lg border border-teal-200 bg-white px-4 py-2.5 text-sm font-bold text-teal-700 transition hover:bg-teal-50">↻ 새로고침</button>} />

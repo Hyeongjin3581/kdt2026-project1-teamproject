@@ -1,3 +1,4 @@
+//
 // 앱 전역에서 공유되는 상수
 const DAY_KR = ["일", "월", "화", "수", "목", "금", "토"];
 const pad2 = (n) => String(n).padStart(2, "0");

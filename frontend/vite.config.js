@@ -33,6 +33,14 @@ export default defineConfig(({ mode }) => {
       host: process.env.FIGMA_DEV_SERVER_HOST || '0.0.0.0',
       port: parseInt(process.env.PORT || '5173'),
       strictPort: true,
+      proxy: {
+        '/api': { target: 'http://localhost:8080', changeOrigin: true },
+        // 기존 화면에서 사용하는 경로도 변경 없이 백엔드로 전달합니다.
+        '/user': { target: 'http://localhost:8080', changeOrigin: true },
+        '/center': { target: 'http://localhost:8080', changeOrigin: true },
+        '/request': { target: 'http://localhost:8080', changeOrigin: true },
+        '/careworkerreport': { target: 'http://localhost:8080', changeOrigin: true },
+      },
       watch: {
         ignored: [
           '**/.figma/**',

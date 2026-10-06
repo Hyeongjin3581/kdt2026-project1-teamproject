@@ -1,3 +1,4 @@
+//
 export default function Badge({ children, tone = "neutral" }) {
   const tones = {
     ok: "bg-emerald-50 text-emerald-700 ring-emerald-200",
