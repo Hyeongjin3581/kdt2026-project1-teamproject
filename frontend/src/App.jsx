@@ -16,16 +16,6 @@ import Inquiries from "./features/admin/inquiries/Inquiries";
 import GuardianApp from "./features/guardian/GuardianApp";
 
 function OncareApp() {
-  // 2026. 10. 05 변경 전 내용 시작부분 -> 프론트엔드 만든 사람과 이야기할 것 ========
-  //
-  // const [role, setRole] = useState(null);
-  // const logout = () => setRole(null);
-  //
-  // 2026. 10. 05 변경 전 내용 끝부분 =============================================
-
-
-
-  // 2026. 10. 05 변경 후 내용 시작(회의하고 이 주석을 삭제할 것) =======================================================
 
   // 로그인한 사용자 정보 (백엔드 UserDto). 비로그인이면 null
   const [user, setUser] = useState(null);
@@ -62,7 +52,6 @@ function OncareApp() {
     return <div className="grid min-h-screen place-items-center text-sm text-slate-500">로그인 확인 중...</div>;
   }
   
-  // 2026. 10. 05 변경 후 내용 끝(회의하고 이 주석을 삭제할 것) =======================================================
   
   return (
     <Routes>

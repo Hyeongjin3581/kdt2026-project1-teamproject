@@ -62,12 +62,11 @@ export default function Login({ login }) {
             ))}
           </div>
 
-          {/* 아이디 입력 칸 변경 (2026. 10. 05) */}
+          {/* 아이디 입력 칸 */}
           <label className="mt-6 block text-xs font-semibold text-slate-600">아이디</label>
-          {/* <input key={role + "-id"} className="mt-2 w-full rounded-lg border border-slate-200 px-3 py-3 text-sm outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-100" defaultValue={meta.id} /> */}
           <input className="mt-2 w-full rounded-lg border border-slate-200 px-3 py-3 text-sm outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-100" value={userId} onChange={(e) => setUserId(e.target.value)} placeholder="아이디" />
           
-          {/* 비밀번호 입력 칸 변경 (2026. 10. 05) */}
+          {/* 비밀번호 입력 칸 */}
           <label className="mt-5 block text-xs font-semibold text-slate-600">비밀번호</label>
           {/* <input className="mt-2 w-full rounded-lg border border-slate-200 px-3 py-3 text-sm outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-100" type="password" defaultValue="oncare" /> */}
           <input 
@@ -75,7 +74,7 @@ export default function Login({ login }) {
             value={userPassword} onChange={(e) => setUserPassword(e.target.value)} onKeyDown={(e) => e.key === "Enter" && handleLogin()} placeholder="비밀번호" 
           />
 
-          {/* 로그인 버튼 변경 (2026. 10. 05) */}
+          {/* 로그인 버튼 변경 */}
           {/* <button onClick={() => login(role)} className="mt-7 w-full rounded-lg bg-teal-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-teal-700">{meta.cta}</button> */}
           <button onClick={handleLogin} className="mt-7 w-full rounded-lg bg-teal-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-teal-700">{meta.cta}</button>
 
