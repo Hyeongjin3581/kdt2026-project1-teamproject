@@ -6,7 +6,8 @@ import Panel from "../../../components/common/Panel";
 import Badge from "../../../components/common/Badge";
 import LoadStatus from "../../../components/common/LoadStatus";
 import { TODAY } from "../../../constants";
-import { buildHistory, buildVisits, nextDateOf } from "../../../utils/guardianAdapters";
+import { buildHistory, buildVisits } from "../../../utils/guardianAdapters";
+import { upcomingDates } from "../../../utils/upcomingDates";
 
 export default function GuardianRequest({ guardian, recipients, activeRecipientId, onSelectRecipient }) {
   const [reqSent, setReqSent] = useState(false);
@@ -16,25 +17,21 @@ export default function GuardianRequest({ guardian, recipients, activeRecipientI
   const [history, setHistory] = useState([]);
   const [visits, setVisits] = useState([]);
   const [status, setStatus] = useState("loading");
-  const [selectedDays, setSelectedDays] = useState(["월"]);
-  const [preferredTimes, setPreferredTimes] = useState({
-    월: { start: "09:00", end: "12:00" },
-  });
+  const dates = upcomingDates(7); // 오늘부터 7일
+  const [selectedDates, setSelectedDates] = useState([]); // 선택한 날짜 (yyyy-MM-dd)
+  const [preferredTimes, setPreferredTimes] = useState({}); // 날짜별 { start, end }
   const [selectedRequestId, setSelectedRequestId] = useState(null);
   const [selectedVisitId, setSelectedVisitId] = useState(null);
   const field = "mt-1.5 w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-600 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100";
-  const weekdays = ["월", "화", "수", "목", "금", "토", "일"];
-  const toggleDay = (day) => {
-    setSelectedDays((current) => {
-      if (current.includes(day)) return current.filter((item) => item !== day);
-      return [...current, day];
-    });
-    setPreferredTimes((current) => current[day]
+  const orderedDates = dates.filter((d) => selectedDates.includes(d.iso));
+  const toggleDate = (iso) => {
+    setSelectedDates((current) => current.includes(iso) ? current.filter((item) => item !== iso) : [...current, iso]);
+    setPreferredTimes((current) => current[iso]
       ? current
-      : { ...current, [day]: { start: "09:00", end: "12:00" } });
+      : { ...current, [iso]: { start: "09:00", end: "12:00" } });
   };
-  const updateTime = (day, key, value) => {
-    setPreferredTimes((current) => ({ ...current, [day]: { ...current[day], [key]: value } }));
+  const updateTime = (iso, key, value) => {
+    setPreferredTimes((current) => ({ ...current, [iso]: { ...current[iso], [key]: value } }));
   };
   const needsSchedule = requestType !== "담당자 관련 문의" && requestType !== "기타 문의";
   const selectedRecipient = recipients.find((recipient) => recipient.id === activeRecipientId) ?? recipients[0];
@@ -128,19 +125,21 @@ export default function GuardianRequest({ guardian, recipients, activeRecipientI
     setSelectedVisitId(null);
   };
 
-  // 요청 보내기 : 선택한 요일마다 문의 1건씩 등록 (POST /guardianinquiry), 요일이 필요 없는 유형은 1건
+  // 요청 보내기 : 선택한 날짜마다 문의 1건씩 등록 (POST /guardianinquiry), 날짜가 필요 없는 유형은 1건
   const sendRequest = async () => {
     if (!selectedRecipient || !selectedVisit || !guardian) return;
     const category = categories.find((c) => c.inquiryCategoryName === requestType);
     if (!category) return;
     const content = `[${selectedRecipient.name} 어르신 · ${selectedVisit.date} ${selectedVisit.time}] ${requestContent.trim()}`.trim();
-    const bodies = needsSchedule && selectedDays.length > 0
-      ? selectedDays.map((day) => ({
+    const invalid = needsSchedule && orderedDates.find((d) => toServerTime(preferredTimes[d.iso]?.start ?? "09:00") >= toServerTime(preferredTimes[d.iso]?.end ?? "12:00"));
+    if (invalid) { alert(`${invalid.label}(${invalid.day}) 종료 시간은 시작 시간보다 늦어야 합니다.`); return; }
+    const bodies = needsSchedule && orderedDates.length > 0
+      ? orderedDates.map((d) => ({
           guardianNo: guardian.guardianNo,
           inquiryCategoryNo: category.inquiryCategoryNo,
-          wishDate: nextDateOf(day),
-          wishStartTime: toServerTime(preferredTimes[day]?.start ?? "09:00"),
-          wishEndTime: toServerTime(preferredTimes[day]?.end ?? "12:00"),
+          wishDate: d.iso,
+          wishStartTime: toServerTime(preferredTimes[d.iso]?.start ?? "09:00"),
+          wishEndTime: toServerTime(preferredTimes[d.iso]?.end ?? "12:00"),
           inquiryContent: content,
         }))
       : [{ guardianNo: guardian.guardianNo, inquiryCategoryNo: category.inquiryCategoryNo, inquiryContent: content }];
@@ -226,26 +225,26 @@ export default function GuardianRequest({ guardian, recipients, activeRecipientI
               {needsSchedule && <section className="rounded-xl border border-slate-100 bg-slate-50/50 p-4">
                 <h3 className="text-sm font-bold text-slate-800">희망 방문 일정</h3>
                 <div className="mt-4">
-                  <p className="text-xs font-semibold text-slate-700">희망 요일 <span className="font-normal text-slate-400">(원하는 요일을 모두 선택)</span></p>
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    {weekdays.map((day) => {
-                      const isSelected = selectedDays.includes(day);
-                      return <button key={day} type="button" onClick={() => toggleDay(day)} aria-pressed={isSelected} className={`grid h-10 w-10 place-items-center rounded-full border text-sm font-bold transition ${isSelected ? "border-teal-500 bg-teal-500 text-white shadow-sm" : "border-slate-200 bg-white text-slate-500 hover:border-teal-300 hover:text-teal-700"}`}>{day}</button>;
+                  <p className="text-xs font-semibold text-slate-700">희망 날짜 <span className="font-normal text-slate-400">(오늘부터 7일 이내, 원하는 날짜를 모두 선택)</span></p>
+                  <div className="mt-3 grid grid-cols-4 gap-2 sm:grid-cols-7">
+                    {dates.map((d) => {
+                      const isSelected = selectedDates.includes(d.iso);
+                      return <button key={d.iso} type="button" onClick={() => toggleDate(d.iso)} aria-pressed={isSelected} className={`rounded-xl border px-1 py-2.5 text-center transition ${isSelected ? "border-teal-500 bg-teal-500 text-white shadow-sm" : "border-slate-200 bg-white text-slate-600 hover:border-teal-300 hover:text-teal-700"}`}><span className="block text-[10px] font-semibold opacity-80">{d.today ? "오늘" : d.day}</span><span className="block text-sm font-bold">{d.label}</span>{d.today && <span className="block text-[10px] opacity-80">({d.day})</span>}</button>;
                     })}
                   </div>
                 </div>
                 <div className="mt-5">
-                  <p className="text-xs font-semibold text-slate-700">요일별 희망 시간</p>
-                  {selectedDays.length > 0 ? <div className="mt-3 space-y-2">
-                    {selectedDays.map((day) => (
-                      <div key={day} className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white p-2">
-                        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-teal-50 text-sm font-bold text-teal-700">{day}</span>
-                        <HourSelect aria-label={`${day}요일 시작 시간`} value={preferredTimes[day]?.start ?? "09:00"} onChange={(event) => updateTime(day, "start", event.target.value)} className="min-w-0 flex-1 rounded-lg border border-slate-200 px-2 py-2 text-sm text-slate-900 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100" />
+                  <p className="text-xs font-semibold text-slate-700">날짜별 희망 시간</p>
+                  {orderedDates.length > 0 ? <div className="mt-3 space-y-2">
+                    {orderedDates.map((d) => (
+                      <div key={d.iso} className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white p-2">
+                        <span className="grid h-9 w-14 shrink-0 place-items-center rounded-lg bg-teal-50 text-[11px] font-bold leading-tight text-teal-700">{d.label}<br />({d.day})</span>
+                        <HourSelect aria-label={`${d.label} 시작 시간`} value={preferredTimes[d.iso]?.start ?? "09:00"} onChange={(event) => updateTime(d.iso, "start", event.target.value)} className="min-w-0 flex-1 rounded-lg border border-slate-200 px-2 py-2 text-sm text-slate-900 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100" />
                         <span className="text-xs font-bold text-slate-400">~</span>
-                        <HourSelect aria-label={`${day}요일 종료 시간`} value={preferredTimes[day]?.end ?? "12:00"} onChange={(event) => updateTime(day, "end", event.target.value)} className="min-w-0 flex-1 rounded-lg border border-slate-200 px-2 py-2 text-sm text-slate-900 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100" />
+                        <HourSelect aria-label={`${d.label} 종료 시간`} value={preferredTimes[d.iso]?.end ?? "12:00"} onChange={(event) => updateTime(d.iso, "end", event.target.value)} className="min-w-0 flex-1 rounded-lg border border-slate-200 px-2 py-2 text-sm text-slate-900 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100" />
                       </div>
                     ))}
-                  </div> : <p className="mt-3 rounded-lg border border-dashed border-slate-200 bg-white px-3 py-3 text-xs text-slate-400">희망 요일을 선택해주세요.</p>}
+                  </div> : <p className="mt-3 rounded-lg border border-dashed border-slate-200 bg-white px-3 py-3 text-xs text-slate-400">희망 날짜를 선택해주세요.</p>}
                 </div>
               </section>}
               <label className="block text-xs font-semibold text-slate-600">내용<textarea value={requestContent} onChange={(event) => setRequestContent(event.target.value)} rows={4} className={`${field} resize-none`} placeholder="예: 다음 주 수요일 방문을 오후로 옮겨주실 수 있을까요?" /></label>

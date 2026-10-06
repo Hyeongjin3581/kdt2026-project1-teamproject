@@ -76,7 +76,7 @@ export default function Caregivers() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="grid h-11 w-11 place-items-center rounded-full bg-teal-100 font-display text-lg font-bold text-teal-700">{c.name[0]}</div>
-                  <div><b className="text-slate-900">{c.name}</b><p className="mt-0.5 text-xs text-slate-400">{c.gender} · {c.area}{center === "all" && ` · ${centers.find((x) => x.id === c.center)?.short}`}</p></div>
+                  <div><b className="text-slate-900">{c.name}</b><p className="mt-0.5 text-xs text-slate-400">{c.gender}{center === "all" && ` · ${centers.find((x) => x.id === c.center)?.short}`}</p></div>
                 </div>
                 <Badge tone={c.tone}>{c.status}</Badge>
               </div>
@@ -85,9 +85,8 @@ export default function Caregivers() {
                 <div className="flex items-end justify-between"><span className="text-[11px] text-slate-400">이번 주 근무시간</span><b className={`font-mono text-sm ${c.week >= WEEK_LIMIT ? "text-red-600" : c.week >= 48 ? "text-amber-600" : "text-slate-800"}`}>{c.week} / {WEEK_LIMIT}시간</b></div>
                 <div className="mt-1.5 h-2 w-full overflow-hidden rounded-full bg-slate-100"><div className={`h-full rounded-full ${bar}`} style={{ width: `${pct}%` }} /></div>
               </div>
-              <div className="mt-4 grid grid-cols-2 divide-x divide-slate-100 text-center">
-                <div><b className="font-mono text-lg text-slate-800">{c.month}</b><p className="text-[11px] text-slate-400">이번 달 배정 건수</p></div>
-                <div><b className="font-mono text-lg text-slate-800">{c.area.split("·").length}</b><p className="text-[11px] text-slate-400">활동 가능 지역</p></div>
+              <div className="mt-4 text-center">
+                <b className="font-mono text-lg text-slate-800">{c.month}</b><p className="text-[11px] text-slate-400">이번 달 배정 건수</p>
               </div>
               <div className="mt-4 grid grid-cols-[1fr_auto_auto] gap-2">
                 <button onClick={() => setRecordId(c.id)} className="rounded-lg border border-slate-200 py-2 text-xs font-bold text-slate-600 transition hover:bg-slate-50">근무 기록 보기</button>
