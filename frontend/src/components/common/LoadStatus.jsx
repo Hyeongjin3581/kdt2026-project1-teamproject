@@ -1,3 +1,4 @@
+//
 // 화면이 백엔드 데이터를 불러오는 중이거나, 불러오기에 실패했을 때 보여주는 안내
 export default function LoadStatus({ status, onRetry }) {
     if (status === "loading") {
