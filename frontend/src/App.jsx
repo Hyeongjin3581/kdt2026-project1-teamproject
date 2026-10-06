@@ -79,38 +79,5 @@ function OncareApp() {
 }
 
 export default function App() {
-  // 폰 프레임(iframe) 안에서 렌더될 때는 토글 UI 없이 앱만 보여줍니다 (재귀 방지).
-  // 화면 이동으로 주소의 ?frame=off 가 사라져도 유지되도록 처음 한 번만 읽습니다.
-  const [framed] = useState(() => new URLSearchParams(window.location.search).get("frame") === "off");
-  const [mobile, setMobile] = useState(false);
-  if (framed) return <OncareApp />;
-
-  return (
-    <>
-      {mobile ? (
-        <div className="grid min-h-screen place-items-center bg-[#06231d] p-6">
-          <div className="relative">
-            <div className="mx-auto h-[812px] w-[390px] overflow-hidden rounded-[44px] border-[10px] border-[#0b3128] bg-black shadow-2xl">
-              <div className="absolute left-1/2 top-[10px] z-10 h-6 w-32 -translate-x-1/2 rounded-full bg-[#0b3128]" />
-              <iframe title="모바일 미리보기" src="/login?frame=off" className="h-full w-full border-0 bg-white" />
-            </div>
-            <p className="mt-4 text-center font-mono text-[11px] tracking-widest text-teal-200/70">MOBILE PREVIEW · 390 × 812</p>
-          </div>
-        </div>
-      ) : (
-        <OncareApp />
-      )}
-      <button
-        type="button"
-        onClick={() => setMobile((v) => !v)}
-        className="fixed bottom-5 right-5 z-50 flex items-center gap-2 rounded-full bg-teal-600 px-4 py-3 text-sm font-bold text-white shadow-lg shadow-teal-900/25 transition hover:bg-teal-700"
-      >
-        {mobile ? (
-          <><span aria-hidden>🖥️</span> 데스크톱 보기</>
-        ) : (
-          <><span aria-hidden>📱</span> 모바일 보기</>
-        )}
-      </button>
-    </>
-  );
+  return <OncareApp />;
 }

@@ -43,6 +43,9 @@ export const toRecipient = (r) => ({
     significant: r.careRecipientContent ?? "",
 });
 
+// 요청 상태(requestState)별 배지 색 : 신청 -> 배정중 -> 배정완료 -> 완료, 취소
+const stateTone = { 신청: "info", 배정중: "warning", 배정완료: "ok", 완료: "ok", 취소: "neutral" };
+
 // 방문 요청 + 근무기록 + 요양보호사 -> 방문 일정 행
 export function buildVisits({ requests, reports, careworkers }) {
     const cwById = new Map(careworkers.map((c) => [c.careworkerNo, c]));
@@ -54,8 +57,7 @@ export function buildVisits({ requests, reports, careworkers }) {
             const cw = report && (report.workStatus === "확정" || report.workStatus === "완료") ? cwById.get(report.careworkerNo) : null; // 요양보호사가 수락(확정)한 뒤에만 표시
             const cancelled = q.requestState === "취소";
             const done = q.requestState === "완료" || report?.workStatus === "완료";
-            const isToday = q.visitDate === todayIso;
-            const status = cancelled ? "취소" : done ? "방문 완료" : isToday ? "오늘 예정" : q.requestState === "신청" ? "배정 대기" : q.requestState === "배정중" ? "요양보호사 확인 중" : "예정";
+            const status = q.requestState ?? "신청"; // 방문 일정에는 요청 상태(requestState)를 그대로 보여 준다
             return {
                 id: q.requestNo,
                 iso: q.visitDate,
@@ -69,7 +71,7 @@ export function buildVisits({ requests, reports, careworkers }) {
                 note: q.requestContent ?? "",
                 status,
                 label: status,
-                tone: cancelled ? "neutral" : done ? "ok" : isToday ? "info" : "neutral",
+                tone: stateTone[status] ?? "neutral",
                 cancelled,
                 done,
             };
@@ -80,7 +82,6 @@ export function buildVisits({ requests, reports, careworkers }) {
 // 문의(보호자 단위) + 서비스 신청(수급자 단위) -> 요청 내역
 export function buildHistory({ inquiries, categories, requests }) {
     const nameOf = new Map(categories.map((c) => [c.inquiryCategoryNo, c.inquiryCategoryName]));
-    const stateTone = { 완료: "ok", 취소: "neutral", 신청: "info", 배정중: "warning", 배정완료: "ok" };
     const fromInquiries = inquiries.map((i) => {
         const type = nameOf.get(i.inquiryCategoryNo) ?? "문의";
         const created = typeof i.createDate === "string" ? i.createDate.slice(0, 10) : i.wishDate ?? "-";

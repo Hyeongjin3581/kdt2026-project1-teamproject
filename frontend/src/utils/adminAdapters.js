@@ -49,7 +49,10 @@ export const emptyModel = {
   vacancyEvents: [],
 };
 
-export function buildAdminModel(raw) {
+// opts.weekStart : 방문 일정 표가 보여 줄 주의 월요일(yyyy-MM-dd). 없으면 이번 주
+export function buildAdminModel(raw, opts = {}) {
+  const viewDates = opts.weekStart ? Array.from({ length: 6 }, (_, i) => addDays(opts.weekStart, i)) : WEEK_DATES;
+  const viewDays = viewDates.map((iso) => `${DAY_KR[parseDate(iso).getDay()]} ${parseDate(iso).getDate()}`);
   const centers = buildCenters(raw.centers);
   const centerName = (id) => centers.find((c) => c.id === id)?.name ?? allCenter.name;
 
@@ -148,10 +151,10 @@ export function buildAdminModel(raw) {
     id: cw.careworkerNo,
     cg: cw.careworkerName,
     center: cw.centerNo,
-    cells: WEEK_DATES.map((date) =>
+    cells: viewDates.map((date) =>
       reports
         .filter((r) => r.careworkerNo === cw.careworkerNo && !r.off && r.workDate === date)
-        .map((r) => ({ t: range(r.workStartTime, r.workEndTime), name: r.rec?.careRecipientName ?? "-", area: dongOf(r.rec?.careRecipientAddress) })),
+        .map((r) => ({ t: range(r.workStartTime, r.workEndTime), name: r.rec?.careRecipientName ?? "-", area: dongOf(r.rec?.careRecipientAddress), st: r.workStatus })),
     ),
   }));
 
@@ -217,5 +220,5 @@ export function buildAdminModel(raw) {
     }),
   ];
 
-  return { centers, centerName, caregivers, recipients, guardians, todayVisits, weekTable, scheduleDays, assignments, stateMeta, vacancyEvents };
+  return { centers, centerName, caregivers, recipients, guardians, todayVisits, weekTable, scheduleDays: viewDays, assignments, stateMeta, vacancyEvents };
 }
