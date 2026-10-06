@@ -81,7 +81,6 @@ export default function Login({ login }) {
           <button onClick={handleLogin} className="mt-7 w-full rounded-lg bg-teal-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-teal-700">{meta.cta}</button>
 
           <p className="mt-4 text-center text-[11px] text-slate-400">{meta.note}</p>
-          </>}
           <div className="mt-5 border-t border-slate-100 pt-4 text-center text-xs text-slate-500">아직 계정이 없으신가요? <button onClick={() => role === "caregiver" ? navigate("/signup", { state: { role: "caregiver" } }) : navigate("/signup")} className="font-bold text-teal-600 hover:underline">회원가입</button></div>
         </div>
       </div>
