@@ -1,3 +1,4 @@
+//
 import { useState } from "react";
 
 // centers : AdminApp 이 axios(GET /center)로 조회해서 내려주는 센터 목록
