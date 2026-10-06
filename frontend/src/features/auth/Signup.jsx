@@ -4,12 +4,14 @@ import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import AppMark from "../../components/common/AppMark";
 import axios from "axios";
+import CaregiverSignupForm from "./CaregiverSignupForm"; // 요양보호사 전용 가입 폼 (2026. 10. 06 병합)
 
-// 가입할 때 선택하는 직급 : 백엔드 usercategory 테이블의 번호와 맞춘다. (2 = 요양보호사는 아직 가입 화면에서 지원하지 않음)
+// 가입할 때 선택하는 직급 : 백엔드 usercategory 테이블의 번호와 맞춘다. (2 = 요양보호사는 CaregiverSignupForm 으로 가입)
 const POSITIONS = [
   { value: "guardian", label: "보호자", userCategoryNo: 1, admin: false },
   { value: "center", label: "센터 관리자", userCategoryNo: 3, admin: true },
   { value: "system", label: "시스템 관리자", userCategoryNo: 4, admin: true },
+  { value: "caregiver", label: "요양보호사", userCategoryNo: 2, admin: false }, // 선택 시 CaregiverSignupForm 사용
 ];
 
 // 보호자가 수급자와 맺는 관계 (guardians.guardian_relationship 에 저장, 최대 20자)
@@ -17,8 +19,10 @@ const RELATIONSHIPS = ["아들", "딸", "배우자", "며느리", "사위", "손
 
 export default function Signup() {
   const navigate = useNavigate();
-  const toLogin = () => navigate("/login");
-  const [role, setRole] = useState("guardian"); // 선택한 직급 (POSITIONS 의 value)
+  const location = useLocation();
+  // 로그인 화면의 요양보호사 탭에서 넘어오면 요양보호사로 시작하고, 가입 후에도 그 탭으로 돌아간다
+  const [role, setRole] = useState(location.state?.role === "caregiver" ? "caregiver" : "guardian"); // 선택한 직급 (POSITIONS 의 value)
+  const toLogin = () => role === "caregiver" ? navigate("/login", { state: { role: "caregiver" } }) : navigate("/login");
   const position = POSITIONS.find((p) => p.value === role);
   const isAdmin = position.admin; // 센터·시스템 관리자는 관리자 인증코드가 필요
   const [done, setDone] = useState(false);
@@ -148,12 +152,14 @@ export default function Signup() {
               <p className="font-mono text-[11px] font-bold tracking-[.15em] text-teal-600">SIGN UP</p>
               <h2 className="mt-2 font-display text-3xl font-extrabold text-slate-900">회원가입</h2>
               <p className="mt-2 text-sm text-slate-500">직급을 선택하고 정보를 입력하세요.</p>
-              <div className="mt-5 grid gap-4 sm:grid-cols-2">
-                <label className="text-xs font-semibold text-slate-600 sm:col-span-2">직급
-                  <select value={role} onChange={(event) => changeRole(event.target.value)} className={field}>
-                    {POSITIONS.map((p) => <option key={p.value} value={p.value}>{p.label}</option>)}
-                  </select>
-                </label>
+              <label className="mt-5 block text-xs font-semibold text-slate-600">직급
+                <select value={role} onChange={(event) => changeRole(event.target.value)} className={field}>
+                  {POSITIONS.map((p) => <option key={p.value} value={p.value}>{p.label}</option>)}
+                </select>
+              </label>
+              {/* 요양보호사는 전용 가입 폼, 그 외(보호자·관리자)는 아래 공용 폼 (2026. 10. 06 병합) */}
+              {role === "caregiver" ? <CaregiverSignupForm onLogin={toLogin} /> : <>
+              <div className="mt-4 grid gap-4 sm:grid-cols-2">
                 <label className="text-xs font-semibold text-slate-600">이름<input value={name} onChange={(event) => setName(event.target.value)} maxLength={10} className={field} placeholder="홍길동" /></label>
                 <label className="text-xs font-semibold text-slate-600">연락처<input value={phone} onChange={(event) => setPhone(event.target.value)} className={field} placeholder="010-0000-0000" /></label>
                 {role === "guardian" && <label className="text-xs font-semibold text-slate-600 sm:col-span-2">수급자(어르신)와의 관계
@@ -191,6 +197,7 @@ export default function Signup() {
               <label className="mt-5 flex items-start gap-2 text-xs text-slate-500"><input type="checkbox" className="mt-0.5 h-4 w-4 accent-teal-600" /><span>서비스 이용약관 및 개인정보 처리방침에 동의합니다. (필수)</span></label>
               {submitError && <p className="mt-4 text-xs font-semibold text-rose-600">{submitError}</p>}
               <button onClick={submitSignup} disabled={submitting || (role === "guardian" && !emailVerified) || (isAdmin && !adminVerified)} className="mt-6 w-full rounded-lg bg-teal-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-teal-700 disabled:cursor-not-allowed disabled:bg-slate-300">{submitting ? "가입 중..." : "가입하기"}</button>
+              </>}
               <div className="mt-5 border-t border-slate-100 pt-4 text-center text-xs text-slate-500">이미 계정이 있으신가요? <button onClick={toLogin} className="font-bold text-teal-600 hover:underline">로그인</button></div>
             </>
           )}

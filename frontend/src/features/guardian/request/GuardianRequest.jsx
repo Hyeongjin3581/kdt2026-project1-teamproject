@@ -1,5 +1,3 @@
-import { inquiryPayload } from "../../../utils/guardianAdapters";
-import { normalizeInquiry, normalizeCategory } from "../../../utils/guardianAdapters";
 import { useEffect, useState } from "react";
 import HourSelect from "../../../components/common/HourSelect";
 import { toHhmm, toServerTime } from "../../../utils/timeFormat";
@@ -19,6 +17,7 @@ export default function GuardianRequest({ guardian, recipients, activeRecipientI
   const [history, setHistory] = useState([]);
   const [visits, setVisits] = useState([]);
   const [status, setStatus] = useState("loading");
+  const [loadError, setLoadError] = useState(null); // 병합 중 빠진 선언 복구 (2026. 10. 06)
   const dates = upcomingDates(7); // 오늘부터 7일
   const [selectedDates, setSelectedDates] = useState([]); // 선택한 날짜 (yyyy-MM-dd)
   const [preferredTimes, setPreferredTimes] = useState({}); // 날짜별 { start, end }
@@ -45,8 +44,8 @@ export default function GuardianRequest({ guardian, recipients, activeRecipientI
     setStatus("loading");
     try {
       const [categoriesRes, inquiriesRes, careworkersRes] = await Promise.all([
-        axios.get("/api/문의카테고리", { withCredentials: true }).then((res) => ({ ...res, data: res.data.map(normalizeCategory) })),
-        axios.get("/api/보호자문의", { withCredentials: true }).then((res) => ({ ...res, data: res.data.map(normalizeInquiry) })),
+        axios.get("http://localhost:8080/inquirycategory", { withCredentials: true }),
+        axios.get("http://localhost:8080/guardianinquiry", { withCredentials: true }),
         axios.get("/api/careworkers", { withCredentials: true }),
       ]);
       const requestsRes = selectedRecipient
@@ -91,7 +90,7 @@ export default function GuardianRequest({ guardian, recipients, activeRecipientI
     const raw = selectedRequest.raw;
     try {
       const response = selectedRequest.source === "inquiry"
-        ? await axios.put(`/api/보호자문의/${raw.inquiryNo}`, inquiryPayload({
+        ? await axios.put("http://localhost:8080/guardianinquiry", {
             inquiryNo: raw.inquiryNo, guardianNo: raw.guardianNo, inquiryCategoryNo: Number(editForm.categoryNo),
             wishDate: editForm.date || null, wishStartTime: toServerTime(editForm.start), wishEndTime: toServerTime(editForm.end), inquiryContent: editForm.content,
           }, { withCredentials: true })
@@ -112,7 +111,7 @@ export default function GuardianRequest({ guardian, recipients, activeRecipientI
     if (!window.confirm(selectedRequest.source === "inquiry" ? "이 문의를 삭제할까요?" : "이 서비스 신청을 취소할까요?")) return;
     try {
       const response = selectedRequest.source === "inquiry"
-        ? await axios.delete(`/api/보호자문의/${raw.inquiryNo}`, { withCredentials: true })
+        ? await axios.delete("http://localhost:8080/guardianinquiry", { data: { inquiryNo: raw.inquiryNo }, withCredentials: true })
         : await axios.delete("/request", { params: { request_no: raw.requestNo }, withCredentials: true });
       if (response.data) { setEditing(false); setSelectedRequestId(null); loadData(); }
       else alert("처리에 실패했습니다.");
@@ -147,7 +146,7 @@ export default function GuardianRequest({ guardian, recipients, activeRecipientI
         }))
       : [{ guardianNo: guardian.guardianNo, inquiryCategoryNo: category.inquiryCategoryNo, inquiryContent: content }];
     try {
-      const results = await Promise.all(bodies.map((body) => axios.post("/api/보호자문의", inquiryPayload(body), { withCredentials: true })));
+      const results = await Promise.all(bodies.map((body) => axios.post("http://localhost:8080/guardianinquiry", body, { withCredentials: true })));
       if (results.every((res) => res.data)) {
         setRequestContent("");
         setReqSent(true);

@@ -1,4 +1,3 @@
-import { recipientPayload } from "../../../utils/guardianAdapters";
 import { useState } from "react";
 import axios from "axios";
 import Panel from "../../../components/common/Panel";
@@ -18,15 +17,15 @@ export default function GuardianRecipient({ guardianNo, onComplete, onCancel }) 
     try {
       // axios.post("통신할주소", { body }, { 옵션 }) → 컨트롤러가 boolean 을 반환
       const response = await axios.post(
-        "/api/수급자",
-        recipientPayload({
+        "http://localhost:8080/carerecipient",
+        {
           guardianNo,
           careRecipientName: form.name.trim(),
           careRecipientAge: Number(form.age),
           careRecipientAddress: form.address.trim(),
           careRecipientGender: form.gender === "female" ? "여자" : "남자",
           careRecipientContent: form.significant,
-        }),
+        },
         { withCredentials: true }
       );
       if (response.data) onComplete();

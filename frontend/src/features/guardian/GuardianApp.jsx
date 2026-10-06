@@ -1,4 +1,3 @@
-import { normalizeGuardian, normalizeRecipient } from "../../utils/guardianAdapters";
 import { useEffect, useState } from "react";
 import { Navigate, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -42,8 +41,8 @@ export default function GuardianApp({ user, logout }) {
     setLoadError(null);
     try {
       const [guardiansRes, recipientsRes] = await Promise.all([
-        axios.get("/api/보호자", { withCredentials: true }).then((res) => ({ ...res, data: res.data.map(normalizeGuardian) })),
-        axios.get("/api/수급자", { withCredentials: true }).then((res) => ({ ...res, data: res.data.map(normalizeRecipient) })),
+        axios.get("http://localhost:8080/guardian", { withCredentials: true }),
+        axios.get("http://localhost:8080/carerecipient", { withCredentials: true }),
       ]);
       const me = guardiansRes.data.find((g) => g.userNo === user?.userNo) ?? null;
       const mine = me ? recipientsRes.data.filter((r) => r.guardianNo === me.guardianNo).map(toRecipient) : [];

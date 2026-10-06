@@ -1,4 +1,3 @@
-import { normalizeGuardian, normalizeRecipient } from "../../../utils/guardianAdapters";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -33,8 +32,8 @@ export default function Dashboard() {
       const [centersRes, careworkersRes, guardiansRes, recipientsRes] = await Promise.all([
         axios.get("/center", { withCredentials: true }).catch(optionalError),
         axios.get("/api/careworkers", { withCredentials: true }),
-        axios.get("/api/보호자", { withCredentials: true }).then((res) => ({ ...res, data: res.data.map(normalizeGuardian) })).catch(optionalError),
-        axios.get("/api/수급자", { withCredentials: true }).then((res) => ({ ...res, data: res.data.map(normalizeRecipient) })).catch(optionalError),
+        axios.get("http://localhost:8080/guardian", { withCredentials: true }).catch(optionalError),
+        axios.get("http://localhost:8080/carerecipient", { withCredentials: true }).catch(optionalError),
       ]);
       // 수급자별 방문 요청, 센터별 근무기록
       const [requestLists, reportLists] = await Promise.all([

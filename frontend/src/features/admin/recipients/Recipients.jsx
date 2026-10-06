@@ -1,4 +1,3 @@
-import { normalizeGuardian, normalizeRecipient } from "../../../utils/guardianAdapters";
 import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import SectionTitle from "../../../components/common/SectionTitle";
@@ -23,8 +22,8 @@ export default function Recipients() {
     try {
       const [careworkersRes, guardiansRes, recipientsRes] = await Promise.all([
         axios.get("/api/careworkers", { withCredentials: true }),
-        axios.get("/api/보호자", { withCredentials: true }).then((res) => ({ ...res, data: res.data.map(normalizeGuardian) })),
-        axios.get("/api/수급자", { withCredentials: true }).then((res) => ({ ...res, data: res.data.map(normalizeRecipient) })),
+        axios.get("http://localhost:8080/guardian", { withCredentials: true }),
+        axios.get("http://localhost:8080/carerecipient", { withCredentials: true }),
       ]);
       // 수급자별 방문 요청, 센터별 근무기록
       const [requestLists, reportLists] = await Promise.all([
