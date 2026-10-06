@@ -19,6 +19,7 @@ public class CareworkerDto {
     private Integer hourWage;
     private Integer careworkerAge;
     private String careworkerState;
+    private String signState;
     private String careworkerAddress;
 
     private Integer centerNo;
@@ -50,6 +51,7 @@ public class CareworkerDto {
                 .hourWage(careworker.getHourWage())
                 .careworkerAge(careworker.getCareworkerAge())
                 .careworkerState(careworker.getCareworkerState())
+                .signState(careworker.getSignState())
                 .centerNo(careworker.getCenterEntity().getCenterNo())
                 .userNo(careworker.getUserEntity().getUserNo())
                 .build();

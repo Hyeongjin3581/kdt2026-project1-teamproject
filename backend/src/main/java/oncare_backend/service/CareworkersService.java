@@ -3,6 +3,7 @@ package oncare_backend.service;
 import java.util.ArrayList;
 import java.util.List;
 
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -84,6 +85,55 @@ public class CareworkersService {
         if ( careworkerEntity == null ) return null;
 
         return CareworkerDto.entityToDto(careworkerEntity);
+    }
+
+    // 시스템 관리자에게 승인 대기 중인 가입 신청 목록 반환
+    @Transactional
+    public List<CareworkerDto> getPendingCareworkers(Integer adminUserNo) {
+        if (adminUserNo == null) return null;
+
+        // 요청한 사용자가 시스템 관리자인지 확인
+        UserEntity adminUserEntity = userRepository.findById(adminUserNo).orElse(null);
+        if (!isSystemAdmin(adminUserEntity)) return null;
+
+        // 승인 대기 상태인 요양보호사 신청 조회
+        List<CareworkerEntity> careworkerEntities =
+                careworkerRepository.findBySignState("승인대기");
+        List<CareworkerDto> careworkerDtos = new ArrayList<>();
+
+        careworkerEntities.forEach(careworkerEntity ->
+                careworkerDtos.add(CareworkerDto.entityToDto(careworkerEntity)));
+
+        return careworkerDtos;
+    }
+
+    // 시스템 관리자만 승인 대기 중인 요양보호사 가입 신청을 승인
+    @Transactional
+    public boolean approveCareworker(Integer careworkerNo, Integer adminUserNo) {
+        if (careworkerNo == null || adminUserNo == null) return false;
+
+        // 요청한 사용자가 시스템 관리자인지 확인
+        UserEntity adminUserEntity = userRepository.findById(adminUserNo).orElse(null);
+        if (!isSystemAdmin(adminUserEntity)) return false;
+
+        // 승인 대상 요양보호사 조회
+        CareworkerEntity careworkerEntity = careworkerRepository.findById(careworkerNo).orElse(null);
+        if (careworkerEntity == null) return false;
+
+        // 승인 대기 상태인 신청만 승인
+        if (!"승인대기".equals(careworkerEntity.getSignState())) return false;
+
+        careworkerEntity.setSignState("승인완료");
+        CareworkerEntity savedCareworkerEntity = careworkerRepository.save(careworkerEntity);
+        return "승인완료".equals(savedCareworkerEntity.getSignState());
+    }
+
+    // 사용자 유형 번호 4번인지 확인
+    private boolean isSystemAdmin(UserEntity userEntity) {
+        return userEntity != null
+                && userEntity.getUserCategoryEntity() != null
+                && Integer.valueOf(4).equals(
+                        userEntity.getUserCategoryEntity().getUserCategoryNo());
     }
 
     // 4. 요양보호사 수정

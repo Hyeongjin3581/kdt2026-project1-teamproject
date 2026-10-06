@@ -3,6 +3,7 @@ package oncare_backend.model.entity;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.Builder.Default;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -24,6 +25,11 @@ public class CareworkerEntity extends BaseTime{
     private Integer hourWage;
     private Integer careworkerAge;
     private String careworkerState;
+    // 가입상태 컬럼: DB 기본값과 Builder 기본값을 승인대기로 설정
+    @Column(name = "sign_state", nullable = false, length = 10,
+            columnDefinition = "varchar(10) not null default '승인대기'")
+    @Default
+    private String signState = "승인대기";
     private double latitude; // 위도
     private double longitude; // 경도
 

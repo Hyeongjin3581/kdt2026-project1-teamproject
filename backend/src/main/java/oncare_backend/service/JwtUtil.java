@@ -51,6 +51,25 @@ public class JwtUtil {
         return jwt;
     }
 
+    // Access 토큰만 검증하고 회원 번호 반환
+    public Integer getUserNoFromAccessToken(String token) {
+        try {
+            Claims claims = Jwts.parser()
+                    .verifyWith(secretKey)
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload();
+
+            if (!"ACCESS".equals(claims.get("type", String.class))) {
+                return null;
+            }
+
+            return Integer.parseInt(claims.getSubject());
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
     // JWT 토큰 검증 메소드
     public Integer getUserNoFromToken( String token ){
         try{  // 만약에 token 파싱(가져오기)이 실패이면 예외 발생한다.
