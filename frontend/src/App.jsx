@@ -8,7 +8,7 @@ import Recipients from "./features/admin/recipients/Recipients";
 import Guardians from "./features/admin/guardians/Guardians";
 import Caregivers from "./features/admin/caregivers/Caregivers";
 import Schedule from "./features/admin/schedule/Schedule";
-import AutoScheduling from "./features/admin/autoScheduling/AutoScheduling";
+import Requests from "./features/admin/requests/Requests";
 import Vacancy from "./features/admin/vacancy/Vacancy";
 import Centers from "./features/admin/centers/Centers";
 import Inquiries from "./features/admin/inquiries/Inquiries";
@@ -29,7 +29,8 @@ function OncareApp() {
         <Route path="guardians" element={<Guardians />} />
         <Route path="caregivers" element={<Caregivers />} />
         <Route path="schedule" element={<Schedule />} />
-        <Route path="auto" element={<AutoScheduling />} />
+        <Route path="requests" element={<Requests />} />
+        <Route path="auto" element={<Navigate to="/admin/requests" replace />} />
         <Route path="vacancy" element={<Vacancy />} />
         <Route path="centers" element={<Centers />} />
         <Route path="inquiries" element={<Inquiries />} />

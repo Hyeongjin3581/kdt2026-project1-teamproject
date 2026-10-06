@@ -1,4 +1,6 @@
 import { useState } from "react";
+import HourSelect from "../../../components/common/HourSelect";
+import { toServerTime } from "../../../utils/timeFormat";
 import axios from "axios";
 import Panel from "../../../components/common/Panel";
 import Badge from "../../../components/common/Badge";
@@ -33,7 +35,7 @@ export default function GuardianApply({ recipient, recipients, onSelectRecipient
         const t = dayTimes[d] ?? { start: "09:00", end: "12:00" };
         return axios.post(
           "http://localhost:8080/request",
-          { preferredGender: "무관", requestState: "신청", visitDate: nextDateOf(d), visitStartTime: t.start, visitEndTime: t.end, requestContent: content.trim() || "방문요양 서비스 신청" },
+          { preferredGender: "무관", requestState: "신청", visitDate: nextDateOf(d), visitStartTime: toServerTime(t.start), visitEndTime: toServerTime(t.end), requestContent: content.trim() || "방문요양 서비스 신청" },
           { params: { carerecipient_no: recipient.id }, withCredentials: true }
         );
       }));
@@ -138,10 +140,10 @@ export default function GuardianApply({ recipient, recipients, onSelectRecipient
                     return (
                       <div key={d} className="flex items-center gap-2.5 rounded-lg border border-slate-200 px-3 py-2">
                         <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-teal-50 text-xs font-bold text-teal-700">{d}</span>
-                        <input type="time" value={t.start} onChange={(e) => setDayTime(d, "start", e.target.value)}
+                        <HourSelect value={t.start} onChange={(e) => setDayTime(d, "start", e.target.value)}
                           className="min-w-0 flex-1 rounded-md border border-slate-200 px-2.5 py-2 text-sm text-slate-800 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100" />
                         <span className="shrink-0 text-xs font-semibold text-slate-400">~</span>
-                        <input type="time" value={t.end} onChange={(e) => setDayTime(d, "end", e.target.value)}
+                        <HourSelect value={t.end} onChange={(e) => setDayTime(d, "end", e.target.value)}
                           className="min-w-0 flex-1 rounded-md border border-slate-200 px-2.5 py-2 text-sm text-slate-800 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100" />
                       </div>
                     );

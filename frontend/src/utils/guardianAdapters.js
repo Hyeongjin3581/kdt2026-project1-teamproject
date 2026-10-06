@@ -1,11 +1,12 @@
 import { TODAY } from "../constants";
+import { toHhmm } from "./timeFormat";
 
 // 보호자 화면용 데이터 변환 (axios 로 받아온 백엔드 DTO -> 화면에서 쓰는 모양)
 const DAY_KR = ["일", "월", "화", "수", "목", "금", "토"];
 const pad = (n) => String(n).padStart(2, "0");
 const parseDate = (iso) => { const [y, m, d] = iso.split("-").map(Number); return new Date(y, m - 1, d); };
 const toIso = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-const hhmm = (t) => (t ? t.slice(0, 5) : "");
+const hhmm = toHhmm;
 
 export const todayIso = TODAY.slice(0, 10).replaceAll(".", "-");
 
@@ -45,16 +46,16 @@ export const toRecipient = (r) => ({
 // 방문 요청 + 근무기록 + 요양보호사 -> 방문 일정 행
 export function buildVisits({ requests, reports, careworkers }) {
     const cwById = new Map(careworkers.map((c) => [c.careworkerNo, c]));
-    const reportByReq = new Map(reports.map((r) => [r.requestNo, r]));
+    const reportByReq = new Map(reports.filter((r) => r.workStatus !== "취소").map((r) => [r.requestNo, r])); // 취소된 기록은 제외
     return requests
         .filter((q) => q.visitDate)
         .map((q) => {
             const report = reportByReq.get(q.requestNo);
-            const cw = report && report.workStatus !== "취소" ? cwById.get(report.careworkerNo) : null;
+            const cw = report && (report.workStatus === "확정" || report.workStatus === "완료") ? cwById.get(report.careworkerNo) : null; // 요양보호사가 수락(확정)한 뒤에만 표시
             const cancelled = q.requestState === "취소";
             const done = q.requestState === "완료" || report?.workStatus === "완료";
             const isToday = q.visitDate === todayIso;
-            const status = cancelled ? "취소" : done ? "방문 완료" : isToday ? "오늘 예정" : q.requestState === "신청" ? "배정 대기" : "예정";
+            const status = cancelled ? "취소" : done ? "방문 완료" : isToday ? "오늘 예정" : q.requestState === "신청" ? "배정 대기" : q.requestState === "배정중" ? "요양보호사 확인 중" : "예정";
             return {
                 id: q.requestNo,
                 iso: q.visitDate,
@@ -79,7 +80,7 @@ export function buildVisits({ requests, reports, careworkers }) {
 // 문의(보호자 단위) + 서비스 신청(수급자 단위) -> 요청 내역
 export function buildHistory({ inquiries, categories, requests }) {
     const nameOf = new Map(categories.map((c) => [c.inquiryCategoryNo, c.inquiryCategoryName]));
-    const stateTone = { 완료: "ok", 취소: "neutral", 신청: "info" };
+    const stateTone = { 완료: "ok", 취소: "neutral", 신청: "info", 배정중: "warning", 배정완료: "ok" };
     const fromInquiries = inquiries.map((i) => {
         const type = nameOf.get(i.inquiryCategoryNo) ?? "문의";
         const created = typeof i.createDate === "string" ? i.createDate.slice(0, 10) : i.wishDate ?? "-";

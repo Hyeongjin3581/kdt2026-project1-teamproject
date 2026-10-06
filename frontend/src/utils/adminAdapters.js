@@ -1,4 +1,5 @@
 import { TODAY, WEEK_LIMIT, WEEK_START } from "../constants";
+import { toHhmm } from "./timeFormat";
 
 // 백엔드 엔티티 DTO(번호로 연결된 정규화 데이터)를 화면이 쓰는 형태로 조합한다.
 const DAY_KR = ["일", "월", "화", "수", "목", "금", "토"];
@@ -8,9 +9,9 @@ const toIso = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDat
 const addDays = (iso, n) => { const d = parseDate(iso); d.setDate(d.getDate() + n); return toIso(d); };
 const mdLabel = (iso) => { const d = parseDate(iso); return `${pad(d.getMonth() + 1)}.${pad(d.getDate())} (${DAY_KR[d.getDay()]})`; };
 const koDateLabel = (iso) => { const d = parseDate(iso); return `${d.getMonth() + 1}월 ${d.getDate()}일 (${DAY_KR[d.getDay()]})`; };
-const hhmm = (t) => (t ? t.slice(0, 5) : "");
+const hhmm = toHhmm;
 const range = (a, b) => `${hhmm(a)}~${hhmm(b)}`;
-const minutes = (t) => { const [h, m] = t.split(":").map(Number); return h * 60 + m; };
+const minutes = (t) => { const [h, m] = toHhmm(t).split(":").map(Number); return h * 60 + m; };
 const hoursBetween = (a, b) => (a && b ? (minutes(b) - minutes(a)) / 60 : 0);
 const fmtHours = (h) => `${Math.round(h * 10) / 10}h`;
 const areaOf = (addr) => (addr ?? "").replace(/^경기도\s*/, "");
@@ -18,7 +19,8 @@ const dongOf = (addr) => (addr ?? "").trim().split(/\s+/).pop() ?? "";
 const shortCenter = (name) => name.replace(" 온케어 방문요양센터", "센터").replace("온케어 ", "");
 
 export const stateMeta = {
-  assigned: { tone: "ok", label: "배정 완료" },
+  assigned: { tone: "ok", label: "배정 완료" },       // 근무기록 확정(요양보호사 수락)
+  pending: { tone: "warning", label: "수락 대기" },     // 근무기록 배정(요양보호사 수락 전)
   review: { tone: "warning", label: "확인 필요" },
   unassigned: { tone: "danger", label: "미배정" },
 };
@@ -58,15 +60,21 @@ export function buildAdminModel(raw) {
 
   const reports = raw.reports.map((rp) => {
     const req = reqById.get(rp.requestNo);
-    return { ...rp, cw: cwById.get(rp.careworkerNo), req, rec: req ? recById.get(req.carerecipientNo) : undefined, cancelled: rp.workStatus === "취소" };
+    return { ...rp, cw: cwById.get(rp.careworkerNo), req, rec: req ? recById.get(req.carerecipientNo) : undefined, cancelled: rp.workStatus === "취소", off: rp.workStatus === "취소" };
   });
-  const reportByReq = new Map(reports.map((r) => [r.requestNo, r]));
+  // 요청마다 "지금 유효한" 근무기록만 (취소·거절된 기록은 제외)
+  const reportByReq = new Map(reports.filter((r) => !r.off).map((r) => [r.requestNo, r]));
+  // 요청별 취소(거절·확정 후 취소)된 요양보호사 이름
+  const cancelledByReq = new Map();
+  reports.filter((r) => r.cancelled).forEach((r) => cancelledByReq.set(r.requestNo, [...(cancelledByReq.get(r.requestNo) ?? []), r.cw?.careworkerName ?? "요양보호사"]));
+  // 취소된 근무기록이 있는 요청 (결원 관리에서 다루므로 미배정 목록과 중복 표시하지 않음)
+  const vacancyReq = new Set(reports.filter((r) => r.cancelled).map((r) => r.requestNo));
   const weekSet = new Set(WEEK_DATES);
   const monthPrefix = WEEK_START.slice(0, 7);
 
   const caregivers = raw.careworkers.map((cw) => {
     const mine = reports.filter((r) => r.careworkerNo === cw.careworkerNo);
-    const active = mine.filter((r) => !r.cancelled);
+    const active = mine.filter((r) => !r.off);
     const week = Math.round(active.filter((r) => weekSet.has(r.workDate)).reduce((s, r) => s + hoursBetween(r.workStartTime, r.workEndTime), 0) * 10) / 10;
     const month = active.filter((r) => r.workDate?.startsWith(monthPrefix)).length;
     const over = week >= WEEK_LIMIT;
@@ -132,7 +140,7 @@ export function buildAdminModel(raw) {
 
   const todayIso = TODAY.slice(0, 10).replaceAll(".", "-");
   const todayVisits = reports
-    .filter((r) => !r.cancelled && r.workDate === todayIso)
+    .filter((r) => !r.off && r.workDate === todayIso)
     .map((r) => ({ t: range(r.workStartTime, r.workEndTime), name: r.rec?.careRecipientName ?? "-", area: areaOf(r.rec?.careRecipientAddress), cg: r.cw?.careworkerName ?? "-", center: r.cw?.centerNo }))
     .sort((a, b) => a.t.localeCompare(b.t));
 
@@ -142,20 +150,21 @@ export function buildAdminModel(raw) {
     center: cw.centerNo,
     cells: WEEK_DATES.map((date) =>
       reports
-        .filter((r) => r.careworkerNo === cw.careworkerNo && !r.cancelled && r.workDate === date)
+        .filter((r) => r.careworkerNo === cw.careworkerNo && !r.off && r.workDate === date)
         .map((r) => ({ t: range(r.workStartTime, r.workEndTime), name: r.rec?.careRecipientName ?? "-", area: dongOf(r.rec?.careRecipientAddress) })),
     ),
   }));
 
   const upcoming = raw.requests
     .filter((q) => q.requestState !== "취소" && q.visitDate >= WEEK_START)
-    .sort((a, b) => `${a.visitDate}${a.visitStartTime}`.localeCompare(`${b.visitDate}${b.visitStartTime}`));
+    .sort((a, b) => `${a.visitDate}${toHhmm(a.visitStartTime)}`.localeCompare(`${b.visitDate}${toHhmm(b.visitStartTime)}`));
   const assignments = upcoming.map((q) => {
     const rp = reportByReq.get(q.requestNo);
-    const cw = rp && !rp.cancelled ? rp.cw : null;
+    const cw = rp && !rp.off ? rp.cw : null;
     const rec = recipients.find((r) => r.id === q.carerecipientNo);
     return {
       requestNo: q.requestNo,
+      requestState: q.requestState,
       reportNo: cw ? rp.careworkersReportNo : null,
       careworkerNo: cw ? cw.careworkerNo : null,
       iso: q.visitDate,
@@ -166,9 +175,10 @@ export function buildAdminModel(raw) {
       time: range(q.visitStartTime, q.visitEndTime),
       cg: cw?.careworkerName ?? "미배정",
       score: 0,
-      state: cw ? "assigned" : "unassigned",
+      reportStatus: cw ? rp.workStatus : null,
+      state: !cw ? "unassigned" : rp.workStatus === "확정" || rp.workStatus === "완료" ? "assigned" : "pending",
       center: cw?.centerNo ?? rec?.center ?? null,
-      reasons: q.requestContent ? [q.requestContent] : [],
+      reasons: [...(cancelledByReq.get(q.requestNo) ?? []).map((n) => `${n} 요양보호사 취소 · 재배정 필요`), ...(q.requestContent ? [q.requestContent] : [])],
     };
   });
 
@@ -188,7 +198,7 @@ export function buildAdminModel(raw) {
       deadline: "",
       subs: [],
     })),
-    ...raw.requests.filter((q) => q.requestState === "신청" && !reportByReq.get(q.requestNo) && inMonth(q.visitDate)).map((q) => {
+    ...raw.requests.filter((q) => q.requestState === "신청" && !reportByReq.get(q.requestNo) && !vacancyReq.has(q.requestNo) && inMonth(q.visitDate)).map((q) => {
       const rec = recipients.find((r) => r.id === q.carerecipientNo);
       return {
         date: parseDate(q.visitDate).getDate(),
