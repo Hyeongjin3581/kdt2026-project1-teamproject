@@ -1,12 +1,11 @@
 package oncare_backend.model.dto;
 
 import java.time.LocalDate;
-import java.time.LocalTime;
-
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import oncare_backend.model.entity.CareRecipientEntity;
 import oncare_backend.model.entity.RequestEntity;
 
 @NoArgsConstructor
@@ -18,13 +17,11 @@ public class RequestDto {
     private String preferredGender;
     private String requestState;
     private LocalDate visitDate;
-    private LocalTime visitStartTime;
-    private LocalTime visitEndTime;
+    private Integer visitStartTime;
+    private Integer visitEndTime;
     private String requestContent;
 
-    //FK
-    @Builder.Default
-    private Integer carerecipientNo = null;
+    private Integer carerecipientNo;
 
     public RequestEntity dtoToEntity(){
         return RequestEntity.builder()
@@ -40,6 +37,7 @@ public class RequestDto {
     public static RequestDto entityToDto(RequestEntity entity){
         return RequestDto.builder()
                         .requestNo(entity.getRequestNo())
+                        .carerecipientNo(entity.getCarerecipientEntity().getCareRecipientNo())
                         .preferredGender(entity.getPreferredGender())
                         .requestState(entity.getRequestState())
                         .visitDate(entity.getVisitDate())

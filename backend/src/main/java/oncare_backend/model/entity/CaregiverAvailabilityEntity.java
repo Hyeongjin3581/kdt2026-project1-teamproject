@@ -28,5 +28,5 @@ public class CaregiverAvailabilityEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "caregiver_no")
     private CareworkerEntity careworkerEntity;
-
+    
 }

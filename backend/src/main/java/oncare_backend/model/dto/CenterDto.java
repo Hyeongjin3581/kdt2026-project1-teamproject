@@ -17,15 +17,15 @@ public class CenterDto {
     private String centerAddress;
     private String centerPhonenumber;
 
-    /*@Builder.Default
-    private List<CareworkersDto> careworkers = new ArrayList<>();*/
+    @Builder.Default
+    private List<CareworkerDto> careworkers = new ArrayList<>();
 
 
     public CenterEntity dtoToEntity(){
         return CenterEntity.builder()
-                .centerName(centerName)
-                .centerAddress(centerAddress)
-                .centerPhonenumber(centerPhonenumber).build();
+            .centerName(this.centerName)
+            .centerAddress(this.centerAddress)
+            .centerPhonenumber(this.centerPhonenumber).build();
     }
 
     public static CenterDto entityToDto(CenterEntity center){

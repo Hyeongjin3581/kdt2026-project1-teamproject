@@ -16,7 +16,6 @@ import oncare_backend.model.entity.CaregiverAvailabilityEntity;
 public class CaregiverAvailabilityDto {
 
     private Integer availabilityNo;
-
     private LocalDate availableDate;
     private Integer startTime;
     private Integer endTime;
@@ -47,11 +46,10 @@ public class CaregiverAvailabilityDto {
                 .availabilityNo(availability.getAvailabilityNo())
                 .availableDate(availability.getAvailableDate())
                 .startTime(availability.getStartTime())
+                .availabilityNo(availability.getAvailabilityNo())
+                .caregiverNo(availability.getCareworkerEntity().getCareworkerNo())
                 .endTime(availability.getEndTime())
                 .status(availability.getStatus())
-                .caregiverNo(
-                        availability.getCareworkerEntity().getCareworkerNo()
-                )
                 .build();
     }
 }

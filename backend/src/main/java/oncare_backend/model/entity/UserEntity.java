@@ -18,6 +18,7 @@ public class UserEntity {
     private String userId;
     private String userPassword;
     private String phoneNumber;
+    private String email;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_category_no")

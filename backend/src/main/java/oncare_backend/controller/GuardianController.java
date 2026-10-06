@@ -11,7 +11,7 @@ import oncare_backend.model.dto.GuardianDto;
 import oncare_backend.service.GuardianService;
 
 @RestController 
-@RequestMapping("/api/보호자")
+@RequestMapping("/guardian")
 public class GuardianController {
 
 	@Autowired
@@ -19,8 +19,8 @@ public class GuardianController {
 
 	// 1. 보호자 전체 조회(관리자)
 	@GetMapping
-	public List<GuardianDto> 보호자전체조회() {
-		return guardianService.보호자전체조회();
+	public List<GuardianDto> GuardianFindAll() {
+		return guardianService.GuardianFindAll();
 	}
 }
 

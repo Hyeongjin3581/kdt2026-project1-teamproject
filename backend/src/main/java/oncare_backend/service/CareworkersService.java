@@ -11,22 +11,26 @@ import oncare_backend.model.entity.CareworkerEntity;
 import oncare_backend.model.entity.CenterEntity;
 import oncare_backend.model.entity.UserEntity;
 import oncare_backend.model.repository.CareworkersRepository;
-import oncare_backend.repository.CenterRepository;
-import oncare_backend.repository.UserRepository;
+import oncare_backend.model.repository.CenterRepository;
+import oncare_backend.model.repository.UserRepository;
 
 @Service
 public class CareworkersService {
     @Autowired 
     private CareworkersRepository careworkerRepository;
 
-    @Autowired 
+    @Autowired
     private CenterRepository centerRepository;
 
     @Autowired 
     private UserRepository userRepository;
 
+    @Autowired
+    private GeoCodingService geoCodingService;
+
     // 1. 요양보호사 등록
     public boolean createCareworker(CareworkerDto careworkerDto) {
+        if (careworkerDto.getCenterNo() == null || careworkerDto.getUserNo() == null) return false;
 
         // 1. DTO -> Entity
         CareworkerEntity careworkerEntity = careworkerDto.dtoToEntity();
@@ -43,6 +47,13 @@ public class CareworkersService {
         // 5. FK 연결
         careworkerEntity.setCenterEntity(centerEntity);
         careworkerEntity.setUserEntity(userEntity);
+
+        // 주소 -> 경도,위도 변환
+        List<Double> geoCoding = geoCodingService.getGeoCoding(careworkerDto.getCareworkerAddress());
+        if (geoCoding != null){
+            careworkerEntity.setLatitude(geoCoding.get(0));
+            careworkerEntity.setLongitude(geoCoding.get(1));
+        }
 
         // 6. DB 저장
         CareworkerEntity savedEntity = careworkerRepository.save(careworkerEntity);
@@ -80,6 +91,7 @@ public class CareworkersService {
         CareworkerEntity careworkerEntity = careworkerRepository.findById(careworkerDto.getCareworkerNo()).orElse(null);
 
         if ( careworkerEntity == null ) return false;
+        if (careworkerDto.getCenterNo() == null || careworkerDto.getUserNo() == null) return false;
 
         CenterEntity centerEntity = centerRepository.findById(careworkerDto.getCenterNo()).orElse(null);
         UserEntity userEntity = userRepository.findById(careworkerDto.getUserNo()).orElse(null);
@@ -87,6 +99,14 @@ public class CareworkersService {
         if ( centerEntity == null || userEntity == null ) return false;
 
         careworkerEntity.setCareworkerName(careworkerDto.getCareworkerName());
+        // 수정된 careWorkerDto의 주소가 저장된 주소랑 다르면 위도, 경도 다시 변경
+        if (!careworkerDto.getCareworkerAddress().equals(careworkerEntity.getCareworkerAddress())){
+            List<Double> geoCoding = geoCodingService.getGeoCoding(careworkerDto.getCareworkerAddress());
+            if (geoCoding != null){
+                careworkerEntity.setLatitude(geoCoding.get(0));
+                careworkerEntity.setLongitude(geoCoding.get(1));
+            }
+        }
         careworkerEntity.setCareworkerAddress(careworkerDto.getCareworkerAddress());
         careworkerEntity.setCareworkerGender(careworkerDto.getCareworkerGender());
         careworkerEntity.setHourWage(careworkerDto.getHourWage());

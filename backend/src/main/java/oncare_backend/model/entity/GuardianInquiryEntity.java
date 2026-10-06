@@ -9,6 +9,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -16,25 +17,30 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity 
-@Table (name="guardian_inquiry")
+@Table (name="guardianinquiry")
 @NoArgsConstructor @AllArgsConstructor @Data @Builder 
 public class GuardianInquiryEntity extends BaseTime{
     @Id 
     @GeneratedValue (strategy = GenerationType.IDENTITY)
-    private Integer inquiry_no;
+    @Column(name = "inquiry_no")
+    private Integer inquiryNo;
 
-    @JoinColumn (name="guardian_no" , nullable = false)
-    private Integer guardian_no;
+    @ManyToOne
+    @JoinColumn(name = "guardian_no", nullable = false)
+    private GuardianEntity guardianEntity;
 
-    @JoinColumn (name="inquiry_category_no", nullable = false)
-    private Integer inquiry_category_no;
+    @ManyToOne
+    @JoinColumn(name = "inquiry_category_no", nullable = false)
+    private InquiryCategoryEntity inquiryCategoryEntity;
 
-    @Column (nullable = false)
-    private LocalDate wish_date;
+    @Column (nullable = true)
+    private LocalDate wishDate;
 
-    private LocalTime wish_start_time;
-    private LocalTime wish_end_time;
+    @Column(name = "wish_start_time")
+    private Integer wishStartTime;
+    @Column(name = "wish_end_time")
+    private Integer wishEndTime;
     
     @Column (length = 1000)
-    private String inquiry_content;
+    private String inquiryContent;
 }

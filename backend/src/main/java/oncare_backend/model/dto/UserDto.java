@@ -13,7 +13,8 @@ public class UserDto {
     private String userId;
     private String userPassword;
     private String phoneNumber;
-
+    private String email;
+    
     private Integer userCategoryNo;
     private String userCategoryName;
 
@@ -21,15 +22,20 @@ public class UserDto {
         return UserEntity.builder()
                 .userId(this.userId)
                 .userPassword(this.userPassword)
-                .phoneNumber(this.phoneNumber).build();
+                .email(this.email)
+                .phoneNumber(this.phoneNumber)
+                .build();
     }
 
     public static UserDto entityToDto(UserEntity user){
         return UserDto.builder()
                 .userNo(user.getUserNo())
                 .userId(user.getUserId())
-                .userPassword(user.getUserPassword())
+                // .userPassword(user.getUserPassword()) // 뭐가 됐든 userDto들을 조회해버리면 비밀번호까지 노출돼서 주석처리 해 놓음
                 .phoneNumber(user.getPhoneNumber())
-                .userCategoryName(user.getUserCategoryEntity().getUserCategoryName()).build();
+                .email(user.getEmail())
+                .userCategoryNo(user.getUserCategoryEntity().getUserCategoryNo())
+                .userCategoryName(user.getUserCategoryEntity().getUserCategoryName())
+                .build();
     }
 }

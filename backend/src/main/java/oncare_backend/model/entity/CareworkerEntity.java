@@ -12,7 +12,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class CareworkerEntity {
+public class CareworkerEntity extends BaseTime{
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -24,13 +24,15 @@ public class CareworkerEntity {
     private Integer hourWage;
     private Integer careworkerAge;
     private String careworkerState;
+    private double latitude; // 위도
+    private double longitude; // 경도
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "center_no")
     private CenterEntity centerEntity;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    // @ManyToOne(fetch = FetchType.LAZY) 
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_no")
     private UserEntity userEntity;
-
 }
