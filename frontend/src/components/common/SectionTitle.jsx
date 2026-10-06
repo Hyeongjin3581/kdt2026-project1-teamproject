@@ -12,7 +12,7 @@ export default function SectionTitle({ title, subtitle, action }) {
   useEffect(() => {
     async function loadCenters() {
       try {
-        const response = await axios.get("http://localhost:8080/center", { withCredentials: true });
+        const response = await axios.get("/center", { withCredentials: true });
         setCenters(buildCenters(response.data));
       } catch (error) {
         console.error("센터 조회 실패:", error);

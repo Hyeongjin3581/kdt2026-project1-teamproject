@@ -1,13 +1,15 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import AppMark from "../../components/common/AppMark";
 import { roleMeta } from "./roleMeta";
 import axios from "axios";
+import CaregiverSignupForm from "./CaregiverSignupForm";
 
 export default function Signup() {
   const navigate = useNavigate();
-  const toLogin = () => navigate("/login");
-  const [role, setRole] = useState("guardian");
+  const location = useLocation();
+  const toLogin = () => role === "caregiver" ? navigate("/login", { state: { role: "caregiver" } }) : navigate("/login");
+  const [role, setRole] = useState(location.state?.role === "caregiver" ? "caregiver" : "guardian");
   const [done, setDone] = useState(false);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -91,14 +93,14 @@ export default function Signup() {
     try {
       // axios.post("통신할주소", { body }, { 옵션 }) → 컨트롤러가 boolean 을 반환
       const response = await axios.post(
-        "http://localhost:8080/user",
+        "/user",
         { userId: email, userPassword: password, email, phoneNumber: phone, userCategoryNo },
         { withCredentials: true }
       );
       if (response.data) setDone(true);
       else setSubmitError("가입에 실패했습니다. 입력 정보를 확인해주세요.");
-    } catch {
-      setSubmitError("서버와 통신할 수 없습니다. 백엔드(localhost:8080) 실행 상태를 확인해주세요.");
+    } catch (error) {
+      setSubmitError(error.response ? `회원가입 요청 실패: ${error.config.url} (HTTP ${error.response.status})` : "서버에 연결할 수 없습니다. 실행 상태를 확인해주세요.");
     } finally {
       setSubmitting(false);
     }
@@ -134,13 +136,14 @@ export default function Signup() {
               <p className="font-mono text-[11px] font-bold tracking-[.15em] text-teal-600">SIGN UP</p>
               <h2 className="mt-2 font-display text-3xl font-extrabold text-slate-900">회원가입</h2>
               <p className="mt-2 text-sm text-slate-500">가입할 계정 유형을 선택하세요.</p>
-              <div className="mt-6 grid grid-cols-2 gap-2 rounded-xl bg-slate-100 p-1">
+              <div className="mt-6 grid grid-cols-3 gap-2 rounded-xl bg-slate-100 p-1">
                 {Object.keys(roleMeta).map((r) => (
                   <button key={r} onClick={() => changeRole(r)} className={`rounded-lg px-2 py-2.5 text-center transition ${role === r ? "bg-white shadow-sm" : "hover:bg-white/50"}`}>
                     <span className={`block text-sm font-bold ${role === r ? "text-teal-700" : "text-slate-500"}`}>{roleMeta[r].label.split(" / ")[0]}</span>
                   </button>
                 ))}
               </div>
+              {role === "caregiver" ? <CaregiverSignupForm onLogin={toLogin} /> : <>
               <div className="mt-5 grid gap-4 sm:grid-cols-2">
                 <label className="text-xs font-semibold text-slate-600">이름<input value={name} onChange={(event) => setName(event.target.value)} className={field} placeholder="홍길동" /></label>
                 <label className="text-xs font-semibold text-slate-600">연락처<input value={phone} onChange={(event) => setPhone(event.target.value)} className={field} placeholder="010-0000-0000" /></label>
@@ -174,6 +177,7 @@ export default function Signup() {
               <label className="mt-5 flex items-start gap-2 text-xs text-slate-500"><input type="checkbox" className="mt-0.5 h-4 w-4 accent-teal-600" /><span>서비스 이용약관 및 개인정보 처리방침에 동의합니다. (필수)</span></label>
               {submitError && <p className="mt-4 text-xs font-semibold text-rose-600">{submitError}</p>}
               <button onClick={submitSignup} disabled={submitting || (role === "guardian" && !emailVerified) || (role === "admin" && !adminVerified)} className="mt-6 w-full rounded-lg bg-teal-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-teal-700 disabled:cursor-not-allowed disabled:bg-slate-300">{submitting ? "가입 중..." : "가입하기"}</button>
+              </>}
               <div className="mt-5 border-t border-slate-100 pt-4 text-center text-xs text-slate-500">이미 계정이 있으신가요? <button onClick={toLogin} className="font-bold text-teal-600 hover:underline">로그인</button></div>
             </>
           )}

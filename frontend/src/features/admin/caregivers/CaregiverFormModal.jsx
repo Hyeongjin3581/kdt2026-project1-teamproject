@@ -62,7 +62,7 @@ export default function CaregiverFormModal({ careworker, onClose, onSaved }) {
                 }));
             } catch (error) {
                 console.error("선택 목록 조회 실패:", error);
-                setMessage("센터/계정 목록을 불러오지 못했습니다.");
+                setMessage(isEdit ? "센터/계정 조회가 불가능하여 현재 연결 값을 유지합니다. 기존 요양보호사 정보는 수정할 수 있습니다." : "센터/계정 조회 API가 준비되지 않아 신규 등록할 수 없습니다.");
             }
         }
         loadOptions();
@@ -134,16 +134,17 @@ export default function CaregiverFormModal({ careworker, onClose, onSaved }) {
                 <div className="grid gap-3 px-6 py-5 sm:grid-cols-2">
                     <label className="block text-xs font-semibold text-slate-600">성명<input value={form.name} onChange={(e) => update("name", e.target.value)} className={field} placeholder="예: 정미숙" /></label>
                     <label className="block text-xs font-semibold text-slate-600">성별
-                        <select value={form.gender} onChange={(e) => update("gender", e.target.value)} className={field}><option>여자</option><option>남자</option></select>
+                        <select value={form.gender} onChange={(e) => update("gender", e.target.value)} className={field}>{isEdit && !["여자", "남자"].includes(careworker.careworkerGender) && <option>{careworker.careworkerGender}</option>}<option>여자</option><option>남자</option></select>
                     </label>
                     <label className="block text-xs font-semibold text-slate-600">나이<input type="number" min="0" max="100" value={form.age} onChange={(e) => update("age", e.target.value)} className={field} /></label>
                     <label className="block text-xs font-semibold text-slate-600">시급(원)<input type="number" min="0" value={form.hourWage} onChange={(e) => update("hourWage", e.target.value)} className={field} placeholder="예: 13000" /></label>
                     <AddressField key={detailKey} className="sm:col-span-2" value={form.address} onChange={(v) => update("address", v)} />
                     <label className="block text-xs font-semibold text-slate-600">근무 상태
-                        <select value={form.state} onChange={(e) => update("state", e.target.value)} className={field}><option>근무중</option><option>휴직</option><option>퇴사</option></select>
+                        <select value={form.state} onChange={(e) => update("state", e.target.value)} className={field}>{isEdit && !["근무중", "휴직", "퇴사"].includes(careworker.careworkerState) && <option>{careworker.careworkerState}</option>}<option>근무중</option><option>휴직</option><option>퇴사</option></select>
                     </label>
                     <label className="block text-xs font-semibold text-slate-600">소속 센터
                         <select value={form.centerNo} onChange={(e) => update("centerNo", e.target.value)} className={field}>
+                            {isEdit && !centers.some((c) => c.centerNo === careworker.centerNo) && <option value={careworker.centerNo}>현재 소속 센터 (번호 {careworker.centerNo})</option>}
                             {centers.map((c) => <option key={c.centerNo} value={c.centerNo}>{c.centerName}</option>)}
                         </select>
                     </label>

@@ -1,3 +1,4 @@
+import { normalizeGuardian, normalizeInquiry, normalizeCategory } from "../../../utils/guardianAdapters";
 import { useEffect, useState } from "react";
 import { toHhmm } from "../../../utils/timeFormat";
 import axios from "axios";
@@ -11,6 +12,7 @@ export default function Inquiries() {
     const [guardians, setGuardians] = useState([]);
     const [categories, setCategories] = useState([]);
     const [status, setStatus] = useState("loading");
+    const [loadError, setLoadError] = useState(null);
     const [q, setQ] = useState("");
 
     // 보호자 문의 전체 조회(관리자) : 문의 + 보호자 + 문의 유형을 axios로 조회
@@ -18,9 +20,9 @@ export default function Inquiries() {
         setStatus("loading");
         try {
             const [inquiriesRes, guardiansRes, categoriesRes] = await Promise.all([
-                axios.get("http://localhost:8080/guardianinquiry", { withCredentials: true }),
-                axios.get("http://localhost:8080/guardian", { withCredentials: true }),
-                axios.get("http://localhost:8080/inquirycategory", { withCredentials: true }),
+                axios.get("/api/보호자문의", { withCredentials: true }).then((res) => ({ ...res, data: res.data.map(normalizeInquiry) })),
+                axios.get("/api/보호자", { withCredentials: true }).then((res) => ({ ...res, data: res.data.map(normalizeGuardian) })),
+                axios.get("/api/문의카테고리", { withCredentials: true }).then((res) => ({ ...res, data: res.data.map(normalizeCategory) })),
             ]);
             setInquiries(inquiriesRes.data);
             setGuardians(guardiansRes.data);
@@ -28,6 +30,7 @@ export default function Inquiries() {
             setStatus("ok");
         } catch (error) {
             console.error("문의 조회 실패:", error);
+            setLoadError(error);
             setStatus("error");
         }
     }
@@ -37,7 +40,7 @@ export default function Inquiries() {
     const removeInquiry = async (inquiry) => {
         if (!window.confirm("이 문의를 삭제할까요?")) return;
         try {
-            const response = await axios.delete("http://localhost:8080/guardianinquiry", { data: { inquiryNo: inquiry.inquiryNo }, withCredentials: true });
+            const response = await axios.delete(`/api/보호자문의/${inquiry.inquiryNo}`, { withCredentials: true });
             if (response.data) loadData();
             else alert("삭제에 실패했습니다.");
         } catch (error) {
@@ -53,7 +56,7 @@ export default function Inquiries() {
         .filter((i) => `${i.guardian?.guardianName ?? ""}${i.category}${i.inquiryContent ?? ""}`.includes(q))
         .sort((a, b) => b.inquiryNo - a.inquiryNo);
 
-    if (status !== "ok") return <LoadStatus status={status} onRetry={loadData} />;
+    if (status !== "ok") return <LoadStatus status={status} onRetry={loadData} error={loadError} />;
     return (
         <div className="space-y-5">
             <SectionTitle title="문의 관리" subtitle="보호자가 센터에 보낸 요청·문의 목록입니다." action={<button onClick={() => { setQ(""); loadData(); }} className="rounded-lg border border-teal-200 bg-white px-4 py-2.5 text-sm font-bold text-teal-700 transition hover:bg-teal-50">↻ 새로고침</button>} />

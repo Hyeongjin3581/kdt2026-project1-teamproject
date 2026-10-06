@@ -14,6 +14,7 @@ import Vacancy from "./features/admin/vacancy/Vacancy";
 import Centers from "./features/admin/centers/Centers";
 import Inquiries from "./features/admin/inquiries/Inquiries";
 import GuardianApp from "./features/guardian/GuardianApp";
+import CaregiverApp from "./features/caregiver/CaregiverApp";
 
 function OncareApp() {
 
@@ -73,12 +74,14 @@ function OncareApp() {
       </Route>
       {/* 보호자: 화면 간에 공유하는 상태(수급자 목록)가 있어 GuardianApp 안에서 하위 Routes를 정의 */}
       <Route path="/guardian/*" element={role === "guardian" ? <GuardianApp logout={logout} /> : <Navigate to="/login" replace />} />
+      <Route path="/caregiver/*" element={role === "caregiver" && caregiverNo && caregiverApproval?.approved === true && caregiverApproval?.canUse !== false ? <CaregiverApp careworkerNo={caregiverNo} approval={caregiverApproval} api={caregiverDemoApi ?? undefined} logout={logout} /> : <Navigate to="/login" replace />} />
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   );
 }
 
 export default function App() {
+  const { pathname } = useLocation();
   // 폰 프레임(iframe) 안에서 렌더될 때는 토글 UI 없이 앱만 보여줍니다 (재귀 방지).
   // 화면 이동으로 주소의 ?frame=off 가 사라져도 유지되도록 처음 한 번만 읽습니다.
   const [framed] = useState(() => new URLSearchParams(window.location.search).get("frame") === "off");
@@ -103,7 +106,7 @@ export default function App() {
       <button
         type="button"
         onClick={() => setMobile((v) => !v)}
-        className="fixed bottom-5 right-5 z-50 flex items-center gap-2 rounded-full bg-teal-600 px-4 py-3 text-sm font-bold text-white shadow-lg shadow-teal-900/25 transition hover:bg-teal-700"
+        className={`fixed ${pathname.startsWith("/caregiver") ? "bottom-20 lg:bottom-5" : "bottom-5"} right-5 z-50 flex items-center gap-2 rounded-full bg-teal-600 px-4 py-3 text-sm font-bold text-white shadow-lg shadow-teal-900/25 transition hover:bg-teal-700`}
       >
         {mobile ? (
           <><span aria-hidden>🖥️</span> 데스크톱 보기</>

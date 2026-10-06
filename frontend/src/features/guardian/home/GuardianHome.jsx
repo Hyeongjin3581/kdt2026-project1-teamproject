@@ -13,6 +13,7 @@ export default function GuardianHome({ go, guardianName, onRecipientChanged, rec
   const activeRecipient = recipients.find((recipient) => recipient.id === activeRecipientId) ?? recipients[0];
   const [visits, setVisits] = useState([]);
   const [status, setStatus] = useState("loading");
+  const [loadError, setLoadError] = useState(null);
 
   // 방문 일정 : 수급자의 방문 요청 + 근무기록 + 요양보호사를 axios로 조회 (axios.get("통신할주소", { 옵션 }) → response.data)
   async function loadData() {
@@ -20,16 +21,17 @@ export default function GuardianHome({ go, guardianName, onRecipientChanged, rec
     setStatus("loading");
     try {
       const [requestsRes, careworkersRes] = await Promise.all([
-        axios.get("http://localhost:8080/request/carerecipient", { params: { carerecipient_no: activeRecipient.id }, withCredentials: true }),
-        axios.get("http://localhost:8080/api/careworkers", { withCredentials: true }),
+        axios.get("/request/carerecipient", { params: { carerecipient_no: activeRecipient.id }, withCredentials: true }),
+        axios.get("/api/careworkers", { withCredentials: true }),
       ]);
       const reportLists = await Promise.all([...new Set(careworkersRes.data.map((c) => c.centerNo))].map((no) =>
-        axios.get("http://localhost:8080/careworkerreport/center", { params: { center_no: no }, withCredentials: true }).catch(() => ({ data: [] }))
+        axios.get("/careworkerreport/center", { params: { center_no: no }, withCredentials: true }).catch(() => ({ data: [] }))
       ));
       setVisits(buildVisits({ requests: requestsRes.data, reports: reportLists.flatMap((res) => res.data), careworkers: careworkersRes.data }));
       setStatus("ok");
     } catch (error) {
       console.error("방문 일정 조회 실패:", error);
+      setLoadError(error);
       setStatus("error");
     }
   }
@@ -44,7 +46,7 @@ export default function GuardianHome({ go, guardianName, onRecipientChanged, rec
     ...(nextWithCg ? [["ok", `이번 주에는 ${nextWithCg.cg} 요양보호사가 방문합니다.`]] : []),
     ...(lastDone ? [["info", `${lastDone.date} 방문 기록이 등록되었습니다.`]] : []),
   ];
-  if (status !== "ok") return <LoadStatus status={status} onRetry={loadData} />;
+  if (status !== "ok") return <LoadStatus status={status} onRetry={loadData} error={loadError} />;
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-end justify-between gap-3">
@@ -77,7 +79,7 @@ export default function GuardianHome({ go, guardianName, onRecipientChanged, rec
                     <div className={`grid h-12 w-12 shrink-0 place-items-center rounded-full font-display text-lg font-bold ${isActive ? "bg-teal-500 text-white" : "bg-teal-100 text-teal-700"}`}>{recipient.name[0]}</div>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2"><h3 className="font-display text-base font-bold text-slate-900">{recipient.name} 어르신</h3>{isActive && <Badge tone="ok">선택됨</Badge>}</div>
-                      <p className="mt-0.5 truncate text-xs text-slate-500">{recipient.address} · {recipient.age}세 · {recipient.gender === "female" ? "여성" : "남성"}</p>
+                      <p className="mt-0.5 truncate text-xs text-slate-500">{recipient.address} · {recipient.age}세 · {recipient.gender === "female" ? "여성" : recipient.gender === "male" ? "남성" : "성별 미확인"}</p>
                     </div>
                     <span className="text-slate-300">›</span>
                   </button>;

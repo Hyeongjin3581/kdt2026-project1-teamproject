@@ -1,3 +1,4 @@
+import { normalizeGuardian, normalizeRecipient } from "../../utils/guardianAdapters";
 import { useEffect, useState } from "react";
 import { Navigate, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -32,14 +33,17 @@ export default function GuardianApp({ logout }) {
   const [guardian, setGuardian] = useState(null);
   const [recipients, setRecipients] = useState([]);
   const [status, setStatus] = useState("loading");
+  const [loadError, setLoadError] = useState(null);
 
   // 보호자 정보와 그 보호자의 수급자 목록을 axios로 조회
   // (로그인 API 연동 전이라 GET /guardian 의 첫 번째 보호자를 로그인한 보호자로 사용)
   async function loadRecipients() {
+    setStatus("loading");
+    setLoadError(null);
     try {
       const [guardiansRes, recipientsRes] = await Promise.all([
-        axios.get("http://localhost:8080/guardian", { withCredentials: true }),
-        axios.get("http://localhost:8080/carerecipient", { withCredentials: true }),
+        axios.get("/api/보호자", { withCredentials: true }).then((res) => ({ ...res, data: res.data.map(normalizeGuardian) })),
+        axios.get("/api/수급자", { withCredentials: true }).then((res) => ({ ...res, data: res.data.map(normalizeRecipient) })),
       ]);
       const me = guardiansRes.data[0] ?? null;
       const mine = me ? recipientsRes.data.filter((r) => r.guardianNo === me.guardianNo).map(toRecipient) : [];
@@ -50,6 +54,7 @@ export default function GuardianApp({ logout }) {
       return mine;
     } catch (error) {
       console.error("보호자 정보 조회 실패:", error);
+      setLoadError(error);
       setStatus("error");
       return [];
     }
@@ -58,7 +63,7 @@ export default function GuardianApp({ logout }) {
   const [activeRecipientId, setActiveRecipientId] = useState(null);
   const activeRecipient = recipients.find((recipient) => recipient.id === activeRecipientId) ?? recipients[0];
 
-  const content = status !== "ok" ? <LoadStatus status={status} onRetry={loadRecipients} /> : (
+  const content = status !== "ok" ? <LoadStatus status={status} onRetry={loadRecipients} error={loadError} /> : (
     <Routes>
       <Route index element={<Navigate to="home" replace />} />
       <Route path="home" element={<GuardianHome go={setPage} guardianName={guardian?.guardianName ?? ""} onRecipientChanged={loadRecipients} recipients={recipients} activeRecipientId={activeRecipient?.id} onSelectRecipient={setActiveRecipientId} />} />
