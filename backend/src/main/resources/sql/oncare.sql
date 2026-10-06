@@ -29,6 +29,15 @@ INSERT IGNORE INTO `user` (user_no, user_id, user_password, phone_number, email,
 (9,  'guardian02',   '$2a$10$69bMrChodVYxOcvM/cUo7evsho3hw6YBJT9yepHudwBlIvi7KlV0.', '010-8282-9898', 'guardian02@example.com',   1),
 (10, 'guardian03',   '$2a$10$69bMrChodVYxOcvM/cUo7evsho3hw6YBJT9yepHudwBlIvi7KlV0.', '010-4124-1241', 'guardian03@example.com',   1);
 
+INSERT IGNORE INTO `user` (user_no, user_id, user_password, phone_number, email, user_category_no) VALUES
+(11, 'careworker05', '$2a$10$69bMrChodVYxOcvM/cUo7evsho3hw6YBJT9yepHudwBlIvi7KlV0.', '010-2001-0005', 'careworker05@example.com', 2),
+(12, 'careworker06', '$2a$10$69bMrChodVYxOcvM/cUo7evsho3hw6YBJT9yepHudwBlIvi7KlV0.', '010-2001-0006', 'careworker06@example.com', 2),
+(13, 'careworker07', '$2a$10$69bMrChodVYxOcvM/cUo7evsho3hw6YBJT9yepHudwBlIvi7KlV0.', '010-2001-0007', 'careworker07@example.com', 2),
+(14, 'careworker08', '$2a$10$69bMrChodVYxOcvM/cUo7evsho3hw6YBJT9yepHudwBlIvi7KlV0.', '010-2001-0008', 'careworker08@example.com', 2),
+(15, 'careworker09', '$2a$10$69bMrChodVYxOcvM/cUo7evsho3hw6YBJT9yepHudwBlIvi7KlV0.', '010-2001-0009', 'careworker09@example.com', 2),
+(16, 'careworker10', '$2a$10$69bMrChodVYxOcvM/cUo7evsho3hw6YBJT9yepHudwBlIvi7KlV0.', '010-2001-0010', 'careworker10@example.com', 2),
+(17, 'careworker11', '$2a$10$69bMrChodVYxOcvM/cUo7evsho3hw6YBJT9yepHudwBlIvi7KlV0.', '010-2001-0011', 'careworker11@example.com', 2);
+
 -- 4. 보호자
 INSERT IGNORE INTO guardians (guardian_no, user_no, guardian_name, guardian_relationship) VALUES
 (1, 8,  '김민수', '아들'),
@@ -41,6 +50,16 @@ INSERT IGNORE INTO careworkers
 (1, '정미숙', '경기도 안양시 동안구 비산동',   '여자', 13000, 58, '근무중', 37.4000, 126.9470, 1, 5),
 (2, '김영희', '경기도 시흥시 능곡동',         '여자', 13500, 55, '근무중', 37.3620, 126.8010, 2, 6),
 (3, '박성호', '경기도 수원시 팔달구 인계동',   '남자', 14000, 58, '근무중', 37.2650, 127.0300, 3, 7);
+
+INSERT IGNORE INTO careworkers
+(careworker_no, careworker_name, careworker_address, careworker_gender, hour_wage, careworker_age, careworker_state, latitude, longitude, center_no, user_no) VALUES
+(4,  '이순옥', '경기도 안양시 만안구 석수동', '여자', 12500, 54, '근무중', 37.4290, 126.9010, 1, 11),
+(5,  '최영수', '경기도 안양시 동안구 관양동', '남자', 13000, 60, '근무중', 37.3920, 126.9650, 1, 12),
+(6,  '한미경', '경기도 시흥시 정왕동',       '여자', 12800, 49, '근무중', 37.3490, 126.7430, 2, 13),
+(7,  '오정자', '경기도 시흥시 장곡동',       '여자', 13200, 57, '근무중', 37.4580, 126.7800, 2, 14),
+(8,  '신혜진', '경기도 수원시 권선구 세류동', '여자', 12700, 45, '근무중', 37.2530, 127.0150, 3, 15),
+(9,  '류재호', '경기도 수원시 영통구 영통동', '남자', 13800, 52, '근무중', 37.2510, 127.0710, 3, 16),
+(10, '문경애', '경기도 수원시 장안구 파장동', '여자', 13400, 59, '근무중', 37.3050, 126.9900, 3, 17);
 
 -- 6. 수급자 (latitude, longitude 포함)
 INSERT IGNORE INTO carerecipients
@@ -70,6 +89,16 @@ INSERT IGNORE INTO requests
 (9,  '무관', '완료', '2026-09-25', 15, 18, '말벗 및 가사 지원',         9),
 (10, '여자', '신청', '2026-09-30', 10, 12, '복약 확인 및 식사 지원',    10);
 
+INSERT IGNORE INTO requests
+(request_no, preferred_gender, request_state, visit_date, visit_start_time, visit_end_time, request_content, carerecipient_no) VALUES
+(11, '여자', '신청',     '2026-10-08',  9, 13, '식사 준비 및 청소 지원',     1),
+(12, '무관', '신청',     '2026-10-08', 14, 18, '병원 방문 동행',            2),
+(13, '남자', '신청',     '2026-10-09', 10, 12, '목욕 및 이동 보조',         3),
+(14, '무관', '신청',     '2026-10-10',  9, 12, '산책 및 말벗',              4),
+(15, '여자', '신청',     '2026-10-12', 13, 17, '복약 확인 및 식사 지원',     7),
+(16, '무관', '배정중',   '2026-10-09', 14, 18, '장보기 및 가사 지원',        5),
+(17, '여자', '배정완료', '2026-10-10', 10, 14, '주변 정리 및 식사 지원',     9);
+
 -- 8. 근무 기록
 INSERT IGNORE INTO careworkersreport
 (careworkers_report_no, work_date, work_start_time, work_end_time, work_status, careworker_no, request_no) VALUES
@@ -83,12 +112,51 @@ INSERT IGNORE INTO careworkersreport
 (8, '2026-09-24',  9, 13, '완료', 3, 8),
 (9, '2026-09-25', 15, 18, '완료', 3, 9);
 
+INSERT IGNORE INTO careworkersreport
+(careworkers_report_no, work_date, work_start_time, work_end_time, work_status, careworker_no, request_no) VALUES
+(10, '2026-10-09', 14, 18, '배정', 6, 16),
+(11, '2026-10-10', 10, 14, '확정', 8, 17);
+
 -- 9. 문의 카테고리
 INSERT IGNORE INTO inquirycategory (inquiry_category_no, inquiry_category_name) VALUES
 (1, '방문 시간 변경 요청'),
 (2, '방문 요일 변경 요청'),
 (3, '담당자 관련 문의'),
 (4, '기타 문의');
+
+-- 근무 가능 시간 (요양보호사 번호는 caregiver_no)
+INSERT IGNORE INTO caregiveravailability
+(availability_no, available_date, start_time, end_time, status, caregiver_no) VALUES
+(1,  '2026-09-30',  9, 18, '근무가능', 1),
+(2,  '2026-09-30',  9, 18, '근무가능', 2),
+(3,  '2026-09-30',  9, 18, '근무가능', 3),
+(4,  '2026-10-08',  9, 18, '근무가능', 1),
+(5,  '2026-10-08',  9, 18, '근무가능', 4),
+(6,  '2026-10-08',  9, 14, '근무가능', 5),
+(7,  '2026-10-08', 13, 19, '근무가능', 2),
+(8,  '2026-10-08',  9, 18, '근무가능', 6),
+(9,  '2026-10-09',  9, 18, '근무가능', 3),
+(10, '2026-10-09',  9, 18, '근무가능', 9),
+(11, '2026-10-09', 10, 16, '근무가능', 5),
+(12, '2026-10-09', 13, 19, '근무가능', 7),
+(13, '2026-10-10',  9, 18, '근무가능', 1),
+(14, '2026-10-10',  9, 18, '근무가능', 4),
+(15, '2026-10-10',  9, 15, '근무가능', 10),
+(16, '2026-10-10',  9, 18, '근무가능', 8),
+(17, '2026-10-12',  9, 18, '근무가능', 8),
+(18, '2026-10-12', 12, 18, '근무가능', 10),
+(19, '2026-10-12',  9, 18, '근무가능', 3),
+(20, '2026-10-08', 10, 15, '휴무',     7);
+
+-- 보호자 문의
+INSERT IGNORE INTO guardianinquiry
+(inquiry_no, guardian_no, inquiry_category_no, wish_date, wish_start_time, wish_end_time, inquiry_content, create_date, update_date) VALUES
+(1, 1, 1, '2026-10-08', 10, 14, '방문 시간을 오전 10시로 옮기고 싶습니다.',         '2026-10-05 09:10:00', '2026-10-05 09:10:00'),
+(2, 2, 2, '2026-10-09', 14, 18, '다음 주 방문 요일을 목요일로 바꿀 수 있을까요?',   '2026-10-05 11:20:00', '2026-10-05 11:20:00'),
+(3, 3, 3, NULL, NULL, NULL,      '담당 요양보호사를 여자 분으로 바꿔 주세요.',         '2026-10-04 15:40:00', '2026-10-04 15:40:00'),
+(4, 1, 4, NULL, NULL, NULL,      '방문 후 일지는 어디서 확인하나요?',                  '2026-10-04 17:00:00', '2026-10-04 17:00:00'),
+(5, 2, 1, '2026-10-10', 9, 13,   '병원 일정 때문에 시간을 앞당기고 싶습니다.',        '2026-10-06 08:30:00', '2026-10-06 08:30:00'),
+(6, 3, 2, '2026-10-12', 13, 17,  '요일을 월요일에서 화요일로 변경 요청합니다.',       '2026-10-06 10:05:00', '2026-10-06 10:05:00');
 
 -- 10. 이미 DB 에 들어 있는 샘플 행은 INSERT IGNORE 로 건너뛰므로 좌표만 따로 맞춘다.
 UPDATE careworkers SET latitude = 37.4000, longitude = 126.9470 WHERE careworker_no = 1 AND latitude = 0 AND longitude = 0;
@@ -104,3 +172,10 @@ UPDATE carerecipients SET latitude = 37.2650, longitude = 127.0300 WHERE carerec
 UPDATE carerecipients SET latitude = 37.2530, longitude = 126.9900 WHERE carerecipient_no = 8  AND latitude = 0 AND longitude = 0;
 UPDATE carerecipients SET latitude = 37.2530, longitude = 127.0450 WHERE carerecipient_no = 9  AND latitude = 0 AND longitude = 0;
 UPDATE carerecipients SET latitude = 37.3010, longitude = 127.0100 WHERE carerecipient_no = 10 AND latitude = 0 AND longitude = 0;
+UPDATE careworkers SET latitude = 37.4290, longitude = 126.9010 WHERE careworker_no = 4 AND latitude = 0 AND longitude = 0;
+UPDATE careworkers SET latitude = 37.3920, longitude = 126.9650 WHERE careworker_no = 5 AND latitude = 0 AND longitude = 0;
+UPDATE careworkers SET latitude = 37.3490, longitude = 126.7430 WHERE careworker_no = 6 AND latitude = 0 AND longitude = 0;
+UPDATE careworkers SET latitude = 37.4580, longitude = 126.7800 WHERE careworker_no = 7 AND latitude = 0 AND longitude = 0;
+UPDATE careworkers SET latitude = 37.2530, longitude = 127.0150 WHERE careworker_no = 8 AND latitude = 0 AND longitude = 0;
+UPDATE careworkers SET latitude = 37.2510, longitude = 127.0710 WHERE careworker_no = 9 AND latitude = 0 AND longitude = 0;
+UPDATE careworkers SET latitude = 37.3050, longitude = 126.9900 WHERE careworker_no = 10 AND latitude = 0 AND longitude = 0;
