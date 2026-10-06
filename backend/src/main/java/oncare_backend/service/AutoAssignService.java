@@ -64,11 +64,9 @@ public class AutoAssignService {
                 .toList();
 
         return availabilityList.stream()
-            .filter(careworkerEntity -> !hasTimeConflict(careworkerEntity, requestEntity))
+            .filter(careworkerEntity -> !isFree(careworkerEntity, requestEntity))
                 .toList();
 
-        // return list;
-        // ★★★★★ 에러 떠서 주석처리함, 이거 필요한건지 작업자와 대화할 것
     }
 
     // 근무 가능 시간 비교
@@ -91,7 +89,7 @@ public class AutoAssignService {
     // ★★★★★ 66 줄의 hasTimeConflict가 없는 메소드로 판별돼서, isFree를 hasTimeConflict로 바꾸던 중이였는지는 모르겠지만 일단 이렇게 바꿨음, 작업자와 얘기해야 함
 
     // private boolean isFree(CareworkerEntity cw, RequestEntity request) {
-    private boolean hasTimeConflict(CareworkerEntity cw, RequestEntity request) {
+    private boolean isFree(CareworkerEntity cw, RequestEntity request) {
         // 근무 기록에서 요청한 day랑 비교해서 근무기록 테이블에서 행 가져오기
         List<CareworkerReportEntity> date = careWorkerReportRepository.findByCareworkerEntityAndWorkDate(cw, request.getVisitDate());
         for (CareworkerReportEntity report : date) {
