@@ -15,6 +15,7 @@ public interface CareWorkerReportRepository extends JpaRepository<CareworkerRepo
     // careworker.centerEntity.centerNo 기준 조회
     List<CareworkerReportEntity> findByCareworkerEntity_CenterEntity_CenterNo(Integer centerNo);
 
+    // 요양보호사번호로 요양보호사엔티티 조회
     List<CareworkerReportEntity> findByCareworkerEntity_CareworkerNo(Integer careworkerNo);
 
     List<CareworkerReportEntity> findByCareworkerEntityAndWorkDate(CareworkerEntity careworkerEntity, LocalDate workDate);
