@@ -26,6 +26,7 @@ public class AutoAssignService {
     private final CareWorkerReportRepository careWorkerReportRepository;
     private final CareWorkerRecommendationService careWorkerRecommendationService;
 
+    // 상위 3명 추출 메소드
     // 필수 조건 후보를 추천 서비스에 전달하고 상위 3명을 반환
     public List<CareWorkerRecommendationDto> top3Careworkers(Integer requestNo) {
         RequestEntity requestEntity = requestRepository.findById(requestNo).orElse(null);
