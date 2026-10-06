@@ -56,13 +56,13 @@ export default function Dashboard() {
   const vacancies = vacancyEvents.filter(inCenter(center)).filter((e) => e.kind === "vacancy");
   const assignedCount = plans.filter((a) => a.state === "assigned").length;
   const unassignedCount = plans.filter((a) => a.state === "unassigned").length;
-  const reviewCount = plans.filter((a) => a.state === "review").length;
+  const reviewCount = plans.filter((a) => a.state === "pending").length; // 수락 대기
   const rate = plans.length ? Math.round((assignedCount / plans.length) * 100) : 0;
   const workingToday = new Set(visits.map((v) => v.cg)).size;
   const alerts = [
     ...vacancies.map((e) => ["danger", "긴급", `${e.dateLabel} ${e.time} ${e.recipient} 수급자 방문에 결원이 발생했습니다. 대체자 지정이 필요합니다.`, "vacancy"]),
     ...overLimit.map((c) => ["warning", "주의", `${c.name} 요양보호사의 이번 주 근무시간이 ${c.week}시간입니다. 주 ${WEEK_LIMIT}시간 기준을 확인하세요.`, "caregivers"]),
-    ...(unassignedCount > 0 ? [["warning", "미배정", `방문 일정 중 ${unassignedCount}건이 아직 배정되지 않았습니다.`, "auto"]] : []),
+    ...(unassignedCount > 0 ? [["warning", "미배정", `방문 일정 중 ${unassignedCount}건이 아직 배정되지 않았습니다.`, "requests"]] : []),
   ];
   if (status !== "ok") return <LoadStatus status={status} onRetry={loadData} />;
   return (
@@ -72,7 +72,7 @@ export default function Dashboard() {
         {[
           ["오늘 방문 예정", String(visits.length), "건", "info", "TODAY", "schedule"],
           ["오늘 근무 요양보호사", String(workingToday), "명", "neutral", "출근", "caregivers"],
-          ["미배정 일정", String(unassignedCount), "건", "warning", "확인 필요", "auto"],
+          ["미배정 일정", String(unassignedCount), "건", "warning", "확인 필요", "requests"],
           ["긴급 결원 / 대체 필요", String(vacancies.length), "건", "danger", "즉시 처리", "vacancy"],
         ].map(([label, value, unit, tone, tag, target]) => (
           <button key={label} onClick={() => go(target)} className="text-left">
@@ -89,10 +89,10 @@ export default function Dashboard() {
           <Panel className="p-5">
             <div className="flex items-center justify-between">
               <div><h2 className="font-display font-bold text-slate-900">방문 일정 배정 현황</h2><p className="mt-0.5 text-xs text-slate-400">방문 요청 기준</p></div>
-              <button onClick={() => go("auto")} className="text-xs font-semibold text-teal-600 hover:underline">초안 확인 →</button>
+              <button onClick={() => go("requests")} className="text-xs font-semibold text-teal-600 hover:underline">요청 관리 →</button>
             </div>
             <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
-              {[["전체 일정", `${plans.length}건`], ["배정 완료", `${assignedCount}건`], ["미배정", `${unassignedCount}건`], ["확인 필요", `${reviewCount}건`]].map(([l, v]) => (
+              {[["전체 일정", `${plans.length}건`], ["배정 완료", `${assignedCount}건`], ["미배정", `${unassignedCount}건`], ["수락 대기", `${reviewCount}건`]].map(([l, v]) => (
                 <div key={l} className="rounded-lg bg-slate-50 px-3 py-3"><p className="text-[11px] text-slate-400">{l}</p><b className="font-mono text-lg text-slate-800">{v}</b></div>
               ))}
             </div>

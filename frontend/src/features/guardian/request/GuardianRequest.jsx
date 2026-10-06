@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import HourSelect from "../../../components/common/HourSelect";
 import { toHhmm, toServerTime } from "../../../utils/timeFormat";
 import axios from "axios";
 import Panel from "../../../components/common/Panel";
@@ -185,8 +186,8 @@ export default function GuardianRequest({ guardian, recipients, activeRecipientI
                 <select value={editForm.categoryNo} onChange={(e) => updateEdit("categoryNo", e.target.value)} className={field}>{categories.map((c) => <option key={c.inquiryCategoryNo} value={c.inquiryCategoryNo}>{c.inquiryCategoryName}</option>)}</select>
               </label>}
               <label className="block text-xs font-semibold text-slate-600 sm:col-span-2">{selectedRequest.source === "inquiry" ? "희망 날짜" : "방문 날짜"}<input type="date" value={editForm.date} onChange={(e) => updateEdit("date", e.target.value)} className={field} /></label>
-              <label className="block text-xs font-semibold text-slate-600">시작 시간<input type="time" value={editForm.start} onChange={(e) => updateEdit("start", e.target.value)} className={field} /></label>
-              <label className="block text-xs font-semibold text-slate-600">종료 시간<input type="time" value={editForm.end} onChange={(e) => updateEdit("end", e.target.value)} className={field} /></label>
+              <label className="block text-xs font-semibold text-slate-600">시작 시간<HourSelect value={editForm.start} onChange={(e) => updateEdit("start", e.target.value)} className={field} /></label>
+              <label className="block text-xs font-semibold text-slate-600">종료 시간<HourSelect value={editForm.end} onChange={(e) => updateEdit("end", e.target.value)} className={field} /></label>
               <label className="block text-xs font-semibold text-slate-600 sm:col-span-2">내용<textarea rows={3} value={editForm.content} onChange={(e) => updateEdit("content", e.target.value)} className={`${field} resize-none`} /></label>
               <div className="flex justify-end gap-2 sm:col-span-2">
                 <button type="button" onClick={() => setEditing(false)} className="rounded-lg border border-slate-200 px-4 py-2 text-xs font-bold text-slate-600 transition hover:bg-white">취소</button>
@@ -239,9 +240,9 @@ export default function GuardianRequest({ guardian, recipients, activeRecipientI
                     {selectedDays.map((day) => (
                       <div key={day} className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white p-2">
                         <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-teal-50 text-sm font-bold text-teal-700">{day}</span>
-                        <input aria-label={`${day}요일 시작 시간`} type="time" value={preferredTimes[day]?.start ?? "09:00"} onChange={(event) => updateTime(day, "start", event.target.value)} className="min-w-0 flex-1 rounded-lg border border-slate-200 px-2 py-2 text-sm text-slate-900 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100" />
+                        <HourSelect aria-label={`${day}요일 시작 시간`} value={preferredTimes[day]?.start ?? "09:00"} onChange={(event) => updateTime(day, "start", event.target.value)} className="min-w-0 flex-1 rounded-lg border border-slate-200 px-2 py-2 text-sm text-slate-900 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100" />
                         <span className="text-xs font-bold text-slate-400">~</span>
-                        <input aria-label={`${day}요일 종료 시간`} type="time" value={preferredTimes[day]?.end ?? "12:00"} onChange={(event) => updateTime(day, "end", event.target.value)} className="min-w-0 flex-1 rounded-lg border border-slate-200 px-2 py-2 text-sm text-slate-900 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100" />
+                        <HourSelect aria-label={`${day}요일 종료 시간`} value={preferredTimes[day]?.end ?? "12:00"} onChange={(event) => updateTime(day, "end", event.target.value)} className="min-w-0 flex-1 rounded-lg border border-slate-200 px-2 py-2 text-sm text-slate-900 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100" />
                       </div>
                     ))}
                   </div> : <p className="mt-3 rounded-lg border border-dashed border-slate-200 bg-white px-3 py-3 text-xs text-slate-400">희망 요일을 선택해주세요.</p>}

@@ -13,7 +13,7 @@ const adminNav = [
   { id: "guardians", label: "보호자 관리", short: "보호자", icon: "◍" },
   { id: "caregivers", label: "요양보호사 관리", short: "보호사", icon: "☺" },
   { id: "schedule", label: "방문 일정", short: "일정", icon: "▤" },
-  { id: "auto", label: "자동편성", short: "편성", icon: "✦" },
+  { id: "requests", label: "요청 관리", short: "요청", icon: "✦" },
   { id: "vacancy", label: "결원 관리", short: "결원", icon: "↺" },
   { id: "inquiries", label: "문의 관리", short: "문의", icon: "✉" },
   { id: "centers", label: "센터 관리", short: "센터", icon: "⌂" },
