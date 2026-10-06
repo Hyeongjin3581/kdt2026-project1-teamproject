@@ -1,4 +1,4 @@
-//
+import { normalizeGuardian, normalizeRecipient } from "../../../utils/guardianAdapters";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -15,25 +15,34 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const go = (id) => navigate(`/admin/${id}`);
   const [model, setModel] = useState(emptyModel);
+  const [issues, setIssues] = useState([]);
   const [status, setStatus] = useState("loading");
+  const [error, setError] = useState(null);
 
   // 대시보드 화면에 필요한 목록을 axios로 조회 : axios.get("통신할주소", { 옵션 }) → response.data
   async function loadData() {
+    const failed = [];
+    const optionalError = (error) => {
+      failed.push(error);
+      return { data: [] };
+    };
+    setIssues([]);
     setStatus("loading");
+    setError(null);
     try {
       const [centersRes, careworkersRes, guardiansRes, recipientsRes] = await Promise.all([
-        axios.get("http://localhost:8080/center", { withCredentials: true }),
-        axios.get("http://localhost:8080/api/careworkers", { withCredentials: true }),
-        axios.get("http://localhost:8080/guardian", { withCredentials: true }),
-        axios.get("http://localhost:8080/carerecipient", { withCredentials: true }),
+        axios.get("/center", { withCredentials: true }).catch(optionalError),
+        axios.get("/api/careworkers", { withCredentials: true }),
+        axios.get("/api/보호자", { withCredentials: true }).then((res) => ({ ...res, data: res.data.map(normalizeGuardian) })).catch(optionalError),
+        axios.get("/api/수급자", { withCredentials: true }).then((res) => ({ ...res, data: res.data.map(normalizeRecipient) })).catch(optionalError),
       ]);
       // 수급자별 방문 요청, 센터별 근무기록
       const [requestLists, reportLists] = await Promise.all([
         Promise.all(recipientsRes.data.map((r) =>
-          axios.get("http://localhost:8080/request/carerecipient", { params: { carerecipient_no: r.careRecipientNo }, withCredentials: true }).catch(() => ({ data: [] }))
+          axios.get("/request/carerecipient", { params: { carerecipient_no: r.careRecipientNo }, withCredentials: true }).catch(optionalError)
         )),
-        Promise.all(centersRes.data.map((c) => c.centerNo).map((no) =>
-          axios.get("http://localhost:8080/careworkerreport/center", { params: { center_no: no }, withCredentials: true }).catch(() => ({ data: [] }))
+        Promise.all([...new Set(careworkersRes.data.map((c) => c.centerNo))].map((no) =>
+          axios.get("/careworkerreport/center", { params: { center_no: no }, withCredentials: true }).catch(optionalError)
         )),
       ]);
       setModel(buildAdminModel({
@@ -42,9 +51,11 @@ export default function Dashboard() {
         requests: requestLists.flatMap((res) => res.data),
         reports: reportLists.flatMap((res) => res.data),
       }));
+      setIssues(failed);
       setStatus("ok");
     } catch (error) {
       console.error("대시보드 조회 실패:", error);
+      setError(error);
       setStatus("error");
     }
   }
@@ -65,7 +76,23 @@ export default function Dashboard() {
     ...overLimit.map((c) => ["warning", "주의", `${c.name} 요양보호사의 이번 주 근무시간이 ${c.week}시간입니다. 주 ${WEEK_LIMIT}시간 기준을 확인하세요.`, "caregivers"]),
     ...(unassignedCount > 0 ? [["warning", "미배정", `방문 일정 중 ${unassignedCount}건이 아직 배정되지 않았습니다.`, "requests"]] : []),
   ];
-  if (status !== "ok") return <LoadStatus status={status} onRetry={loadData} />;
+  if (status !== "ok") return <LoadStatus status={status} onRetry={loadData} error={error} />;
+  if (issues.length > 0) return (
+    <div className="space-y-5">
+      <SectionTitle title="오늘의 운영 현황" subtitle="조회 가능한 요양보호사 목록을 표시합니다." />
+      <Panel className="p-5">
+        <p className="font-bold text-amber-700">일부 데이터를 불러오지 못했습니다.</p>
+        <p className="mt-2 text-sm text-slate-600">센터·보호자·수급자·방문 기록 조회가 완료되어야 운영 통계를 표시할 수 있습니다.</p>
+        {issues.map((issue, index) => <p key={index} className="mt-1 text-xs text-slate-500">{issue.config?.url} · {issue.response ? `HTTP ${issue.response.status}` : "응답 없음"}</p>)}
+        <button onClick={loadData} className="mt-3 text-sm font-bold text-teal-700">다시 불러오기</button>
+      </Panel>
+      <Panel className="p-5">
+        <h2 className="font-bold text-slate-900">등록된 요양보호사 {caregivers.filter(inCenter(center)).length}명</h2>
+        {caregivers.filter(inCenter(center)).map((c) => <div key={c.id} className="mt-3 border-t border-slate-100 pt-3 text-sm">{c.name} · {c.gender} · {c.area} · {c.raw.careworkerState}</div>)}
+        <button onClick={() => go("caregivers")} className="mt-4 text-sm font-bold text-teal-700">요양보호사 관리로 이동 →</button>
+      </Panel>
+    </div>
+  );
   return (
     <div className="space-y-5">
       <SectionTitle title="오늘의 운영 현황" subtitle="센터 운영 상황을 한눈에 확인하고 바로 업무를 처리하세요." action={<button onClick={() => go("auto")} className="rounded-lg bg-teal-600 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-teal-700">✦ 다음 주 자동편성</button>} />

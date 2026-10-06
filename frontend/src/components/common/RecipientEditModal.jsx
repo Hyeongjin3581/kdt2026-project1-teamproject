@@ -4,6 +4,7 @@ import axios from "axios";
 import AddressField from "./AddressField";
 
 // 수급자 정보 수정·삭제 모달 : PUT /carerecipient, DELETE /carerecipient (body 에 { careRecipientNo })
+// 현재 API는 /api/수급자/{번호} 경로와 underscore 필드명을 사용합니다.
 // recipient : 백엔드 수급자 DTO 그대로 (careRecipientNo, guardianNo, careRecipientName ...)
 export default function RecipientEditModal({ recipient, onClose, onChanged }) {
     const [form, setForm] = useState({
@@ -13,7 +14,7 @@ export default function RecipientEditModal({ recipient, onClose, onChanged }) {
         address: recipient.careRecipientAddress ?? "",
         content: recipient.careRecipientContent ?? "",
     });
-    const [message, setMessage] = useState("");
+    const [message, setMessage] = useState("성별 코드 기준이 정해지기 전까지 기존 성별 값을 유지합니다.");
     const field = "mt-1.5 w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-800 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100";
     const update = (key, value) => setForm((current) => ({ ...current, [key]: value }));
 
@@ -24,15 +25,15 @@ export default function RecipientEditModal({ recipient, onClose, onChanged }) {
         }
         try {
             const response = await axios.put(
-                "http://localhost:8080/carerecipient",
+                `/api/수급자/${recipient.careRecipientNo}`,
                 {
-                    careRecipientNo: recipient.careRecipientNo,
-                    guardianNo: recipient.guardianNo,
-                    careRecipientName: form.name.trim(),
-                    careRecipientAge: Number(form.age),
-                    careRecipientGender: form.gender,
-                    careRecipientAddress: form.address.trim(),
-                    careRecipientContent: form.content,
+                    carerecipient_no: recipient.careRecipientNo,
+                    guardian_no: recipient.guardianNo,
+                    carerecipient_name: form.name.trim(),
+                    carerecipient_age: Number(form.age),
+                    carerecipient_gender: recipient.carerecipient_gender,
+                    carerecipient_address: form.address.trim(),
+                    careRecipient_content: form.content,
                 },
                 { withCredentials: true }
             );
@@ -47,8 +48,7 @@ export default function RecipientEditModal({ recipient, onClose, onChanged }) {
     const remove = async () => {
         if (!window.confirm(`${recipient.careRecipientName} 어르신을 삭제할까요? 이 작업은 되돌릴 수 없습니다.`)) return;
         try {
-            const response = await axios.delete("http://localhost:8080/carerecipient", {
-                data: { careRecipientNo: recipient.careRecipientNo },
+            const response = await axios.delete(`/api/수급자/${recipient.careRecipientNo}`, {
                 withCredentials: true,
             });
             if (response.data) onChanged();
@@ -70,7 +70,7 @@ export default function RecipientEditModal({ recipient, onClose, onChanged }) {
                     <label className="block text-xs font-semibold text-slate-600">수급자 성명<input value={form.name} onChange={(e) => update("name", e.target.value)} className={field} /></label>
                     <label className="block text-xs font-semibold text-slate-600">나이<input type="number" min="0" max="130" value={form.age} onChange={(e) => update("age", e.target.value)} className={field} /></label>
                     <label className="block text-xs font-semibold text-slate-600">성별
-                        <select value={form.gender} onChange={(e) => update("gender", e.target.value)} className={field}><option>여자</option><option>남자</option></select>
+                        <select disabled value={form.gender} onChange={(e) => update("gender", e.target.value)} className={field}><option>미확인</option><option>여자</option><option>남자</option></select>
                     </label>
                     <AddressField label="거주지역(주소)" value={form.address} onChange={(v) => update("address", v)} />
                     <label className="block text-xs font-semibold text-slate-600 sm:col-span-2">특이사항<textarea rows={3} value={form.content} onChange={(e) => update("content", e.target.value)} className={`${field} resize-none`} /></label>

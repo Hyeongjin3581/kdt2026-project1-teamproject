@@ -1,5 +1,4 @@
-//
-//
+import { normalizeGuardian, normalizeRecipient } from "../../utils/guardianAdapters";
 import { useEffect, useState } from "react";
 import { Navigate, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -34,14 +33,17 @@ export default function GuardianApp({ user, logout }) {
   const [guardian, setGuardian] = useState(null);
   const [recipients, setRecipients] = useState([]);
   const [status, setStatus] = useState("loading");
+  const [loadError, setLoadError] = useState(null);
 
   // 보호자 정보와 그 보호자의 수급자 목록을 axios로 조회
   // 로그인한 사용자(user.userNo)와 같은 userNo 를 가진 보호자를 찾는다. 보호자 정보가 아직 없으면 null
   async function loadRecipients() {
+    setStatus("loading");
+    setLoadError(null);
     try {
       const [guardiansRes, recipientsRes] = await Promise.all([
-        axios.get("http://localhost:8080/guardian", { withCredentials: true }),
-        axios.get("http://localhost:8080/carerecipient", { withCredentials: true }),
+        axios.get("/api/보호자", { withCredentials: true }).then((res) => ({ ...res, data: res.data.map(normalizeGuardian) })),
+        axios.get("/api/수급자", { withCredentials: true }).then((res) => ({ ...res, data: res.data.map(normalizeRecipient) })),
       ]);
       const me = guardiansRes.data.find((g) => g.userNo === user?.userNo) ?? null;
       const mine = me ? recipientsRes.data.filter((r) => r.guardianNo === me.guardianNo).map(toRecipient) : [];
@@ -52,6 +54,7 @@ export default function GuardianApp({ user, logout }) {
       return mine;
     } catch (error) {
       console.error("보호자 정보 조회 실패:", error);
+      setLoadError(error);
       setStatus("error");
       return [];
     }

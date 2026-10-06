@@ -1,7 +1,7 @@
 //
 //
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import AppMark from "../../components/common/AppMark";
 import axios from "axios";
 
@@ -111,8 +111,8 @@ export default function Signup() {
       );
       if (response.data) setDone(true);
       else setSubmitError("가입에 실패했습니다. 입력 정보를 확인해주세요.");
-    } catch {
-      setSubmitError("서버와 통신할 수 없습니다. 백엔드(localhost:8080) 실행 상태를 확인해주세요.");
+    } catch (error) {
+      setSubmitError(error.response ? `회원가입 요청 실패: ${error.config.url} (HTTP ${error.response.status})` : "서버에 연결할 수 없습니다. 실행 상태를 확인해주세요.");
     } finally {
       setSubmitting(false);
     }
