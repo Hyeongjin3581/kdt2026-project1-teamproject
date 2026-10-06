@@ -22,7 +22,7 @@ const guardianNav = [
   { id: "request", label: "요청 · 문의", short: "요청", icon: "✎" },
 ];
 
-export default function GuardianApp({ logout }) {
+export default function GuardianApp({ user, logout }) {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   // /guardian/home → home, /guardian/apply → apply ...
@@ -34,14 +34,14 @@ export default function GuardianApp({ logout }) {
   const [status, setStatus] = useState("loading");
 
   // 보호자 정보와 그 보호자의 수급자 목록을 axios로 조회
-  // (로그인 API 연동 전이라 GET /guardian 의 첫 번째 보호자를 로그인한 보호자로 사용)
+  // 로그인한 사용자(user.userNo)와 같은 userNo 를 가진 보호자를 찾는다. 보호자 정보가 아직 없으면 null
   async function loadRecipients() {
     try {
       const [guardiansRes, recipientsRes] = await Promise.all([
         axios.get("http://localhost:8080/guardian", { withCredentials: true }),
         axios.get("http://localhost:8080/carerecipient", { withCredentials: true }),
       ]);
-      const me = guardiansRes.data[0] ?? null;
+      const me = guardiansRes.data.find((g) => g.userNo === user?.userNo) ?? null;
       const mine = me ? recipientsRes.data.filter((r) => r.guardianNo === me.guardianNo).map(toRecipient) : [];
       setGuardian(me);
       setRecipients(mine);
@@ -58,7 +58,12 @@ export default function GuardianApp({ logout }) {
   const [activeRecipientId, setActiveRecipientId] = useState(null);
   const activeRecipient = recipients.find((recipient) => recipient.id === activeRecipientId) ?? recipients[0];
 
-  const content = status !== "ok" ? <LoadStatus status={status} onRetry={loadRecipients} /> : (
+  const content = status !== "ok" ? <LoadStatus status={status} onRetry={loadRecipients} /> : !guardian ? (
+    <div className="mx-auto mt-16 max-w-md rounded-2xl border border-slate-200 bg-white p-8 text-center">
+      <h2 className="font-display text-lg font-bold text-slate-900">보호자 정보가 아직 등록되지 않았습니다</h2>
+      <p className="mt-3 text-sm leading-6 text-slate-500">{user?.userId} 계정으로 로그인했지만 연결된 보호자 정보가 없습니다. 센터 관리자에게 보호자 등록을 요청해주세요.</p>
+    </div>
+  ) : (
     <Routes>
       <Route index element={<Navigate to="home" replace />} />
       <Route path="home" element={<GuardianHome go={setPage} guardianName={guardian?.guardianName ?? ""} onRecipientChanged={loadRecipients} recipients={recipients} activeRecipientId={activeRecipient?.id} onSelectRecipient={setActiveRecipientId} />} />

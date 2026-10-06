@@ -5,37 +5,40 @@ import axios from "axios";
 import Panel from "../../../components/common/Panel";
 import Badge from "../../../components/common/Badge";
 import { TODAY } from "../../../constants";
-import { nextDateOf } from "../../../utils/guardianAdapters";
+import { upcomingDates } from "../../../utils/upcomingDates";
 
 export default function GuardianApply({ recipient, recipients, onSelectRecipient, onDone, onRegisterRecipient }) {
   const [applySent, setApplySent] = useState(false);
   const [content, setContent] = useState("");
+  const [preferredGender, setPreferredGender] = useState("무관"); // 선호하는 요양보호사 성별 : 무관 / 여자 / 남자
   const [sentCount, setSentCount] = useState(0);
   const [message, setMessage] = useState("");
-  const DAY_ORDER = ["월", "화", "수", "목", "금", "토", "일"];
-  const [selectedDays, setSelectedDays] = useState([]);
-  const [dayTimes, setDayTimes] = useState({});
-  const orderedDays = DAY_ORDER.filter((d) => selectedDays.includes(d));
-  const toggleDay = (d) =>
-    setSelectedDays((prev) => {
-      if (prev.includes(d)) {
-        setDayTimes((t) => { const n = { ...t }; delete n[d]; return n; });
-        return prev.filter((x) => x !== d);
+  const dates = upcomingDates(7);
+  const [selectedDates, setSelectedDates] = useState([]); // 선택한 날짜 (yyyy-MM-dd)
+  const [dateTimes, setDateTimes] = useState({}); // 날짜별 { start, end }
+  const orderedDates = dates.filter((d) => selectedDates.includes(d.iso));
+  const toggleDate = (iso) =>
+    setSelectedDates((prev) => {
+      if (prev.includes(iso)) {
+        setDateTimes((t) => { const n = { ...t }; delete n[iso]; return n; });
+        return prev.filter((x) => x !== iso);
       }
-      setDayTimes((t) => (t[d] ? t : { ...t, [d]: { start: "09:00", end: "12:00" } }));
-      return [...prev, d];
+      setDateTimes((t) => (t[iso] ? t : { ...t, [iso]: { start: "09:00", end: "12:00" } }));
+      return [...prev, iso];
     });
-  const setDayTime = (d, key, value) =>
-    setDayTimes((t) => ({ ...t, [d]: { ...(t[d] ?? { start: "09:00", end: "12:00" }), [key]: value } }));
-  // 선택한 요일마다 방문 요청 1건씩 등록 : axios.post("통신할주소", { body }, { 옵션 }) → 컨트롤러가 boolean 을 반환
+  const setDateTime = (iso, key, value) =>
+    setDateTimes((t) => ({ ...t, [iso]: { ...(t[iso] ?? { start: "09:00", end: "12:00" }), [key]: value } }));
+  // 선택한 날짜마다 방문 요청 1건씩 등록 : axios.post("통신할주소", { body }, { 옵션 }) → 컨트롤러가 boolean 을 반환
   const submitApply = async () => {
-    if (orderedDays.length === 0) { setMessage("희망 요일을 하나 이상 선택해주세요."); return; }
+    if (orderedDates.length === 0) { setMessage("희망 날짜를 하나 이상 선택해주세요."); return; }
+    const invalid = orderedDates.find((d) => { const t = dateTimes[d.iso] ?? { start: "09:00", end: "12:00" }; return toServerTime(t.start) >= toServerTime(t.end); });
+    if (invalid) { setMessage(`${invalid.label}(${invalid.day}) 종료 시간은 시작 시간보다 늦어야 합니다.`); return; }
     try {
-      const results = await Promise.all(orderedDays.map((d) => {
-        const t = dayTimes[d] ?? { start: "09:00", end: "12:00" };
+      const results = await Promise.all(orderedDates.map((d) => {
+        const t = dateTimes[d.iso] ?? { start: "09:00", end: "12:00" };
         return axios.post(
           "http://localhost:8080/request",
-          { preferredGender: "무관", requestState: "신청", visitDate: nextDateOf(d), visitStartTime: toServerTime(t.start), visitEndTime: toServerTime(t.end), requestContent: content.trim() || "방문요양 서비스 신청" },
+          { preferredGender, requestState: "신청", visitDate: d.iso, visitStartTime: toServerTime(t.start), visitEndTime: toServerTime(t.end), requestContent: content.trim() || "방문요양 서비스 신청" },
           { params: { carerecipient_no: recipient.id }, withCredentials: true }
         );
       }));
@@ -77,7 +80,7 @@ export default function GuardianApply({ recipient, recipients, onSelectRecipient
           <h2 className="mt-5 font-display text-2xl font-extrabold text-slate-900">신청이 접수되었습니다</h2>
           <p className="mt-3 text-sm leading-6 text-slate-500">담당 사회복지사가 접수 내용을 검토한 뒤 1~2일 내 유선으로 상담을 진행합니다.</p>
           <div className="mx-auto mt-6 max-w-sm rounded-lg bg-slate-50 p-4 text-left text-sm">
-            {[["접수 건수", `${sentCount}건`], ["신청 대상", `${recipient.name} 어르신`], ["희망 요일", selectedDays.join(", ") || "미선택"]].map(([l, v]) => (
+            {[["접수 건수", `${sentCount}건`], ["신청 대상", `${recipient.name} 어르신`], ["희망 날짜", orderedDates.map((d) => `${d.label}(${d.day})`).join(", ") || "미선택"], ["선호 성별", preferredGender === "무관" ? "상관없음" : preferredGender === "여자" ? "여성" : "남성"]].map(([l, v]) => (
               <div key={l} className="flex justify-between border-b border-slate-100 py-2 last:border-0"><span className="text-slate-400">{l}</span><b className="text-slate-700">{v}</b></div>
             ))}
             <div className="flex items-center justify-between py-2"><span className="text-slate-400">진행 상태</span><Badge tone="info">접수 완료 · 검토 대기</Badge></div>
@@ -112,38 +115,40 @@ export default function GuardianApply({ recipient, recipients, onSelectRecipient
         <div className="pt-5">
           <div className="flex items-center justify-between">
             <h2 className="font-display font-bold text-slate-900">희망 방문 일정</h2>
-            {orderedDays.length > 0 && <Badge tone="info">주 {orderedDays.length}회</Badge>}
+            {orderedDates.length > 0 && <Badge tone="info">{orderedDates.length}일 선택</Badge>}
           </div>
           <div className="mt-4 space-y-4">
             <div>
-              <p className="text-xs font-semibold text-slate-600">희망 요일<span className="ml-1 font-normal text-slate-400">(원하는 요일을 모두 선택)</span></p>
-              <div className="mt-2 flex flex-wrap gap-2">
-                {DAY_ORDER.map((d) => {
-                  const on = selectedDays.includes(d);
+              <p className="text-xs font-semibold text-slate-600">희망 날짜<span className="ml-1 font-normal text-slate-400">(오늘부터 7일 이내, 원하는 날짜를 모두 선택)</span></p>
+              <div className="mt-2 grid grid-cols-4 gap-2 sm:grid-cols-7">
+                {dates.map((d) => {
+                  const on = selectedDates.includes(d.iso);
                   return (
-                    <button key={d} type="button" onClick={() => toggleDay(d)}
-                      className={`grid h-10 w-10 place-items-center rounded-full border text-xs font-semibold transition ${on ? "border-teal-500 bg-teal-500 text-white" : "border-slate-200 text-slate-500 hover:border-teal-300 hover:text-teal-600"}`}>
-                      {d}
+                    <button key={d.iso} type="button" onClick={() => toggleDate(d.iso)}
+                      className={`rounded-xl border px-1 py-2.5 text-center transition ${on ? "border-teal-500 bg-teal-500 text-white" : "border-slate-200 text-slate-600 hover:border-teal-300 hover:text-teal-600"}`}>
+                      <span className="block text-[10px] font-semibold opacity-80">{d.today ? "오늘" : d.day}</span>
+                      <span className="block text-sm font-bold">{d.label}</span>
+                      {d.today && <span className="block text-[10px] opacity-80">({d.day})</span>}
                     </button>
                   );
                 })}
               </div>
             </div>
             <div>
-              <p className="text-xs font-semibold text-slate-600">요일별 희망 시간</p>
-              {orderedDays.length === 0 ? (
-                <p className="mt-2 rounded-lg border border-dashed border-slate-200 px-3 py-4 text-center text-xs text-slate-400">희망 요일을 선택하면 요일별 시작·종료 시간을 입력할 수 있습니다.</p>
+              <p className="text-xs font-semibold text-slate-600">날짜별 희망 시간</p>
+              {orderedDates.length === 0 ? (
+                <p className="mt-2 rounded-lg border border-dashed border-slate-200 px-3 py-4 text-center text-xs text-slate-400">희망 날짜를 선택하면 날짜별 시작·종료 시간을 입력할 수 있습니다.</p>
               ) : (
                 <div className="mt-2 space-y-2">
-                  {orderedDays.map((d) => {
-                    const t = dayTimes[d] ?? { start: "09:00", end: "12:00" };
+                  {orderedDates.map((d) => {
+                    const t = dateTimes[d.iso] ?? { start: "09:00", end: "12:00" };
                     return (
-                      <div key={d} className="flex items-center gap-2.5 rounded-lg border border-slate-200 px-3 py-2">
-                        <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-teal-50 text-xs font-bold text-teal-700">{d}</span>
-                        <HourSelect value={t.start} onChange={(e) => setDayTime(d, "start", e.target.value)}
+                      <div key={d.iso} className="flex items-center gap-2.5 rounded-lg border border-slate-200 px-3 py-2">
+                        <span className="grid h-9 w-14 shrink-0 place-items-center rounded-lg bg-teal-50 text-[11px] font-bold leading-tight text-teal-700">{d.label}<br />({d.day})</span>
+                        <HourSelect value={t.start} onChange={(e) => setDateTime(d.iso, "start", e.target.value)}
                           className="min-w-0 flex-1 rounded-md border border-slate-200 px-2.5 py-2 text-sm text-slate-800 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100" />
                         <span className="shrink-0 text-xs font-semibold text-slate-400">~</span>
-                        <HourSelect value={t.end} onChange={(e) => setDayTime(d, "end", e.target.value)}
+                        <HourSelect value={t.end} onChange={(e) => setDateTime(d.iso, "end", e.target.value)}
                           className="min-w-0 flex-1 rounded-md border border-slate-200 px-2.5 py-2 text-sm text-slate-800 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100" />
                       </div>
                     );
@@ -152,6 +157,16 @@ export default function GuardianApply({ recipient, recipients, onSelectRecipient
               )}
             </div>
           </div>
+        </div>
+      </Panel>
+
+      <Panel className="p-5">
+        <h2 className="font-display font-bold text-slate-900">선호하는 요양보호사 성별</h2>
+        <p className="mt-1 text-xs text-slate-400">선택한 성별에 맞는 요양보호사를 우선 배정합니다.</p>
+        <div className="mt-3 grid grid-cols-3 gap-2 rounded-xl bg-slate-100 p-1">
+          {["무관", "여자", "남자"].map((g) => (
+            <button key={g} type="button" onClick={() => setPreferredGender(g)} className={`rounded-lg px-2 py-2.5 text-sm font-bold transition ${preferredGender === g ? "bg-white text-teal-700 shadow-sm" : "text-slate-500 hover:bg-white/50"}`}>{g === "무관" ? "상관없음" : g === "여자" ? "여성" : "남성"}</button>
+          ))}
         </div>
       </Panel>
 

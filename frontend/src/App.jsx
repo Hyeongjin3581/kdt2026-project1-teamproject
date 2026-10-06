@@ -72,7 +72,7 @@ function OncareApp() {
         <Route path="inquiries" element={<Inquiries />} />
       </Route>
       {/* 보호자: 화면 간에 공유하는 상태(수급자 목록)가 있어 GuardianApp 안에서 하위 Routes를 정의 */}
-      <Route path="/guardian/*" element={role === "guardian" ? <GuardianApp logout={logout} /> : <Navigate to="/login" replace />} />
+      <Route path="/guardian/*" element={role === "guardian" ? <GuardianApp user={user} logout={logout} /> : <Navigate to="/login" replace />} />
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   );
