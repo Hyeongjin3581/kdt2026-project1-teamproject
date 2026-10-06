@@ -3,8 +3,10 @@ package oncare_backend.service;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import oncare_backend.model.dto.UserDto;
+import oncare_backend.model.entity.GuardianEntity;
 import oncare_backend.model.entity.UserCategoryEntity;
 import oncare_backend.model.entity.UserEntity;
+import oncare_backend.model.repository.GuardianRepository;
 import oncare_backend.model.repository.UserCategoryRepository;
 import oncare_backend.model.repository.UserRepository;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -19,7 +21,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final UserCategoryRepository userCategoryRepository;
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder(); // 단방향 해시함수 라이브러리
-
+    private final GuardianRepository guardianRepository;
     // 회원가입
     public boolean save(UserDto userDto) {
         if (userDto.getUserCategoryNo() == null) return false;
@@ -34,6 +36,15 @@ public class UserService {
         }
         userEntity.setUserCategoryEntity(userCategoryEntity);
         UserEntity saved = userRepository.save(userEntity);
+        if (userDto.getUserCategoryNo() == 1) {
+            GuardianEntity guardian = GuardianEntity.builder()
+                    .userEntity(saved)
+                    .guardianName(userDto.getGuardianName())
+                    .guardianRelationship(userDto.getGuardianRelationship())
+                    .build();
+            guardianRepository.save(guardian);
+        }
+
         if (saved.getUserNo() >= 1){
             return true;
         }

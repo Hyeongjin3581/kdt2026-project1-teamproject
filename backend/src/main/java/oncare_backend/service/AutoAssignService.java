@@ -84,7 +84,6 @@ public class AutoAssignService {
         return false;
     }
 
-    // 근무 기록 비교
     private boolean isFree(CareworkerEntity cw, RequestEntity request) {
         // 근무 기록에서 요청한 day랑 비교해서 근무기록 테이블에서 행 가져오기
         List<CareworkerReportEntity> date = careWorkerReportRepository.findByCareworkerEntityAndWorkDate(cw, request.getVisitDate());
