@@ -34,34 +34,33 @@ export default function CaregiverRecord({ c, onClose, onChanged }) {
   };
   return (
     <div className="fixed inset-0 z-40 flex justify-end bg-slate-900/40" onClick={onClose}>
-      <div className="h-full w-full max-w-md overflow-y-auto bg-[#f4f8f7] p-5 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+      <div className="h-full w-full max-w-3xl overflow-y-auto bg-[#f4f8f7] p-5 shadow-2xl" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between">
           <Badge tone="info">근무 기록</Badge>
           <button onClick={onClose} className="text-slate-400 hover:text-slate-700">✕</button>
         </div>
         <div className="mt-4 flex items-center gap-3">
           <div className="grid h-14 w-14 place-items-center rounded-full bg-teal-100 font-display text-xl font-bold text-teal-700">{c.name[0]}</div>
-          <div><h2 className="font-display text-xl font-bold text-slate-900">{c.name} 요양보호사</h2><p className="text-xs text-slate-400">{c.gender} · {c.area} · 이번 주 {c.week}/{WEEK_LIMIT}시간</p></div>
+          <div><h2 className="font-display text-xl font-bold text-slate-900">{c.name} 요양보호사</h2><p className="text-xs text-slate-400">{c.gender} · 이번 주 {c.week}/{WEEK_LIMIT}시간</p></div>
         </div>
-        <Panel className="mt-4 overflow-hidden">
-          <table className="w-full text-sm">
-            <thead className="bg-slate-50 text-left text-[11px] uppercase tracking-wide text-slate-400"><tr>{["날짜", "수급자", "방문시간", "근무", "상태", ""].map((h) => <th key={h} className="px-4 py-3">{h}</th>)}</tr></thead>
+        <Panel className="mt-4 overflow-x-auto">
+          <table className="w-full whitespace-nowrap text-sm">
+            <thead className="bg-slate-50 text-left text-[11px] uppercase tracking-wide text-slate-400"><tr>{["날짜", "수급자", "방문시간", "근무", "상태", ""].map((h) => <th key={h} className="px-5 py-3">{h}</th>)}</tr></thead>
             <tbody>
               {rows.map((r, i) => (
                 <tr key={i} className="border-t border-slate-100">
-                  <td className="px-4 py-3 font-mono text-xs text-slate-500">{r[0]}</td>
-                  <td className="px-4 py-3 text-slate-700">{r[1]}</td>
-                  <td className="px-4 py-3 font-mono text-xs text-slate-600">{r[2]}</td>
-                  <td className="px-4 py-3 font-mono text-slate-600">{r[3]}</td>
-                  <td className="px-4 py-3"><Badge tone={statusTone(r[4])}>{r[4]}</Badge></td>
-                  <td className="px-4 py-3 text-right whitespace-nowrap">
+                  <td className="px-5 py-3.5 font-mono text-xs text-slate-500">{r[0]}</td>
+                  <td className="px-5 py-3.5 text-slate-700">{r[1]}</td>
+                  <td className="px-5 py-3.5 font-mono text-xs text-slate-600">{r[2]}</td>
+                  <td className="px-5 py-3.5 font-mono text-slate-600">{r[3]}</td>
+                  <td className="px-5 py-3.5"><Badge tone={statusTone(r[4])}>{r[4]}</Badge></td>
+                  <td className="px-5 py-3.5 text-right whitespace-nowrap">
                     {r[4] !== "완료" && <button onClick={() => changeStatus(r[5], "완료")} className="mr-2 text-[11px] font-bold text-teal-600 hover:underline">완료</button>}
-                    {r[4] !== "취소" && <button onClick={() => changeStatus(r[5], "취소")} className="mr-2 text-[11px] font-bold text-amber-600 hover:underline">취소</button>}
                     <button onClick={() => removeReport(r[5])} className="text-[11px] font-bold text-red-500 hover:underline">삭제</button>
                   </td>
                 </tr>
               ))}
-              {rows.length === 0 && <tr><td colSpan={6} className="px-4 py-8 text-center text-sm text-slate-400">근무 기록이 없습니다.</td></tr>}
+              {rows.length === 0 && <tr><td colSpan={6} className="px-5 py-8 text-center text-sm text-slate-400">근무 기록이 없습니다.</td></tr>}
             </tbody>
           </table>
         </Panel>
