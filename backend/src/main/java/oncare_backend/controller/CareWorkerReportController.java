@@ -4,6 +4,8 @@ import java.util.List;
 
 import oncare_backend.model.dto.AssignCareworkerDto;
 import oncare_backend.model.dto.AssignmentActionDto;
+import oncare_backend.model.dto.CareWorkerRecommendationDto;
+import oncare_backend.service.AutoAssignService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -23,6 +25,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 @RequestMapping ("/careworkerreport")
 public class CareWorkerReportController {
     @Autowired private CareWorkerReportService careWorkerReportService;
+    @Autowired private  AutoAssignService autoAssignService;
 
     // [1] 근무기록 추가
     @PostMapping("")
@@ -76,5 +79,11 @@ public class CareWorkerReportController {
     @GetMapping("/myRequest")
     public List<CareworkerReportDto> myRequest(@RequestParam Integer careworkNo){
         return careWorkerReportService.myRequest(careworkNo);
+    }
+
+    // 요청 번호를 받아 필수 조건을 통과한 요양보호사 중 상위 3명을 반환
+    @GetMapping("/candidates")
+    public List<CareWorkerRecommendationDto> candidates(@RequestParam("request_no") Integer requestNo) {
+        return autoAssignService.top3Careworkers(requestNo);
     }
 }
