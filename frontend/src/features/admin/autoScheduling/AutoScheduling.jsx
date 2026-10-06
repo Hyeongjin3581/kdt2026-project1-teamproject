@@ -1,3 +1,4 @@
+import { normalizeGuardian, normalizeRecipient } from "../../../utils/guardianAdapters";
 import { useEffect, useState } from "react";
 import axios from "axios";
 import SectionTitle from "../../../components/common/SectionTitle";
@@ -14,24 +15,25 @@ export default function AutoScheduling() {
   const center = useCenter();
   const [model, setModel] = useState(emptyModel);
   const [status, setStatus] = useState("loading");
+  const [loadError, setLoadError] = useState(null);
 
   // 자동편성 화면에 필요한 목록을 axios로 조회 : axios.get("통신할주소", { 옵션 }) → response.data
   async function loadData() {
     setStatus("loading");
     try {
       const [centersRes, careworkersRes, guardiansRes, recipientsRes] = await Promise.all([
-        axios.get("http://localhost:8080/center", { withCredentials: true }),
-        axios.get("http://localhost:8080/api/careworkers", { withCredentials: true }),
-        axios.get("http://localhost:8080/guardian", { withCredentials: true }),
-        axios.get("http://localhost:8080/carerecipient", { withCredentials: true }),
+        axios.get("/center", { withCredentials: true }),
+        axios.get("/api/careworkers", { withCredentials: true }),
+        axios.get("/api/보호자", { withCredentials: true }).then((res) => ({ ...res, data: res.data.map(normalizeGuardian) })),
+        axios.get("/api/수급자", { withCredentials: true }).then((res) => ({ ...res, data: res.data.map(normalizeRecipient) })),
       ]);
       // 수급자별 방문 요청, 센터별 근무기록
       const [requestLists, reportLists] = await Promise.all([
         Promise.all(recipientsRes.data.map((r) =>
-          axios.get("http://localhost:8080/request/carerecipient", { params: { carerecipient_no: r.careRecipientNo }, withCredentials: true }).catch(() => ({ data: [] }))
+          axios.get("/request/carerecipient", { params: { carerecipient_no: r.careRecipientNo }, withCredentials: true }).catch(() => ({ data: [] }))
         )),
         Promise.all(centersRes.data.map((c) => c.centerNo).map((no) =>
-          axios.get("http://localhost:8080/careworkerreport/center", { params: { center_no: no }, withCredentials: true }).catch(() => ({ data: [] }))
+          axios.get("/careworkerreport/center", { params: { center_no: no }, withCredentials: true }).catch(() => ({ data: [] }))
         )),
       ]);
       setModel(buildAdminModel({
@@ -43,6 +45,7 @@ export default function AutoScheduling() {
       setStatus("ok");
     } catch (error) {
       console.error("자동편성 조회 실패:", error);
+      setLoadError(error);
       setStatus("error");
     }
   }
@@ -56,9 +59,9 @@ export default function AutoScheduling() {
     const a = assignTarget;
     if (!pickedCw) return;
     try {
-      if (a.reportNo) await axios.delete("http://localhost:8080/careworkerreport", { params: { careworker_report_no: a.reportNo }, withCredentials: true });
+      if (a.reportNo) await axios.delete("/careworkerreport", { params: { careworker_report_no: a.reportNo }, withCredentials: true });
       const response = await axios.post(
-        "http://localhost:8080/careworkerreport",
+        "/careworkerreport",
         { careworkerNo: Number(pickedCw), requestNo: a.requestNo, workDate: a.iso, workStartTime: a.start, workEndTime: a.end, workStatus: "예정" },
         { withCredentials: true }
       );
@@ -75,7 +78,7 @@ export default function AutoScheduling() {
     if (!a.reportNo) return;
     if (!window.confirm(`${a.recipient} 수급자의 ${a.date} 배정을 제외할까요?`)) return;
     try {
-      const response = await axios.delete("http://localhost:8080/careworkerreport", { params: { careworker_report_no: a.reportNo }, withCredentials: true });
+      const response = await axios.delete("/careworkerreport", { params: { careworker_report_no: a.reportNo }, withCredentials: true });
       if (response.data) loadData();
       else alert("배정 제외에 실패했습니다.");
     } catch (error) {
@@ -87,7 +90,7 @@ export default function AutoScheduling() {
   const list = assignments.filter(inCenter(center));
   const unassignedCount = list.filter((a) => a.state === "unassigned").length;
 
-  if (status !== "ok") return <LoadStatus status={status} onRetry={loadData} />;
+  if (status !== "ok") return <LoadStatus status={status} onRetry={loadData} error={loadError} />;
   if (stage === "setup") {
     return (
       <div className="space-y-5">

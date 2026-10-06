@@ -32,7 +32,7 @@ export default function GuardianApply({ recipient, recipients, onSelectRecipient
       const results = await Promise.all(orderedDays.map((d) => {
         const t = dayTimes[d] ?? { start: "09:00", end: "12:00" };
         return axios.post(
-          "http://localhost:8080/request",
+          "/request",
           { preferredGender: "무관", requestState: "신청", visitDate: nextDateOf(d), visitStartTime: t.start, visitEndTime: t.end, requestContent: content.trim() || "방문요양 서비스 신청" },
           { params: { carerecipient_no: recipient.id }, withCredentials: true }
         );
@@ -105,7 +105,7 @@ export default function GuardianApply({ recipient, recipients, onSelectRecipient
               </select>
             </div>
           </div>
-          <p className="text-xs text-slate-500">{recipient.address} · {recipient.age}세 · {recipient.gender === "female" ? "여성" : "남성"}</p>
+          <p className="text-xs text-slate-500">{recipient.address} · {recipient.age}세 · {recipient.gender === "female" ? "여성" : recipient.gender === "male" ? "남성" : "성별 미확인"}</p>
         </div>
         <div className="pt-5">
           <div className="flex items-center justify-between">

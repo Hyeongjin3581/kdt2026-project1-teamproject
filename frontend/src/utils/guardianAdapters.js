@@ -38,7 +38,7 @@ export const toRecipient = (r) => ({
     name: r.careRecipientName,
     age: String(r.careRecipientAge ?? ""),
     address: (r.careRecipientAddress ?? "").replace(/^경기도\s*/, ""),
-    gender: r.careRecipientGender === "남자" ? "male" : "female",
+    gender: r.careRecipientGender === "남자" ? "male" : r.careRecipientGender === "여자" ? "female" : "unknown",
     significant: r.careRecipientContent ?? "",
 });
 
@@ -112,4 +112,40 @@ export function buildHistory({ inquiries, categories, requests }) {
         details: [["방문 일정", `${q.visitDate ?? "-"} ${hhmm(q.visitStartTime)}~${hhmm(q.visitEndTime)}`], ["요청 내용", q.requestContent ?? "-"], ["진행 상태", q.requestState ?? "-"]],
     }));
     return [...fromInquiries, ...fromRequests].sort((a, b) => String(b.date).localeCompare(String(a.date)));
+}
+
+// API의 필드명을 기존 화면에서 사용하던 이름으로 맞춥니다.
+// 수급자 Boolean 성별의 남녀 기준은 팀에서 확정하기 전까지 추측하지 않습니다.
+export const normalizeGuardian = (g) => ({
+    ...g, guardianNo: g.guardian_no, userNo: g.user_no,
+    guardianName: g.guardian_name, guardianRelationship: g.guardian_relationship,
+});
+export const normalizeRecipient = (r) => ({
+    ...r, careRecipientNo: r.carerecipient_no, guardianNo: r.guardian_no,
+    careRecipientName: r.carerecipient_name, careRecipientAge: r.carerecipient_age,
+    careRecipientAddress: r.carerecipient_address, careRecipientGender: "미확인",
+    careRecipientContent: r.careRecipient_content,
+});
+export const normalizeInquiry = (i) => ({
+    ...i, inquiryNo: i.inquiry_no, guardianNo: i.guardian_no,
+    inquiryCategoryNo: i.inquiry_category_no, wishDate: i.wish_date,
+    wishStartTime: i.wish_start_time, wishEndTime: i.wish_end_time, inquiryContent: i.inquiry_content,
+});
+export const normalizeCategory = (c) => ({
+    ...c, inquiryCategoryNo: c.inquiry_category_no, inquiryCategoryName: c.inquiry_category_name,
+});
+export const inquiryPayload = (i) => ({
+    guardian_no: i.guardianNo, inquiry_category_no: i.inquiryCategoryNo,
+    wish_date: i.wishDate ?? null, wish_start_time: i.wishStartTime ?? null,
+    wish_end_time: i.wishEndTime ?? null, inquiry_content: i.inquiryContent,
+});
+export function recipientPayload(r) {
+    if (typeof r.carerecipient_gender !== "boolean") {
+        throw new Error("수급자 성별의 남녀 Boolean 기준을 먼저 확정해야 합니다.");
+    }
+    return {
+        guardian_no: r.guardianNo, carerecipient_name: r.careRecipientName,
+        carerecipient_age: r.careRecipientAge, carerecipient_address: r.careRecipientAddress,
+        carerecipient_gender: r.carerecipient_gender, careRecipient_content: r.careRecipientContent,
+    };
 }

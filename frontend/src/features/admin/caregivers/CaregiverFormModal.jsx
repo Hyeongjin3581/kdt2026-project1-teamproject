@@ -28,9 +28,9 @@ export default function CaregiverFormModal({ careworker, onClose, onSaved }) {
         async function loadOptions() {
             try {
                 const [centersRes, usersRes, careworkersRes] = await Promise.all([
-                    axios.get("http://localhost:8080/center", { withCredentials: true }),
-                    axios.get("http://localhost:8080/user", { withCredentials: true }),
-                    axios.get("http://localhost:8080/api/careworkers", { withCredentials: true }),
+                    axios.get("/center", { withCredentials: true }),
+                    axios.get("/user", { withCredentials: true }),
+                    axios.get("/api/careworkers", { withCredentials: true }),
                 ]);
                 const used = new Set(careworkersRes.data.filter((c) => c.careworkerNo !== careworker?.careworkerNo).map((c) => c.userNo));
                 const available = usersRes.data.filter((u) => u.userCategoryName === "요양보호사" && !used.has(u.userNo));
@@ -44,7 +44,7 @@ export default function CaregiverFormModal({ careworker, onClose, onSaved }) {
                 }));
             } catch (error) {
                 console.error("선택 목록 조회 실패:", error);
-                setMessage("센터/계정 목록을 불러오지 못했습니다.");
+                setMessage(isEdit ? "센터/계정 조회가 불가능하여 현재 연결 값을 유지합니다. 기존 요양보호사 정보는 수정할 수 있습니다." : "센터/계정 조회 API가 준비되지 않아 신규 등록할 수 없습니다.");
             }
         }
         loadOptions();
@@ -64,9 +64,9 @@ export default function CaregiverFormModal({ careworker, onClose, onSaved }) {
         if (usingNewAccount) {
             try {
                 // 요양보호사 로그인 계정 생성 : POST /user (사용자 카테고리 2 = 요양보호사) 후 회원번호를 다시 조회
-                const created = await axios.post("http://localhost:8080/user", { userId: newAccount.id.trim(), userPassword: newAccount.password, email: newAccount.id.trim(), phoneNumber: "", userCategoryNo: 2 }, { withCredentials: true });
+                const created = await axios.post("/user", { userId: newAccount.id.trim(), userPassword: newAccount.password, email: newAccount.id.trim(), phoneNumber: "", userCategoryNo: 2 }, { withCredentials: true });
                 if (!created.data) { setMessage("계정 생성에 실패했습니다. 아이디 중복 여부를 확인해주세요."); return; }
-                const usersRes = await axios.get("http://localhost:8080/user", { withCredentials: true });
+                const usersRes = await axios.get("/user", { withCredentials: true });
                 userNo = usersRes.data.find((u) => u.userId === newAccount.id.trim())?.userNo;
                 if (!userNo) { setMessage("생성한 계정을 찾지 못했습니다."); return; }
             } catch (error) {
@@ -88,8 +88,8 @@ export default function CaregiverFormModal({ careworker, onClose, onSaved }) {
         try {
             // axios.post / axios.put("통신할주소", { body }, { 옵션 }) → 컨트롤러가 boolean 을 반환
             const response = isEdit
-                ? await axios.put("http://localhost:8080/api/careworkers", { ...body, careworkerNo: careworker.careworkerNo }, { withCredentials: true })
-                : await axios.post("http://localhost:8080/api/careworkers", body, { withCredentials: true });
+                ? await axios.put("/api/careworkers", { ...body, careworkerNo: careworker.careworkerNo }, { withCredentials: true })
+                : await axios.post("/api/careworkers", body, { withCredentials: true });
             if (response.data) onSaved();
             else setMessage("저장에 실패했습니다. 입력 정보를 확인해주세요.");
         } catch (error) {
@@ -108,16 +108,17 @@ export default function CaregiverFormModal({ careworker, onClose, onSaved }) {
                 <div className="grid gap-3 px-6 py-5 sm:grid-cols-2">
                     <label className="block text-xs font-semibold text-slate-600">성명<input value={form.name} onChange={(e) => update("name", e.target.value)} className={field} placeholder="예: 정미숙" /></label>
                     <label className="block text-xs font-semibold text-slate-600">성별
-                        <select value={form.gender} onChange={(e) => update("gender", e.target.value)} className={field}><option>여자</option><option>남자</option></select>
+                        <select value={form.gender} onChange={(e) => update("gender", e.target.value)} className={field}>{isEdit && !["여자", "남자"].includes(careworker.careworkerGender) && <option>{careworker.careworkerGender}</option>}<option>여자</option><option>남자</option></select>
                     </label>
                     <label className="block text-xs font-semibold text-slate-600">나이<input type="number" min="0" max="100" value={form.age} onChange={(e) => update("age", e.target.value)} className={field} /></label>
                     <label className="block text-xs font-semibold text-slate-600">시급(원)<input type="number" min="0" value={form.hourWage} onChange={(e) => update("hourWage", e.target.value)} className={field} placeholder="예: 13000" /></label>
                     <AddressField className="sm:col-span-2" value={form.address} onChange={(v) => update("address", v)} />
                     <label className="block text-xs font-semibold text-slate-600">근무 상태
-                        <select value={form.state} onChange={(e) => update("state", e.target.value)} className={field}><option>근무중</option><option>휴직</option><option>퇴사</option></select>
+                        <select value={form.state} onChange={(e) => update("state", e.target.value)} className={field}>{isEdit && !["근무중", "휴직", "퇴사"].includes(careworker.careworkerState) && <option>{careworker.careworkerState}</option>}<option>근무중</option><option>휴직</option><option>퇴사</option></select>
                     </label>
                     <label className="block text-xs font-semibold text-slate-600">소속 센터
                         <select value={form.centerNo} onChange={(e) => update("centerNo", e.target.value)} className={field}>
+                            {isEdit && !centers.some((c) => c.centerNo === careworker.centerNo) && <option value={careworker.centerNo}>현재 소속 센터 (번호 {careworker.centerNo})</option>}
                             {centers.map((c) => <option key={c.centerNo} value={c.centerNo}>{c.centerName}</option>)}
                         </select>
                     </label>
