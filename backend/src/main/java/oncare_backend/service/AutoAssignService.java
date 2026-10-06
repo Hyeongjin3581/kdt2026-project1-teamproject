@@ -11,7 +11,6 @@ import oncare_backend.model.repository.CareWorkerReportRepository;
 import oncare_backend.model.repository.CaregiverAvailabilityRepository;
 import oncare_backend.model.repository.CareworkersRepository;
 import oncare_backend.model.repository.RequestRepository;
-import oncare_backend.service.CareWorkerRecommendationService.CareWorkerRecommendation;
 
 import org.springframework.stereotype.Service;
 
