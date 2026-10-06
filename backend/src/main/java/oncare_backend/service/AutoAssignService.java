@@ -86,9 +86,6 @@ public class AutoAssignService {
     }
 
     // 근무 기록 비교
-    // ★★★★★ 66 줄의 hasTimeConflict가 없는 메소드로 판별돼서, isFree를 hasTimeConflict로 바꾸던 중이였는지는 모르겠지만 일단 이렇게 바꿨음, 작업자와 얘기해야 함
-
-    // private boolean isFree(CareworkerEntity cw, RequestEntity request) {
     private boolean isFree(CareworkerEntity cw, RequestEntity request) {
         // 근무 기록에서 요청한 day랑 비교해서 근무기록 테이블에서 행 가져오기
         List<CareworkerReportEntity> date = careWorkerReportRepository.findByCareworkerEntityAndWorkDate(cw, request.getVisitDate());
