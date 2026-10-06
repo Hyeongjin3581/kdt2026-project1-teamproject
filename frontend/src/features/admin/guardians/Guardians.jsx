@@ -1,5 +1,3 @@
-//
-//
 import { Fragment, useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import SectionTitle from "../../../components/common/SectionTitle";
@@ -15,24 +13,25 @@ export default function Guardians() {
   const center = useCenter();
   const [model, setModel] = useState(emptyModel);
   const [status, setStatus] = useState("loading");
+  const [loadError, setLoadError] = useState(null);
 
   // 보호자 관리 화면에 필요한 목록을 axios로 조회 : axios.get("통신할주소", { 옵션 }) → response.data
   async function loadData() {
     setStatus("loading");
     try {
       const [careworkersRes, guardiansRes, recipientsRes, usersRes] = await Promise.all([
-        axios.get("http://localhost:8080/api/careworkers", { withCredentials: true }),
+        axios.get("/api/careworkers", { withCredentials: true }),
         axios.get("http://localhost:8080/guardian", { withCredentials: true }),
         axios.get("http://localhost:8080/carerecipient", { withCredentials: true }),
-        axios.get("http://localhost:8080/user", { withCredentials: true }).catch(() => ({ data: [] })),
+        axios.get("/user", { withCredentials: true }).catch(() => ({ data: [] })),
       ]);
       // 수급자별 방문 요청, 센터별 근무기록
       const [requestLists, reportLists] = await Promise.all([
         Promise.all(recipientsRes.data.map((r) =>
-          axios.get("http://localhost:8080/request/carerecipient", { params: { carerecipient_no: r.careRecipientNo }, withCredentials: true }).catch(() => ({ data: [] }))
+          axios.get("/request/carerecipient", { params: { carerecipient_no: r.careRecipientNo }, withCredentials: true }).catch(() => ({ data: [] }))
         )),
         Promise.all([...new Set(careworkersRes.data.map((c) => c.centerNo))].map((no) =>
-          axios.get("http://localhost:8080/careworkerreport/center", { params: { center_no: no }, withCredentials: true }).catch(() => ({ data: [] }))
+          axios.get("/careworkerreport/center", { params: { center_no: no }, withCredentials: true }).catch(() => ({ data: [] }))
         )),
       ]);
       setModel(buildAdminModel({
@@ -44,6 +43,7 @@ export default function Guardians() {
       setStatus("ok");
     } catch (error) {
       console.error("보호자 관리 조회 실패:", error);
+      setLoadError(error);
       setStatus("error");
     }
   }
@@ -55,7 +55,7 @@ export default function Guardians() {
     setOpen(null);
     loadData();
   };
-  if (status !== "ok") return <LoadStatus status={status} onRetry={loadData} />;
+  if (status !== "ok") return <LoadStatus status={status} onRetry={loadData} error={loadError} />;
   return (
     <div className="space-y-5">
       <SectionTitle title="보호자 관리" subtitle="서비스에 로그인하는 보호자 계정 목록입니다. 한 보호자는 한 명 이상의 수급자와 연결될 수 있습니다." action={<button onClick={refresh} className="rounded-lg border border-teal-200 bg-white px-4 py-2.5 text-sm font-bold text-teal-700 transition hover:bg-teal-50">↻ 새로고침</button>} />

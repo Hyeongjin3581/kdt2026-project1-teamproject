@@ -10,6 +10,7 @@ import { buildVisits } from "../../../utils/guardianAdapters";
 export default function GuardianRecords({ recipient }) {
   const [visits, setVisits] = useState([]);
   const [status, setStatus] = useState("loading");
+  const [loadError, setLoadError] = useState(null);
 
   // 방문 일정 : 수급자의 방문 요청 + 근무기록 + 요양보호사를 axios로 조회 (axios.get("통신할주소", { 옵션 }) → response.data)
   async function loadData() {
@@ -17,23 +18,24 @@ export default function GuardianRecords({ recipient }) {
     setStatus("loading");
     try {
       const [requestsRes, careworkersRes] = await Promise.all([
-        axios.get("http://localhost:8080/request/carerecipient", { params: { carerecipient_no: recipient.id }, withCredentials: true }),
-        axios.get("http://localhost:8080/api/careworkers", { withCredentials: true }),
+        axios.get("/request/carerecipient", { params: { carerecipient_no: recipient.id }, withCredentials: true }),
+        axios.get("/api/careworkers", { withCredentials: true }),
       ]);
       const reportLists = await Promise.all([...new Set(careworkersRes.data.map((c) => c.centerNo))].map((no) =>
-        axios.get("http://localhost:8080/careworkerreport/center", { params: { center_no: no }, withCredentials: true }).catch(() => ({ data: [] }))
+        axios.get("/careworkerreport/center", { params: { center_no: no }, withCredentials: true }).catch(() => ({ data: [] }))
       ));
       setVisits(buildVisits({ requests: requestsRes.data, reports: reportLists.flatMap((res) => res.data), careworkers: careworkersRes.data }));
       setStatus("ok");
     } catch (error) {
       console.error("방문 일정 조회 실패:", error);
+      setLoadError(error);
       setStatus("error");
     }
   }
   useEffect(() => { loadData(); }, [recipient?.id]);
 
   const records = visits.filter((v) => v.done).sort((a, b) => b.iso.localeCompare(a.iso)).map((v) => ({ date: v.date, cg: v.cg, t: v.t, note: v.note, tone: "ok" }));
-  if (status !== "ok") return <LoadStatus status={status} onRetry={loadData} />;
+  if (status !== "ok") return <LoadStatus status={status} onRetry={loadData} error={loadError} />;
   return (
     <div className="space-y-5">
       <div>

@@ -1,5 +1,3 @@
-//
-//
 import { useEffect, useState } from "react";
 import axios from "axios";
 import SectionTitle from "../../../components/common/SectionTitle";
@@ -13,23 +11,24 @@ export default function Schedule() {
   const center = useCenter();
   const [model, setModel] = useState(emptyModel);
   const [status, setStatus] = useState("loading");
+  const [loadError, setLoadError] = useState(null);
 
   // 방문 일정 화면에 필요한 목록을 axios로 조회 : axios.get("통신할주소", { 옵션 }) → response.data
   async function loadData() {
     setStatus("loading");
     try {
       const [centersRes, careworkersRes, recipientsRes] = await Promise.all([
-        axios.get("http://localhost:8080/center", { withCredentials: true }),
-        axios.get("http://localhost:8080/api/careworkers", { withCredentials: true }),
+        axios.get("/center", { withCredentials: true }),
+        axios.get("/api/careworkers", { withCredentials: true }),
         axios.get("http://localhost:8080/carerecipient", { withCredentials: true }),
       ]);
       // 수급자별 방문 요청, 센터별 근무기록
       const [requestLists, reportLists] = await Promise.all([
         Promise.all(recipientsRes.data.map((r) =>
-          axios.get("http://localhost:8080/request/carerecipient", { params: { carerecipient_no: r.careRecipientNo }, withCredentials: true }).catch(() => ({ data: [] }))
+          axios.get("/request/carerecipient", { params: { carerecipient_no: r.careRecipientNo }, withCredentials: true }).catch(() => ({ data: [] }))
         )),
         Promise.all(centersRes.data.map((c) => c.centerNo).map((no) =>
-          axios.get("http://localhost:8080/careworkerreport/center", { params: { center_no: no }, withCredentials: true }).catch(() => ({ data: [] }))
+          axios.get("/careworkerreport/center", { params: { center_no: no }, withCredentials: true }).catch(() => ({ data: [] }))
         )),
       ]);
       setModel(buildAdminModel({
@@ -41,6 +40,7 @@ export default function Schedule() {
       setStatus("ok");
     } catch (error) {
       console.error("방문 일정 조회 실패:", error);
+      setLoadError(error);
       setStatus("error");
     }
   }
@@ -48,7 +48,7 @@ export default function Schedule() {
   const { centers, scheduleDays, weekTable } = model;
   const rows = weekTable.filter(inCenter(center));
   const conflictCount = rows.reduce((n, r) => n + r.cells.reduce((m, cell) => m + (conflictSet(cell).size > 0 ? 1 : 0), 0), 0);
-  if (status !== "ok") return <LoadStatus status={status} onRetry={loadData} />;
+  if (status !== "ok") return <LoadStatus status={status} onRetry={loadData} error={loadError} />;
   return (
     <div className="space-y-5">
       <SectionTitle title="방문 일정" subtitle="요양보호사별 주간 타임테이블입니다. 같은 시간대에도 여러 요양보호사가 각각 다른 수급자를 방문할 수 있습니다." />

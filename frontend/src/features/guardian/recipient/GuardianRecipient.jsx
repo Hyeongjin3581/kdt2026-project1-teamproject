@@ -1,4 +1,3 @@
-//
 import { useState } from "react";
 import axios from "axios";
 import Panel from "../../../components/common/Panel";
@@ -33,7 +32,7 @@ export default function GuardianRecipient({ guardianNo, onComplete, onCancel }) 
       else setMessage("등록에 실패했습니다. 입력 정보를 확인해주세요.");
     } catch (error) {
       console.error(error);
-      setMessage("서버 통신 오류가 발생했습니다.");
+      setMessage(error.response ? `등록 요청 실패 (HTTP ${error.response.status})` : error.message);
     }
   };
 
