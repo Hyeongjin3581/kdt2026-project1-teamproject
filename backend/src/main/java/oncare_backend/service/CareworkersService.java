@@ -34,6 +34,8 @@ public class CareworkersService {
 
         // 1. DTO -> Entity
         CareworkerEntity careworkerEntity = careworkerDto.dtoToEntity();
+        // 회원가입 시 승인상태는 무조건 승인대기
+        careworkerEntity.setSignStatus("승인대기");
 
         // 2. 센터번호로 센터 찾기
         CenterEntity centerEntity = centerRepository.findById(careworkerDto.getCenterNo()).orElse(null);
@@ -130,5 +132,11 @@ public class CareworkersService {
         careworkerRepository.deleteById(careworkerNo);
 
         return true;
+    }
+
+    // 6. 요양보호사 승인대기상태 조회
+    public List<CareworkerDto> getPendingCareworkers(){
+        List<CareworkerEntity> careworkerEntities = careworkerRepository.findBySignStatus("승인대기")
+        
     }
 }

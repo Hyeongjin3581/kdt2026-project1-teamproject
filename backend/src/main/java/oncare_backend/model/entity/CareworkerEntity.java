@@ -35,4 +35,7 @@ public class CareworkerEntity extends BaseTime{
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_no")
     private UserEntity userEntity;
+
+    @Column ( name = "sign_status" )
+    private String signStatus;
 }

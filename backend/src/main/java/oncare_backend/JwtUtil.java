@@ -5,13 +5,12 @@ import java.util.Date;
 
 import javax.crypto.SecretKey;
 
-import io.jsonwebtoken.Jwt;
+import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
 
-@Component 
+// 로그인에 사용하는 Bean은 oncare_backend.service.JwtUtil에 등록되어 있습니다.
 public class JwtUtil {
     private final SecretKey secretKey;
 
@@ -20,11 +19,13 @@ public class JwtUtil {
     }
     // 1. jwt access token 생성
     public String createAccessToken( Long mno ){
-        String jwt = Jwt.builder()
+        String jwt = Jwts.builder()
                         .claim("type","ACCESS")
                         .subject( mno+"")
                         .issuedAt( new Date())
                         .expiration( new Date( new Date().getTime()+ 1000L * 60 * 30 ))
-
+                        .signWith( secretKey )
+                        .compact();
+        return jwt;
     }
 }

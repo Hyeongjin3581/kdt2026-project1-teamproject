@@ -21,6 +21,8 @@ public class CareworkerDto {
     private String careworkerState;
     private String careworkerAddress;
 
+    private String signStatus;
+
     private Integer centerNo;
     private Integer userNo;
 
@@ -37,6 +39,7 @@ public class CareworkerDto {
             .careworkerAge(this.careworkerAge)
             .careworkerState(this.careworkerState)
             .careworkerAddress(this.careworkerAddress)
+            .signStatus(this.signStatus)
             .build();
     }
 
@@ -52,6 +55,7 @@ public class CareworkerDto {
                 .careworkerState(careworker.getCareworkerState())
                 .centerNo(careworker.getCenterEntity().getCenterNo())
                 .userNo(careworker.getUserEntity().getUserNo())
+                .signStatus(careworker.getSignStatus())
                 .build();
     }
 }

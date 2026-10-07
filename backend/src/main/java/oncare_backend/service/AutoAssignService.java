@@ -63,10 +63,8 @@ public class AutoAssignService {
                 .toList();
 
         return availabilityList.stream()
-            .filter(careworkerEntity -> !hasTimeConflict(careworkerEntity, requestEntity))
+            .filter(careworkerEntity -> !isFree(careworkerEntity, requestEntity))
                 .toList();
-
-        return list;
     }
 
     // 근무 가능 시간 비교
@@ -85,7 +83,7 @@ public class AutoAssignService {
         return false;
     }
 
-    // 근무 기록 비교
+    // 근무 기록 비교: 요청 시간과 겹치는 근무가 있으면 true 반환
     private boolean isFree(CareworkerEntity cw, RequestEntity request) {
         // 근무 기록에서 요청한 day랑 비교해서 근무기록 테이블에서 행 가져오기
         List<CareworkerReportEntity> date = careWorkerReportRepository.findByCareworkerEntityAndWorkDate(cw, request.getVisitDate());

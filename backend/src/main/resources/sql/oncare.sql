@@ -100,6 +100,8 @@ CREATE TABLE careworkers (
     hour_wage INT NOT NULL,
     careworker_age INT NOT NULL,
     careworker_state VARCHAR(10) NOT NULL,
+    sign_state VARCHAR(10) NOT NULL DEFAULT '승인대기',
+
     latitude DOUBLE NOT NULL DEFAULT 0,
     longitude DOUBLE NOT NULL DEFAULT 0,
     center_no INT NOT NULL,
