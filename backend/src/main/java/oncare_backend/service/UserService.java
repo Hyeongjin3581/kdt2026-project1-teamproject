@@ -29,6 +29,7 @@ public class UserService {
     private final GuardianRepository guardianRepository;
     private final CareworkersRepository careworkersRepository;
     private final CenterRepository centerRepository;
+    private final GeoCodingService geoCodingService;
 
     // 회원가입
     public boolean save(UserDto userDto) {
@@ -52,6 +53,8 @@ public class UserService {
                     .build();
             guardianRepository.save(guardian);
         }
+
+
 
         if (saved.getUserNo() >= 1){
             return true;
@@ -105,6 +108,14 @@ public class UserService {
         CareworkerEntity careworkerEntity = new CareworkerEntity();
         careworkerEntity.setCareworkerName(signupDto.getCareworkerName());
         careworkerEntity.setCareworkerAddress(signupDto.getCareworkerAddress());
+
+        // 주소값 위도 경도로 바꾸기
+        List<Double> geoCoding = geoCodingService.getGeoCoding(signupDto.getCareworkerAddress());
+        if (geoCoding != null){
+            careworkerEntity.setLatitude(geoCoding.get(0));
+            careworkerEntity.setLongitude(geoCoding.get(1));
+        }
+
         careworkerEntity.setCareworkerGender(signupDto.getCareworkerGender());
         careworkerEntity.setHourWage(signupDto.getHourWage());
         careworkerEntity.setCareworkerAge(signupDto.getCareworkerAge());

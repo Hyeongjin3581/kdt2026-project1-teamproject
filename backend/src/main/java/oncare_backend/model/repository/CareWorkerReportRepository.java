@@ -35,7 +35,6 @@ public interface CareWorkerReportRepository extends JpaRepository<CareworkerRepo
             AND work_status = '완료'
             GROUP BY careworker_no
             """, nativeQuery = true)
-
     List<WorkCount> countCompletedWork(
             @Param("workerNos") List<Integer> workerNos,
             @Param("startDate") LocalDate startDate,
