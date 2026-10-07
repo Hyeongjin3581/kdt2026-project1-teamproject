@@ -76,9 +76,9 @@ public class CareWorkerReportController {
     }
 
     // 요양보호사가 자기 페이지를 열었을 때 수락 대기 중인 배정을 보여 주는 조회
-    @GetMapping("/myRequest")
-    public List<CareworkerReportDto> myRequest(@RequestParam Integer careworkNo){
-        return careWorkerReportService.myRequest(careworkNo);
+    @GetMapping("/findMyAssignments")
+    public List<CareworkerReportDto> findMyAssignments(@RequestParam Integer carworkerNo){
+        return careWorkerReportService.findMyAssignments(carworkerNo);
     }
 
     // 요청 번호를 받아 필수 조건을 통과한 요양보호사 중 상위 3명을 반환

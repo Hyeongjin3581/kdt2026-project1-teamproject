@@ -174,7 +174,18 @@ public class CareWorkerReportService{
         return true;
     }
 
-    public List<CareworkerReportDto> myRequest(Integer careworkNo) {
-        return null;
+    public List<CareworkerReportDto> findMyAssignments(Integer careworkerNo) {
+        CareworkerEntity careworkerEntity = careWorkerRepository.findById(careworkerNo).orElse(null);
+        if (careworkerEntity == null){
+            return new ArrayList<>();
+        }
+        // 해당 요양보호사번호로 근무기록 전체 조회
+        List<CareworkerReportEntity> careworkerReports = careWorkerReportRepository.findByCareworkerEntity_CareworkerNo(careworkerNo);
+        // 필터 이용해서 근무기록에 배정 상태인 것 추출
+        List<CareworkerReportEntity> list =
+                careworkerReports.stream().filter(careworkerReportEntity -> "배정".equals(careworkerReportEntity.getWorkStatus())).toList();
+        // 조회용이라 dto로 변경
+        List<CareworkerReportDto> careworkerReportDtos = list.stream().map(careworkerReportEntity -> CareworkerReportDto.entityToDto(careworkerReportEntity)).toList();
+        return careworkerReportDtos;
     }
 }
