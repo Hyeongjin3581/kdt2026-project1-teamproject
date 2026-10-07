@@ -1,74 +1,130 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import axios from "axios";
 import Panel from "../../../components/common/Panel";
 import Badge from "../../../components/common/Badge";
+import LoadStatus from "../../../components/common/LoadStatus";
 import CaregiverPageTitle from "../CaregiverPageTitle";
-import ScheduleCancelRequestModal from "./ScheduleCancelRequestModal";
+import { buildVisits, visitStatusMeta } from "../../../utils/caregiverAdapters";
 
-// 일정 API 연결 후 조회한 배열을 items로 전달합니다.
-export default function CaregiverSchedule({ items = [], loading = false, error = "", onRetry, connected = false }) {
+// 방문 일정 : 관리자가 지정한 배정(수락 대기)을 수락·거절하고, 확정된 방문 일정을 확인한다.
+export default function CaregiverSchedule({ careworkerNo, onChanged }) {
+  const [pending, setPending] = useState([]);   // 수락 대기 (근무기록 '배정')
+  const [confirmed, setConfirmed] = useState([]); // 확정된 방문 (근무기록 '확정')
+  const [status, setStatus] = useState("loading");
+  const [loadError, setLoadError] = useState(null);
   const [date, setDate] = useState("");
-  const [cancelItem, setCancelItem] = useState(null);
-  const filtered = items.filter((item) => !date || item.visitDate === date);
-  const timeText = (item) => `${item.startTime || "미정"} ~ ${item.endTime || "미정"}`;
+  const [busyNo, setBusyNo] = useState(null);
+  const [message, setMessage] = useState("");
+
+  // 방문 일정 화면에 필요한 목록을 axios로 조회 : axios.get("통신할주소", { 옵션 }) → response.data
+  async function loadData() {
+    setLoadError(null);
+    try {
+      const [mineRes, recipientsRes] = await Promise.all([
+        axios.get("http://localhost:8080/careworkerreport/careworker", { params: { careworker_no: careworkerNo }, withCredentials: true }),
+        axios.get("http://localhost:8080/carerecipient", { withCredentials: true }),
+      ]);
+      // 수락 대기 배정 : GET /careworkerreport/findMyAssignments?carworkerNo=번호 (서버 파라미터 이름이 carworkerNo)
+      const assignedRes = await axios.get("http://localhost:8080/careworkerreport/findMyAssignments", { params: { carworkerNo: careworkerNo }, withCredentials: true })
+        .catch(() => ({ data: mineRes.data.filter((r) => r.workStatus === "배정") })); // API 가 아직 없는 서버면 내 근무기록에서 '배정'만 골라 쓴다
+      // 근무기록에는 요청 번호만 있어서, 수급자별 요청을 받아 수급자 이름·주소를 연결한다
+      const requestLists = await Promise.all(recipientsRes.data.map((r) =>
+        axios.get("http://localhost:8080/request/carerecipient", { params: { carerecipient_no: r.careRecipientNo }, withCredentials: true }).catch(() => ({ data: [] }))
+      ));
+      const base = { requests: requestLists.flatMap((res) => res.data), recipients: recipientsRes.data };
+      setPending(buildVisits({ ...base, reports: assignedRes.data }));
+      setConfirmed(buildVisits({ ...base, reports: mineRes.data.filter((r) => r.workStatus === "확정") }));
+      setStatus("ok");
+    } catch (error) {
+      console.error("방문 일정 조회 실패:", error);
+      setLoadError(error);
+      setStatus("error");
+    }
+  }
+  useEffect(() => { loadData(); }, [careworkerNo]);
+
+  // 수락 / 거절 : PUT /careworkerreport/accept | reject  (body { careworkersReportNo })
+  // 수락 → 근무기록 '확정' + 요청 '배정완료',  거절 → 근무기록 '취소' + 요청 '신청'(관리자가 다시 배정)
+  const answer = async (visit, action) => {
+    if (busyNo) return;
+    if (action === "reject" && !window.confirm(`${visit.date} ${visit.recipientName} 수급자 방문 배정을 거절할까요?`)) return;
+    setBusyNo(visit.reportNo);
+    setMessage("");
+    try {
+      const response = await axios.put(`http://localhost:8080/careworkerreport/${action}`, { careworkersReportNo: visit.reportNo }, { withCredentials: true });
+      if (response.data) {
+        setMessage(action === "accept" ? `${visit.date} ${visit.recipientName} 수급자 방문을 수락했습니다. 확정 일정에 추가되었습니다.` : `${visit.date} 배정을 거절했습니다. 센터에서 다른 요양보호사를 배정합니다.`);
+        await loadData();
+        onChanged?.(); // 사이드 메뉴의 수락 대기 표시도 바로 갱신
+      } else {
+        alert("처리하지 못했습니다. 이미 처리된 배정인지 확인해주세요.");
+      }
+    } catch (error) {
+      console.error(error);
+      alert("서버 통신 오류가 발생했습니다.");
+    } finally {
+      setBusyNo(null);
+    }
+  };
+
+  if (status !== "ok") return <LoadStatus status={status} onRetry={loadData} error={loadError} />;
+  const filtered = confirmed.filter((v) => !date || v.iso === date);
 
   return (
     <div className="space-y-5">
-      <CaregiverPageTitle title="확정 근무 일정" subtitle="센터에서 배정한 방문 날짜와 시간, 수급자와 방문 주소를 확인하세요." />
-      <p className="rounded-xl border border-teal-100 bg-teal-50 px-5 py-3 text-sm leading-6 text-teal-800">근무 가능한 시간은 가용시간 메뉴에서 관리합니다. 확정 근무 시간은 직접 수정할 수 없으며, 변경·취소 요청은 센터 관리자 확인 후 확정됩니다.</p>
+      <CaregiverPageTitle title="방문 일정" subtitle="센터에서 지정한 방문을 수락하거나 거절하고, 확정된 방문 일정을 확인하세요." />
+      {message && <p role="status" className="rounded-lg border border-teal-100 bg-teal-50 px-4 py-3 text-sm text-teal-800">{message}</p>}
+
+      <Panel className="overflow-hidden">
+        <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
+          <div><h2 className="font-display font-bold text-slate-900">수락 대기 중인 배정 <span className="ml-1 text-sm text-amber-600">{pending.length}건</span></h2><p className="mt-1 text-xs text-slate-500">수락하면 확정 일정이 되고, 거절하면 센터에서 다른 요양보호사를 배정합니다.</p></div>
+          <button type="button" onClick={loadData} className="text-xs font-semibold text-teal-600 hover:underline">새로고침</button>
+        </div>
+        {pending.length === 0 ? <p className="px-5 py-10 text-center text-sm text-slate-400">수락을 기다리는 배정이 없습니다.</p> : (
+          <div className="divide-y divide-slate-100">
+            {pending.map((v) => (
+              <article key={v.reportNo} className="flex flex-wrap items-center justify-between gap-3 px-5 py-4">
+                <div>
+                  <div className="flex items-center gap-2"><b className="text-sm text-slate-900">{v.date}</b><span className="font-mono text-xs text-teal-700">{v.time}</span><Badge tone="warning">수락 대기</Badge></div>
+                  <p className="mt-1.5 text-sm font-semibold text-slate-800">{v.recipientName} 수급자</p>
+                  <p className="mt-0.5 break-words text-xs text-slate-500">{v.address}{v.content && ` · ${v.content}`}</p>
+                </div>
+                <div className="flex gap-2">
+                  <button type="button" onClick={() => answer(v, "reject")} disabled={busyNo !== null} className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-50">거절</button>
+                  <button type="button" onClick={() => answer(v, "accept")} disabled={busyNo !== null} className="rounded-lg bg-teal-600 px-4 py-2 text-sm font-bold text-white hover:bg-teal-700 disabled:opacity-50">{busyNo === v.reportNo ? "처리 중..." : "수락"}</button>
+                </div>
+              </article>
+            ))}
+          </div>
+        )}
+      </Panel>
+
       <Panel className="overflow-hidden">
         <div className="flex flex-wrap items-end justify-between gap-4 border-b border-slate-100 px-5 py-4">
-          <div>
-            <h2 className="font-display font-bold text-slate-900">내 방문 일정</h2>
-            {!loading && !error && <p className="mt-1 text-xs text-slate-500">{date || "전체 날짜"} · {filtered.length}건</p>}
-          </div>
+          <div><h2 className="font-display font-bold text-slate-900">확정된 방문 일정</h2><p className="mt-1 text-xs text-slate-500">{date || "전체 날짜"} · {filtered.length}건</p></div>
           <div className="flex flex-wrap items-end gap-2">
             <label className="text-xs font-semibold text-slate-600">방문 날짜
               <input type="date" value={date} onChange={(event) => setDate(event.target.value)} className="mt-1.5 block rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100" />
             </label>
             <button type="button" onClick={() => setDate("")} disabled={!date} className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50 disabled:opacity-40">초기화</button>
-            {onRetry && <button type="button" onClick={onRetry} disabled={loading} className="rounded-lg border border-teal-200 px-3 py-2 text-sm font-semibold text-teal-700 hover:bg-teal-50 disabled:opacity-40">새로고침</button>}
           </div>
         </div>
-        {loading ? <div role="status" className="px-5 py-16 text-center text-sm text-slate-500">방문 일정을 불러오는 중입니다...</div> : error ? (
-          <div role="alert" className="px-5 py-12 text-center">
-            <p className="text-sm font-semibold text-rose-600">방문 일정을 불러오지 못했습니다.</p>
-            <p className="mt-2 text-xs text-slate-500">{typeof error === "string" ? error : "잠시 후 다시 시도해주세요."}</p>
-            {onRetry && <button type="button" onClick={onRetry} className="mt-4 rounded-lg bg-teal-600 px-4 py-2 text-sm font-bold text-white hover:bg-teal-700">다시 불러오기</button>}
-          </div>
-        ) : (
-          <>
-            <div className="hidden overflow-x-auto md:block">
-              <table className="w-full min-w-[700px] text-sm">
-                <thead className="bg-slate-50 text-left text-xs text-slate-500"><tr>{["방문 날짜", "시작 / 종료", "수급자", "방문 주소", "일정 / 방문 상태", "요청"].map((label) => <th key={label} className="px-5 py-3">{label}</th>)}</tr></thead>
-                <tbody>{filtered.map((item) => (
-                  <tr key={item.scheduleNo} className="border-t border-slate-100 hover:bg-slate-50/70">
-                    <td className="whitespace-nowrap px-5 py-4 font-semibold text-slate-800">{item.visitDate || "미정"}</td>
-                    <td className="whitespace-nowrap px-5 py-4 font-mono text-xs">{timeText(item)}</td>
-                    <td className="px-5 py-4">{item.recipientName || "정보 없음"}</td>
-                    <td className="max-w-xs break-words px-5 py-4 text-slate-600">{item.address || "주소 정보 없음"}</td>
-                    <td className="px-5 py-4"><Badge>{item.status || "상태 정보 없음"}</Badge></td>
-                    <td className="px-5 py-4"><button type="button" onClick={() => setCancelItem(item)} className="whitespace-nowrap rounded-lg border border-slate-200 px-3 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50">근무 취소 요청</button></td>
-                  </tr>
-                ))}</tbody>
-              </table>
-            </div>
-            <div className="divide-y divide-slate-100 md:hidden">{filtered.map((item) => (
-              <article key={item.scheduleNo} className="space-y-3 px-5 py-4">
-                <div className="flex flex-wrap items-center justify-between gap-2"><p className="text-sm font-bold text-slate-900">{item.visitDate || "날짜 미정"}</p><Badge>{item.status || "상태 정보 없음"}</Badge></div>
-                <dl className="grid grid-cols-[64px_1fr] gap-x-3 gap-y-2 text-sm">
-                  <dt className="text-slate-500">시간</dt><dd className="font-mono">{timeText(item)}</dd>
-                  <dt className="text-slate-500">수급자</dt><dd>{item.recipientName || "정보 없음"}</dd>
-                  <dt className="text-slate-500">주소</dt><dd className="break-words">{item.address || "주소 정보 없음"}</dd>
-                </dl>
-                <button type="button" onClick={() => setCancelItem(item)} className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50">근무 취소 요청</button>
-              </article>
-            ))}</div>
-            {filtered.length === 0 && <div role="status" className="px-5 py-14 text-center"><p className="text-sm font-semibold text-slate-600">{items.length === 0 ? "등록된 방문 일정이 없습니다." : "선택한 날짜에 방문 일정이 없습니다."}</p><p className="mt-2 text-xs text-slate-400">{items.length === 0 ? "배정된 일정이 등록되면 이곳에서 확인할 수 있습니다." : "다른 날짜를 선택하거나 날짜 필터를 초기화해주세요."}</p></div>}
-          </>
-        )}
-        {!connected && <p className="border-t border-slate-100 bg-slate-50 px-5 py-3 text-xs leading-5 text-slate-500">서버 일정 API 연결 대기 중입니다. 연결 후 실제 배정 일정이 표시됩니다.</p>}
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[640px] whitespace-nowrap text-sm">
+            <thead className="bg-slate-50 text-left text-xs text-slate-500"><tr>{["방문 날짜", "시간", "수급자", "방문 주소", "상태"].map((label) => <th key={label} className="px-5 py-3">{label}</th>)}</tr></thead>
+            <tbody>{filtered.map((v) => (
+              <tr key={v.reportNo} className="border-t border-slate-100 hover:bg-slate-50/70">
+                <td className="px-5 py-4 font-semibold text-slate-800">{v.date}</td>
+                <td className="px-5 py-4 font-mono text-xs">{v.time}</td>
+                <td className="px-5 py-4">{v.recipientName}</td>
+                <td className="px-5 py-4 text-slate-600">{v.address}</td>
+                <td className="px-5 py-4"><Badge tone={visitStatusMeta[v.status]?.tone}>{visitStatusMeta[v.status]?.label ?? v.status}</Badge></td>
+              </tr>
+            ))}</tbody>
+          </table>
+        </div>
+        {filtered.length === 0 && <p className="px-5 py-12 text-center text-sm text-slate-400">{confirmed.length === 0 ? "확정된 방문 일정이 없습니다." : "선택한 날짜에 방문 일정이 없습니다."}</p>}
       </Panel>
-      {cancelItem && <ScheduleCancelRequestModal item={cancelItem} onClose={() => setCancelItem(null)} />}
     </div>
   );
 }

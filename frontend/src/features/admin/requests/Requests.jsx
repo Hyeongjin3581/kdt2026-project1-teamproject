@@ -57,9 +57,11 @@ export default function Requests() {
   useEffect(() => { loadData(); }, []);
 
   // 자동배정(후보 추천) : GET /careworkerreport/candidates?request_no=번호 → 상위 3명 [{ careworkerNo, careworkerName, distanceKm, workCount, distanceScore, workScore, totalScore }]
-  // 이 API 가 아직 없으면 전체 요양보호사 목록에서 직접 고르게 한다.
+  // 직접 선택 목록 : GET /careworkerreport/available?requestNo=번호 → 필수 조건(근무중·성별·근무가능 시간·일정 겹침 없음)을 통과한 요양보호사 전체 [{ careworkerNo, careworkerName, ... }]
+  // 이 API 가 아직 없는 서버면 전체 요양보호사 목록에서 고르게 한다.
   const [assignTarget, setAssignTarget] = useState(null);
   const [candidates, setCandidates] = useState({ loading: false, list: [], noApi: false });
+  const [available, setAvailable] = useState(null); // null: 서버에 API 없음(전체에서 선택), 배열: 필수 조건을 통과한 요양보호사
   const [manual, setManual] = useState(false);
   const [pickedCw, setPickedCw] = useState("");
   const openAssign = async (a) => {
@@ -67,13 +69,17 @@ export default function Requests() {
     setPickedCw(String(a.careworkerNo ?? ""));
     setManual(false);
     setCandidates({ loading: true, list: [], noApi: false });
-    try {
-      const response = await axios.get("http://localhost:8080/careworkerreport/candidates", { params: { request_no: a.requestNo }, withCredentials: true });
-      setCandidates({ loading: false, list: Array.isArray(response.data) ? response.data.slice(0, 3) : [], noApi: false });
-    } catch (error) {
-      setCandidates({ loading: false, list: [], noApi: true });
-    }
+    setAvailable(null);
+    // 추천 상위 3명과 필수 조건 통과 목록을 함께 조회한다 (둘 중 하나가 실패해도 다른 쪽은 쓴다)
+    const [candidatesRes, availableRes] = await Promise.all([
+      axios.get("http://localhost:8080/careworkerreport/candidates", { params: { request_no: a.requestNo }, withCredentials: true }).catch(() => null),
+      axios.get("http://localhost:8080/careworkerreport/available", { params: { requestNo: a.requestNo }, withCredentials: true }).catch(() => null),
+    ]);
+    setAvailable(Array.isArray(availableRes?.data) ? availableRes.data : null);
+    setCandidates(candidatesRes ? { loading: false, list: Array.isArray(candidatesRes.data) ? candidatesRes.data.slice(0, 3) : [], noApi: false } : { loading: false, list: [], noApi: true });
   };
+  // 직접 선택 목록에 보여 줄 요양보호사 : 필수 조건을 통과한 사람만 (API 가 없는 서버면 전체)
+  const pickOptions = available ? available.map((c) => ({ id: c.careworkerNo, label: `${c.careworkerName} · ${c.careworkerGender} · ${c.careworkerAge}세` })) : model.caregivers.map((c) => ({ id: c.id, label: `${c.name} · ${c.status} · 이번 주 ${c.week}h` }));
 
   // 지정(배정) : 기존 근무기록이 있으면 삭제(DELETE) 후 새 근무기록 등록(POST /careworkerreport, 상태 '배정') + 요청 '배정중'
   const assign = async () => {
@@ -204,13 +210,14 @@ export default function Requests() {
                   ))}
                 </div>
               )}
-              {!candidates.loading && candidates.list.length === 0 && !candidates.noApi && <p className="rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-700">조건에 맞는 후보가 없습니다. 아래에서 요양보호사를 직접 선택할 수 있습니다.</p>}
-              {!candidates.loading && candidates.noApi && <p className="rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-500">후보 추천 기능(서버)이 아직 준비되지 않아 전체 요양보호사 중에서 직접 선택합니다.</p>}
-              {!candidates.loading && (manual || candidates.list.length === 0) && (
-                <label className="block text-xs font-semibold text-slate-600">요양보호사 직접 선택
+              {!candidates.loading && available && available.length === 0 && <p className="rounded-lg bg-amber-50 px-3 py-2 text-xs leading-5 text-amber-700">이 방문 시간에 배정할 수 있는 요양보호사가 없습니다. 근무중인지, 선호 성별이 맞는지, 근무 가능 시간이 등록돼 있는지, 같은 시간에 다른 일정이 없는지를 확인해주세요.</p>}
+              {!candidates.loading && available && available.length > 0 && candidates.list.length === 0 && <p className="rounded-lg bg-slate-50 px-3 py-2 text-xs leading-5 text-slate-500">추천 점수를 계산할 수 있는 후보는 없지만(주소 좌표 없음 등), 조건을 통과한 요양보호사를 아래에서 직접 선택할 수 있습니다.</p>}
+              {!candidates.loading && !available && <p className="rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-500">조건 필터 기능(서버)이 아직 준비되지 않아 전체 요양보호사 중에서 직접 선택합니다.</p>}
+              {!candidates.loading && pickOptions.length > 0 && (manual || candidates.list.length === 0) && (
+                <label className="block text-xs font-semibold text-slate-600">요양보호사 직접 선택 <span className="font-normal text-slate-400">{available ? `(조건을 통과한 ${pickOptions.length}명)` : ""}</span>
                   <select value={pickedCw} onChange={(e) => setPickedCw(e.target.value)} className="mt-1.5 w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-800 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100">
                     <option value="">선택하세요</option>
-                    {model.caregivers.map((c) => <option key={c.id} value={c.id}>{c.name} · {c.status} · 이번 주 {c.week}h</option>)}
+                    {pickOptions.map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}
                   </select>
                 </label>
               )}
