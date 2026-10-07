@@ -1,0 +1,44 @@
+=================== application.properties 커밋 안되게 한 후 만든 참고용 파일 ==============
+이 파일을 복사해서 같은 폴더에 application.properties 로 만들고, 각자 값으로 채우세요.
+application.properties 는 .gitignore 대상입니다. 절대 커밋하지 마세요. (2026. 10. 07 복구)
+
+spring.application.name=oncare_backend
+
+# [1] 내장 톰캣의 포트 번호 변경 가능 (기본값 = 8080)
+server.port = 8080
+
+# 2-1: 연동할 DB 주소 (DB 메타데이터, 미리 만들어진)
+spring.datasource.url=jdbc:mysql://localhost:3306/oncare
+
+# 2-2: DB 주소의 계정명/비밀번호 (각자 MySQL 비밀번호)
+spring.datasource.username=root
+spring.datasource.password=각자_MySQL_비밀번호
+spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+
+# [3] 시작 시 SQL 자동 실행 안 함 (샘플 데이터는 Workbench 에서 oncare.sql 직접 실행)
+spring.sql.init.mode=never
+
+# 샘플 파일 위치 (src/main/resources/sql/*.sql)
+spring.sql.init.data-locations=classpath:sql/oncare.sql
+
+# Hibernate 테이블 생성 후 스크립트 실행
+spring.jpa.defer-datasource-initialization=true
+
+# DDL : 엔티티에 컬럼이 추가되면 테이블에 자동 반영 (예: careworkers.sign_state)
+spring.jpa.hibernate.ddl-auto=update
+
+# 에러 로그
+spring.sql.init.continue-on-error=false
+
+# 한글 인코딩
+spring.sql.init.encoding=UTF-8
+
+# 카카오 REST API 키 (GeoCodingService 에서 사용) - 팀 공용 키는 개인 메시지로 공유
+kakao.rest-api-key=***
+
+# JWT 서명 키 (JwtUtil 에서 사용) - 32자 이상 아무 문자열
+jwt.secret=***
+
+# Redis (로그인 refresh 토큰 저장) - redis-server.exe 실행 필요
+spring.data.redis.host=localhost
+spring.data.redis.port=6379
