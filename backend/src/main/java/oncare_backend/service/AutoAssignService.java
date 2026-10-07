@@ -66,7 +66,6 @@ public class AutoAssignService {
         return availabilityList.stream()
             .filter(careworkerEntity -> !isFree(careworkerEntity, requestEntity))
                 .toList();
-
     }
 
     // 근무 가능 시간 비교

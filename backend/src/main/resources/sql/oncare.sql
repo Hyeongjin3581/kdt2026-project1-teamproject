@@ -46,20 +46,20 @@ INSERT IGNORE INTO guardians (guardian_no, user_no, guardian_name, guardian_rela
 
 -- 5. 요양보호사 (latitude, longitude 포함)
 INSERT IGNORE INTO careworkers
-(careworker_no, careworker_name, careworker_address, careworker_gender, hour_wage, careworker_age, careworker_state, latitude, longitude, center_no, user_no) VALUES
-(1, '정미숙', '경기도 안양시 동안구 비산동',   '여자', 13000, 58, '근무중', 37.4000, 126.9470, 1, 5),
-(2, '김영희', '경기도 시흥시 능곡동',         '여자', 13500, 55, '근무중', 37.3620, 126.8010, 2, 6),
-(3, '박성호', '경기도 수원시 팔달구 인계동',   '남자', 14000, 58, '근무중', 37.2650, 127.0300, 3, 7);
+(careworker_no, careworker_name, careworker_address, careworker_gender, hour_wage, careworker_age, careworker_state, latitude, longitude, center_no, user_no, sign_state) VALUES
+(1, '정미숙', '경기도 안양시 동안구 비산동',   '여자', 13000, 58, '근무중', 37.4000, 126.9470, 1, 5, '승인완료'),
+(2, '김영희', '경기도 시흥시 능곡동',         '여자', 13500, 55, '근무중', 37.3620, 126.8010, 2, 6, '승인완료'),
+(3, '박성호', '경기도 수원시 팔달구 인계동',   '남자', 14000, 58, '근무중', 37.2650, 127.0300, 3, 7, '승인완료');
 
 INSERT IGNORE INTO careworkers
-(careworker_no, careworker_name, careworker_address, careworker_gender, hour_wage, careworker_age, careworker_state, latitude, longitude, center_no, user_no) VALUES
-(4,  '이순옥', '경기도 안양시 만안구 석수동', '여자', 12500, 54, '근무중', 37.4290, 126.9010, 1, 11),
-(5,  '최영수', '경기도 안양시 동안구 관양동', '남자', 13000, 60, '근무중', 37.3920, 126.9650, 1, 12),
-(6,  '한미경', '경기도 시흥시 정왕동',       '여자', 12800, 49, '근무중', 37.3490, 126.7430, 2, 13),
-(7,  '오정자', '경기도 시흥시 장곡동',       '여자', 13200, 57, '근무중', 37.4580, 126.7800, 2, 14),
-(8,  '신혜진', '경기도 수원시 권선구 세류동', '여자', 12700, 45, '근무중', 37.2530, 127.0150, 3, 15),
-(9,  '류재호', '경기도 수원시 영통구 영통동', '남자', 13800, 52, '근무중', 37.2510, 127.0710, 3, 16),
-(10, '문경애', '경기도 수원시 장안구 파장동', '여자', 13400, 59, '근무중', 37.3050, 126.9900, 3, 17);
+(careworker_no, careworker_name, careworker_address, careworker_gender, hour_wage, careworker_age, careworker_state, latitude, longitude, center_no, user_no, sign_state) VALUES
+(4,  '이순옥', '경기도 안양시 만안구 석수동', '여자', 12500, 54, '근무중', 37.4290, 126.9010, 1, 11, '승인완료'),
+(5,  '최영수', '경기도 안양시 동안구 관양동', '남자', 13000, 60, '근무중', 37.3920, 126.9650, 1, 12, '승인완료'),
+(6,  '한미경', '경기도 시흥시 정왕동',       '여자', 12800, 49, '근무중', 37.3490, 126.7430, 2, 13, '승인완료'),
+(7,  '오정자', '경기도 시흥시 장곡동',       '여자', 13200, 57, '근무중', 37.4580, 126.7800, 2, 14, '승인완료'),
+(8,  '신혜진', '경기도 수원시 권선구 세류동', '여자', 12700, 45, '근무중', 37.2530, 127.0150, 3, 15, '승인완료'),
+(9,  '류재호', '경기도 수원시 영통구 영통동', '남자', 13800, 52, '근무중', 37.2510, 127.0710, 3, 16, '승인완료'),
+(10, '문경애', '경기도 수원시 장안구 파장동', '여자', 13400, 59, '근무중', 37.3050, 126.9900, 3, 17, '승인완료');
 
 -- 6. 수급자 (latitude, longitude 포함)
 INSERT IGNORE INTO carerecipients

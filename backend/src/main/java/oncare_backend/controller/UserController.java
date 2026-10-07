@@ -1,6 +1,7 @@
 package oncare_backend.controller;
 
 import lombok.RequiredArgsConstructor;
+import oncare_backend.model.dto.CareworkerSignupDto;
 import oncare_backend.model.dto.UserDto;
 import oncare_backend.service.JwtUtil;
 import oncare_backend.service.RedisTokenService;
@@ -27,6 +28,12 @@ public class UserController {
     @PostMapping
     public boolean save(@RequestBody UserDto userDto){
         return userService.save(userDto);
+    }
+
+    // 요양보호사 가입 신청: 계정 정보와 프로필 정보를 한 번에 전달받는다.
+    @PostMapping("/careworker")
+    public boolean registerCareworker(@RequestBody CareworkerSignupDto signupDto) {
+        return userService.registerCareworker(signupDto);
     }
 
     // 로그인
