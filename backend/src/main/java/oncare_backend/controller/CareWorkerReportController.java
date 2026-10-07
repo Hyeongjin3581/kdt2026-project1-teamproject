@@ -2,6 +2,10 @@ package oncare_backend.controller;
 
 import java.util.List;
 
+import oncare_backend.model.dto.AssignCareworkerDto;
+import oncare_backend.model.dto.AssignmentActionDto;
+import oncare_backend.model.dto.CareWorkerRecommendationDto;
+import oncare_backend.service.AutoAssignService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -21,6 +25,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 @RequestMapping ("/careworkerreport")
 public class CareWorkerReportController {
     @Autowired private CareWorkerReportService careWorkerReportService;
+    @Autowired private  AutoAssignService autoAssignService;
 
     // [1] 근무기록 추가
     @PostMapping("")
@@ -50,5 +55,35 @@ public class CareWorkerReportController {
     @DeleteMapping("")
     public boolean deleteReport( @RequestParam(name="careworker_report_no")Integer careworkersReportNo ){
         return careWorkerReportService.deleteReport(careworkersReportNo);
+    }
+
+    // 요양보호사 : 배정 수락
+    @PutMapping("/accept")
+    public boolean acceptAssignment(@RequestBody AssignmentActionDto assignmentActionDto){
+        return careWorkerReportService.acceptAssignment(assignmentActionDto);
+    }
+
+    // 요양보호사 : 배정 거절
+    @PutMapping("/reject")
+    public boolean rejectAssignment(@RequestBody AssignmentActionDto assignmentActionDto){
+        return careWorkerReportService.rejectAssignment(assignmentActionDto);
+    }
+
+    // 관리자가 상위 3명 중 한 명을 눌러 "배정하기"를 했을 때
+    @PostMapping("/assign")
+    public boolean assignCareworker(@RequestBody AssignCareworkerDto assignCareworkerDto){
+        return careWorkerReportService.assignCareworker(assignCareworkerDto);
+    }
+
+    // 요양보호사가 자기 페이지를 열었을 때 수락 대기 중인 배정을 보여 주는 조회
+    @GetMapping("/findMyAssignments")
+    public List<CareworkerReportDto> findMyAssignments(@RequestParam Integer carworkerNo){
+        return careWorkerReportService.findMyAssignments(carworkerNo);
+    }
+
+    // 요청 번호를 받아 필수 조건을 통과한 요양보호사 중 상위 3명을 반환
+    @GetMapping("/candidates")
+    public List<CareWorkerRecommendationDto> candidates(@RequestParam("request_no") Integer requestNo) {
+        return autoAssignService.top3Careworkers(requestNo);
     }
 }

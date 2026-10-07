@@ -2,6 +2,7 @@ package oncare_backend.service;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import oncare_backend.model.dto.CareWorkerRecommendationDto;
 import oncare_backend.model.entity.CaregiverAvailabilityEntity;
 import oncare_backend.model.entity.CareworkerEntity;
 import oncare_backend.model.entity.CareworkerReportEntity;
@@ -10,7 +11,6 @@ import oncare_backend.model.repository.CareWorkerReportRepository;
 import oncare_backend.model.repository.CaregiverAvailabilityRepository;
 import oncare_backend.model.repository.CareworkersRepository;
 import oncare_backend.model.repository.RequestRepository;
-import oncare_backend.service.CareWorkerRecommendationService.CareWorkerRecommendation;
 
 import org.springframework.stereotype.Service;
 
@@ -26,8 +26,9 @@ public class AutoAssignService {
     private final CareWorkerReportRepository careWorkerReportRepository;
     private final CareWorkerRecommendationService careWorkerRecommendationService;
 
+    // 상위 3명 추출 메소드
     // 필수 조건 후보를 추천 서비스에 전달하고 상위 3명을 반환
-    public List<CareWorkerRecommendation> top3Careworkers(Integer requestNo) {
+    public List<CareWorkerRecommendationDto> top3Careworkers(Integer requestNo) {
         RequestEntity requestEntity = requestRepository.findById(requestNo).orElse(null);
         if (requestEntity == null) {
             return List.of();

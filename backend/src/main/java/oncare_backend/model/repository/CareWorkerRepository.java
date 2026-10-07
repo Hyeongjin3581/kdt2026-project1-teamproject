@@ -8,9 +8,10 @@ import org.springframework.stereotype.Repository;
 
 import oncare_backend.model.entity.CareworkerEntity;
 
+import java.util.List;
+
 
 @Repository 
 public interface CareWorkerRepository extends JpaRepository<CareworkerEntity,Integer> {
 
-    List<CareworkerEntity> findBySignStatus(String signstatus);
 }

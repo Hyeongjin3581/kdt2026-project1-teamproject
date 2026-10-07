@@ -18,6 +18,9 @@ public class UserDto {
     private Integer userCategoryNo;
     private String userCategoryName;
 
+    private String guardianName;          // 보호자 가입 시에만 사용
+    private String guardianRelationship;  // 보호자 가입 시에만 사용
+
     public UserEntity dtoToEntity(){
         return UserEntity.builder()
                 .userId(this.userId)
