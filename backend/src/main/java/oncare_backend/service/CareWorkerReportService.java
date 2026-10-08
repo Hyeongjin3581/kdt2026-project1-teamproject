@@ -211,4 +211,19 @@ public class CareWorkerReportService{
         reportEntity.getRequestEntity().setRequestState("신청");
         return true;
     }
+
+    // 요양보호사 확정된 요청을 완료
+    public boolean complete(AssignmentActionDto actionDto) {
+        CareworkerReportEntity reportEntity = careWorkerReportRepository.findById(actionDto.getCareworkersReportNo()).orElse(null);
+        if (reportEntity == null){
+            return false;
+        }
+        // 확정 상태일때만
+        if (!"확정".equals(reportEntity.getWorkStatus())){
+            return false;
+        }
+        reportEntity.setWorkStatus("완료");
+        reportEntity.getRequestEntity().setRequestState("완료");
+        return true;
+    }
 }

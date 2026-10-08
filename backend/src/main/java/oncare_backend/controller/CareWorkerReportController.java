@@ -101,4 +101,10 @@ public class CareWorkerReportController {
     public boolean cancel(@RequestBody AssignmentActionDto assignmentActionDto){
         return careWorkerReportService.cancel(assignmentActionDto);
     }
+
+    // 요양보호사 확정된 요청을 완료
+    @PutMapping("/complete")
+    public boolean complete(@RequestBody AssignmentActionDto assignmentActionDto){
+        return careWorkerReportService.complete(assignmentActionDto);
+    }
 }
