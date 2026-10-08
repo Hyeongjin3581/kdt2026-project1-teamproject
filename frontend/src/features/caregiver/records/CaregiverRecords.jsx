@@ -19,11 +19,11 @@ export default function CaregiverRecords({ careworkerNo }) {
     setLoadError(null);
     try {
       const [mineRes, recipientsRes] = await Promise.all([
-        axios.get("http://localhost:8080/careworkerreport/careworker", { params: { careworker_no: careworkerNo }, withCredentials: true }),
+        axios.get("http://localhost:8080/careworkerreport/careworker", { params: { careworkerNo: careworkerNo }, withCredentials: true }),
         axios.get("http://localhost:8080/carerecipient", { withCredentials: true }),
       ]);
       const requestLists = await Promise.all(recipientsRes.data.map((r) =>
-        axios.get("http://localhost:8080/request/carerecipient", { params: { carerecipient_no: r.careRecipientNo }, withCredentials: true }).catch(() => ({ data: [] }))
+        axios.get("http://localhost:8080/request/carerecipient", { params: { careRecipientNo: r.careRecipientNo }, withCredentials: true }).catch(() => ({ data: [] }))
       ));
       const done = buildVisits({ reports: mineRes.data.filter((r) => r.workStatus === "완료"), requests: requestLists.flatMap((res) => res.data), recipients: recipientsRes.data });
       setRecords(done.reverse()); // 최근 방문이 위로

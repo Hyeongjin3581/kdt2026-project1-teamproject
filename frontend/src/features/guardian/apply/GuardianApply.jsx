@@ -40,7 +40,7 @@ export default function GuardianApply({ recipient, recipients, onSelectRecipient
         return axios.post(
           "http://localhost:8080/request",
           { preferredGender, requestState: "신청", visitDate: d.iso, visitStartTime: toServerTime(t.start), visitEndTime: toServerTime(t.end), requestContent: content.trim() || "방문요양 서비스 신청" },
-          { params: { carerecipient_no: recipient.id }, withCredentials: true }
+          { params: { careRecipientNo: recipient.id }, withCredentials: true }
         );
       }));
       if (results.every((res) => res.data)) { setSentCount(results.length); setMessage(""); setApplySent(true); }

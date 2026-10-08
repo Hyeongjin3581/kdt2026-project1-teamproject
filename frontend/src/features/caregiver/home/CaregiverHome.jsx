@@ -20,12 +20,12 @@ export default function CaregiverHome({ careworker, center, go }) {
     setLoadError(null);
     try {
       const [mineRes, recipientsRes, availabilityRes] = await Promise.all([
-        axios.get("http://localhost:8080/careworkerreport/careworker", { params: { careworker_no: careworker.careworkerNo }, withCredentials: true }),
+        axios.get("http://localhost:8080/careworkerreport/careworker", { params: { careworkerNo: careworker.careworkerNo }, withCredentials: true }),
         axios.get("http://localhost:8080/carerecipient", { withCredentials: true }),
         axios.get("http://localhost:8080/api/caregiver-availability", { withCredentials: true }),
       ]);
       const requestLists = await Promise.all(recipientsRes.data.map((r) =>
-        axios.get("http://localhost:8080/request/carerecipient", { params: { carerecipient_no: r.careRecipientNo }, withCredentials: true }).catch(() => ({ data: [] }))
+        axios.get("http://localhost:8080/request/carerecipient", { params: { careRecipientNo: r.careRecipientNo }, withCredentials: true }).catch(() => ({ data: [] }))
       ));
       const upcoming = mineRes.data.filter((r) => r.workStatus === "확정" && r.workDate >= todayIso);
       setVisits(buildVisits({ reports: upcoming, requests: requestLists.flatMap((res) => res.data), recipients: recipientsRes.data }));

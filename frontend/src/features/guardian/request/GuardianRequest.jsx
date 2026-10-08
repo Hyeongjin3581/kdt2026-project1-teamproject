@@ -49,10 +49,10 @@ export default function GuardianRequest({ guardian, recipients, activeRecipientI
         axios.get("/api/careworkers", { withCredentials: true }),
       ]);
       const requestsRes = selectedRecipient
-        ? await axios.get("/request/carerecipient", { params: { carerecipient_no: selectedRecipient.id }, withCredentials: true })
+        ? await axios.get("/request/carerecipient", { params: { careRecipientNo: selectedRecipient.id }, withCredentials: true })
         : { data: [] };
       const reportLists = await Promise.all([...new Set(careworkersRes.data.map((c) => c.centerNo))].map((no) =>
-        axios.get("/careworkerreport/center", { params: { center_no: no }, withCredentials: true }).catch(() => ({ data: [] }))
+        axios.get("/careworkerreport/center", { params: { centerNo: no }, withCredentials: true }).catch(() => ({ data: [] }))
       ));
       setCategories(categoriesRes.data);
       setRequestType((current) => current || categoriesRes.data[0]?.inquiryCategoryName || "");
@@ -96,7 +96,7 @@ export default function GuardianRequest({ guardian, recipients, activeRecipientI
           }, { withCredentials: true })
         : await axios.put("http://localhost:8080/request", {
             visitDate: editForm.date || null, visitStartTime: toServerTime(editForm.start), visitEndTime: toServerTime(editForm.end), requestContent: editForm.content,
-          }, { params: { request_no: raw.requestNo }, withCredentials: true });
+          }, { params: { requestNo: raw.requestNo }, withCredentials: true });
       if (response.data) { setEditing(false); setSelectedRequestId(null); loadData(); }
       else alert("수정에 실패했습니다.");
     } catch (error) {
@@ -111,8 +111,8 @@ export default function GuardianRequest({ guardian, recipients, activeRecipientI
     if (!window.confirm(selectedRequest.source === "inquiry" ? "이 문의를 삭제할까요?" : "이 서비스 신청을 취소할까요?")) return;
     try {
       const response = selectedRequest.source === "inquiry"
-        ? await axios.delete("http://localhost:8080/guardianinquiry", { data: { inquiryNo: raw.inquiryNo }, withCredentials: true })
-        : await axios.delete("/request", { params: { request_no: raw.requestNo }, withCredentials: true });
+        ? await axios.delete("http://localhost:8080/guardianinquiry", { params: { inquiryNo: raw.inquiryNo }, withCredentials: true })
+        : await axios.delete("/request", { params: { requestNo: raw.requestNo }, withCredentials: true });
       if (response.data) { setEditing(false); setSelectedRequestId(null); loadData(); }
       else alert("처리에 실패했습니다.");
     } catch (error) {

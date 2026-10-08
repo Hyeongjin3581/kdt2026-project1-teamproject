@@ -56,8 +56,8 @@ export default function Signup() {
 
   // Gmail 인증번호 발송 (POST /user/email/send)
   const sendVerificationEmail = async () => {
-    if (!/^[^\s@]+@gmail\.com$/i.test(email)) {
-      setVerificationMessage("Gmail 주소를 입력해주세요.");
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setVerificationMessage("올바른 이메일 주소를 입력해주세요.");
       return;
     }
     try {
@@ -66,8 +66,7 @@ export default function Signup() {
         setEmailSent(true);
         setEmailVerified(false);
         setVerificationCode("");
-        // setVerificationMessage("인증번호를 Gmail로 발송했습니다. 테스트 인증번호는 123456입니다.");
-        setVerificationMessage("인증번호를 Gmail로 발송했습니다. 5분 안에 입력해주세요. (스팸함도 확인)");
+        setVerificationMessage("인증번호를 입력한 메일로 발송했습니다. 5분 안에 입력해주세요. (스팸함도 확인)");
       } else {
         setVerificationMessage("발송하지 못했습니다. 1분 후에 다시 시도해주세요.")
       }

@@ -39,7 +39,7 @@ export default function Inquiries() {
     const removeInquiry = async (inquiry) => {
         if (!window.confirm("이 문의를 삭제할까요?")) return;
         try {
-            const response = await axios.delete("http://localhost:8080/guardianinquiry", { data: { inquiryNo: inquiry.inquiryNo }, withCredentials: true });
+            const response = await axios.delete("http://localhost:8080/guardianinquiry", { params: { inquiryNo: inquiry.inquiryNo }, withCredentials: true });
             if (response.data) loadData();
             else alert("삭제에 실패했습니다.");
         } catch (error) {

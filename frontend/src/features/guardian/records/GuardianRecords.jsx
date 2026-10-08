@@ -18,11 +18,11 @@ export default function GuardianRecords({ recipient }) {
     setStatus("loading");
     try {
       const [requestsRes, careworkersRes] = await Promise.all([
-        axios.get("/request/carerecipient", { params: { carerecipient_no: recipient.id }, withCredentials: true }),
+        axios.get("/request/carerecipient", { params: { careRecipientNo: recipient.id }, withCredentials: true }),
         axios.get("/api/careworkers", { withCredentials: true }),
       ]);
       const reportLists = await Promise.all([...new Set(careworkersRes.data.map((c) => c.centerNo))].map((no) =>
-        axios.get("/careworkerreport/center", { params: { center_no: no }, withCredentials: true }).catch(() => ({ data: [] }))
+        axios.get("/careworkerreport/center", { params: { centerNo: no }, withCredentials: true }).catch(() => ({ data: [] }))
       ));
       setVisits(buildVisits({ requests: requestsRes.data, reports: reportLists.flatMap((res) => res.data), careworkers: careworkersRes.data }));
       setStatus("ok");
