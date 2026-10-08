@@ -36,10 +36,10 @@ export default function Requests() {
       // 수급자별 방문 요청, 센터별 근무기록
       const [requestLists, reportLists] = await Promise.all([
         Promise.all(recipientsRes.data.map((r) =>
-          axios.get("http://localhost:8080/request/carerecipient", { params: { carerecipient_no: r.careRecipientNo }, withCredentials: true }).catch(() => ({ data: [] }))
+          axios.get("http://localhost:8080/request/carerecipient", { params: { careRecipientNo: r.careRecipientNo }, withCredentials: true }).catch(() => ({ data: [] }))
         )),
         Promise.all(centersRes.data.map((c) => c.centerNo).map((no) =>
-          axios.get("http://localhost:8080/careworkerreport/center", { params: { center_no: no }, withCredentials: true }).catch(() => ({ data: [] }))
+          axios.get("http://localhost:8080/careworkerreport/center", { params: { centerNo: no }, withCredentials: true }).catch(() => ({ data: [] }))
         )),
       ]);
       setModel(buildAdminModel({
@@ -72,7 +72,7 @@ export default function Requests() {
     setAvailable(null);
     // 추천 상위 3명과 필수 조건 통과 목록을 함께 조회한다 (둘 중 하나가 실패해도 다른 쪽은 쓴다)
     const [candidatesRes, availableRes] = await Promise.all([
-      axios.get("http://localhost:8080/careworkerreport/candidates", { params: { request_no: a.requestNo }, withCredentials: true }).catch(() => null),
+      axios.get("http://localhost:8080/careworkerreport/candidates", { params: { requestNo: a.requestNo }, withCredentials: true }).catch(() => null),
       axios.get("http://localhost:8080/careworkerreport/available", { params: { requestNo: a.requestNo }, withCredentials: true }).catch(() => null),
     ]);
     setAvailable(Array.isArray(availableRes?.data) ? availableRes.data : null);
@@ -86,14 +86,14 @@ export default function Requests() {
     const a = assignTarget;
     if (!pickedCw) { alert("요양보호사를 선택해주세요."); return; }
     try {
-      if (a.reportNo) await axios.delete("http://localhost:8080/careworkerreport", { params: { careworker_report_no: a.reportNo }, withCredentials: true });
+      if (a.reportNo) await axios.delete("http://localhost:8080/careworkerreport", { params: { careworkersReportNo: a.reportNo }, withCredentials: true });
       const response = await axios.post(
         "http://localhost:8080/careworkerreport",
         { careworkerNo: Number(pickedCw), requestNo: a.requestNo, workDate: a.iso, workStartTime: toServerTime(a.start), workEndTime: toServerTime(a.end), workStatus: "배정" },
         { withCredentials: true }
       );
       // 요양보호사의 수락을 기다리는 상태 : PUT /request?request_no=번호 (body 에 { requestState })
-      if (response.data) await axios.put("http://localhost:8080/request", { requestState: "배정중" }, { params: { request_no: a.requestNo }, withCredentials: true });
+      if (response.data) await axios.put("http://localhost:8080/request", { requestState: "배정중" }, { params: { requestNo: a.requestNo }, withCredentials: true });
       if (response.data) { setAssignTarget(null); loadData(); }
       else alert("담당자 지정에 실패했습니다.");
     } catch (error) {
@@ -107,8 +107,8 @@ export default function Requests() {
     if (!a.reportNo) return;
     if (!window.confirm(`${a.recipient} 수급자의 ${a.date} 배정을 제외할까요?`)) return;
     try {
-      const response = await axios.delete("http://localhost:8080/careworkerreport", { params: { careworker_report_no: a.reportNo }, withCredentials: true });
-      if (response.data) await axios.put("http://localhost:8080/request", { requestState: "신청" }, { params: { request_no: a.requestNo }, withCredentials: true });
+      const response = await axios.delete("http://localhost:8080/careworkerreport", { params: { careworkersReportNo: a.reportNo }, withCredentials: true });
+      if (response.data) await axios.put("http://localhost:8080/request", { requestState: "신청" }, { params: { requestNo: a.requestNo }, withCredentials: true });
       if (response.data) loadData();
       else alert("배정 제외에 실패했습니다.");
     } catch (error) {
@@ -121,8 +121,8 @@ export default function Requests() {
   const confirmAssign = async (a) => {
     if (!a.reportNo) return;
     try {
-      const response = await axios.put("http://localhost:8080/careworkerreport", null, { params: { careworker_report_no: a.reportNo, work_status: "확정" }, withCredentials: true });
-      if (response.data) await axios.put("http://localhost:8080/request", { requestState: "배정완료" }, { params: { request_no: a.requestNo }, withCredentials: true });
+      const response = await axios.put("http://localhost:8080/careworkerreport", null, { params: { careworkersReportNo: a.reportNo, workStatus: "확정" }, withCredentials: true });
+      if (response.data) await axios.put("http://localhost:8080/request", { requestState: "배정완료" }, { params: { requestNo: a.requestNo }, withCredentials: true });
       if (response.data) loadData();
       else alert("확정 처리에 실패했습니다.");
     } catch (error) {

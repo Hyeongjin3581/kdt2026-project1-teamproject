@@ -27,7 +27,7 @@ export default function CaregiverAvailability({ careworkerNo }) {
     try {
       const [availabilityRes, mineRes] = await Promise.all([
         axios.get("http://localhost:8080/api/caregiver-availability", { withCredentials: true }),
-        axios.get("http://localhost:8080/careworkerreport/careworker", { params: { careworker_no: careworkerNo }, withCredentials: true }),
+        axios.get("http://localhost:8080/careworkerreport/careworker", { params: { careworkerNo: careworkerNo }, withCredentials: true }),
       ]);
       // 가용시간은 전체 조회만 있어서 내 번호(caregiverNo)로 거른다
       setItems(availabilityRes.data

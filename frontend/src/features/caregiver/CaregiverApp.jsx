@@ -56,7 +56,7 @@ export default function CaregiverApp({ careworkerNo, user, logout }) {
   // 수락 대기 배정 건수 : 내 근무기록 중 상태가 '배정'(관리자가 지정, 아직 수락 전)인 것의 수
   async function loadPendingCount() {
     try {
-      const response = await axios.get("http://localhost:8080/careworkerreport/careworker", { params: { careworker_no: careworkerNo }, withCredentials: true });
+      const response = await axios.get("http://localhost:8080/careworkerreport/careworker", { params: { careworkerNo: careworkerNo }, withCredentials: true });
       setPendingCount(response.data.filter((r) => r.workStatus === "배정").length);
     } catch (error) {
       setPendingCount(0);

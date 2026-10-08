@@ -47,7 +47,7 @@ export default function RecipientEditModal({ recipient, onClose, onChanged }) {
         if (!window.confirm(`${recipient.careRecipientName} 어르신을 삭제할까요? 이 작업은 되돌릴 수 없습니다.`)) return;
         try {
             const response = await axios.delete("http://localhost:8080/carerecipient", {
-                data: { careRecipientNo: recipient.careRecipientNo },
+                params: { careRecipientNo: recipient.careRecipientNo },
                 withCredentials: true,
             });
             if (response.data) onChanged();
