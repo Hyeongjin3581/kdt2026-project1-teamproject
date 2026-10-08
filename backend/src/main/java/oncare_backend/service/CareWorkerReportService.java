@@ -5,6 +5,7 @@ import java.util.List;
 
 import oncare_backend.model.dto.AssignCareworkerDto;
 import oncare_backend.model.dto.AssignmentActionDto;
+import oncare_backend.model.dto.CareworkerDto;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -187,5 +188,12 @@ public class CareWorkerReportService{
         // 조회용이라 dto로 변경
         List<CareworkerReportDto> careworkerReportDtos = list.stream().map(careworkerReportEntity -> CareworkerReportDto.entityToDto(careworkerReportEntity)).toList();
         return careworkerReportDtos;
+    }
+
+    // 요양보호사별 확정된 요청 전체조회
+    public List<CareworkerReportDto> findMyConfirmed(Integer careworkerNo) {
+        List<CareworkerReportEntity> reportList = careWorkerReportRepository.findByCareworkerEntity_CareworkerNo(careworkerNo);
+        return reportList.stream().filter(careworkerReportEntity -> "확정".equals(careworkerReportEntity.getWorkStatus()))
+                .map(careworkerReportEntity -> CareworkerReportDto.entityToDto(careworkerReportEntity)).toList();
     }
 }

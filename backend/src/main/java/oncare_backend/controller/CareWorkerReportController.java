@@ -90,4 +90,15 @@ public class CareWorkerReportController {
     public List<CareworkerDto> availableCareworker(@RequestParam Integer requestNo){
         return autoAssignService.filterCareworkers(requestNo);
     }
+    // 요양보호사별 확정된 요청 전체조회
+    @GetMapping("/findMyConfirmed")
+    public List<CareworkerReportDto> findMyConfirmed(@RequestParam Integer careworkerNo){
+        return careWorkerReportService.findMyConfirmed(careworkerNo);
+    }
+
+    // 확정된 요청을 거절
+    @PutMapping("/cancel")
+    public boolean cancel(@RequestBody AssignCareworkerDto assignCareworkerDto){
+        return careWorkerReportService.cancel(assignCareworkerDto);
+    }
 }
