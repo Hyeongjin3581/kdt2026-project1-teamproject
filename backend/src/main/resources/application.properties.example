@@ -42,3 +42,11 @@ jwt.secret=***
 # Redis (로그인 refresh 토큰 저장) - redis-server.exe 실행 필요
 spring.data.redis.host=localhost
 spring.data.redis.port=6379
+
+# Gmail 발송 (앱 비밀번호 16자리, 띄어쓰기 없이)
+spring.mail.host=smtp.gmail.com
+spring.mail.port=587
+spring.mail.username=발송계정@gmail.com
+spring.mail.password=***
+spring.mail.properties.mail.smtp.auth=true
+spring.mail.properties.mail.smtp.starttls.enable=true

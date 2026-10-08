@@ -29,10 +29,15 @@ public class UserService {
     private final GuardianRepository guardianRepository;
     private final CareworkersRepository careworkersRepository;
     private final CenterRepository centerRepository;
+    private final EmailVerificationService emailVerificationService; // 이메일 인증
 
     // 회원가입
     public boolean save(UserDto userDto) {
         if (userDto.getUserCategoryNo() == null || userDto.getUserCategoryNo() == 2) return false;
+
+        boolean isGuardian = userDto.getUserCategoryNo() == 1;
+        // 보호자는 Gmail 인증을 마쳐야만 가입 가능 (프론트 우회 방지)
+        if (isGuardian && !emailVerificationService.isVerified(userDto.getEmail())) return false;
 
         UserEntity userEntity = userDto.dtoToEntity();
         userEntity.setUserPassword(passwordEncoder.encode(userDto.getUserPassword())); // 유저 password 암호화 해서 세팅
@@ -54,6 +59,9 @@ public class UserService {
         }
 
         if (saved.getUserNo() >= 1){
+            if (isGuardian) {
+                emailVerificationService.clear(userDto.getEmail()); // 인증 기록 정리
+            }
             return true;
         }
         return false;
