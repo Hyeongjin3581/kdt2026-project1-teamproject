@@ -2,14 +2,12 @@ package oncare_backend.controller;
 
 import java.util.List;
 
-import oncare_backend.model.dto.AssignCareworkerDto;
-import oncare_backend.model.dto.AssignmentActionDto;
-import oncare_backend.model.dto.CareWorkerRecommendationDto;
+import oncare_backend.model.dto.*;
+import oncare_backend.model.repository.RequestRepository;
 import oncare_backend.service.AutoAssignService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RestController;
 
-import oncare_backend.model.dto.CareworkerReportDto;
 import oncare_backend.service.CareWorkerReportService;
 
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -85,5 +83,11 @@ public class CareWorkerReportController {
     @GetMapping("/candidates")
     public List<CareWorkerRecommendationDto> candidates(@RequestParam("request_no") Integer requestNo) {
         return autoAssignService.top3Careworkers(requestNo);
+    }
+
+    // 요청 번호 받아 필수 조건을 통과한 요양보호사 List 반환
+    @GetMapping("/available")
+    public List<CareworkerDto> availableCareworker(@RequestParam Integer requestNo){
+        return autoAssignService.filterCareworkers(requestNo);
     }
 }

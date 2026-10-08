@@ -3,6 +3,7 @@ package oncare_backend.service;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import oncare_backend.model.dto.CareWorkerRecommendationDto;
+import oncare_backend.model.dto.CareworkerDto;
 import oncare_backend.model.entity.CaregiverAvailabilityEntity;
 import oncare_backend.model.entity.CareworkerEntity;
 import oncare_backend.model.entity.CareworkerReportEntity;
@@ -14,6 +15,7 @@ import oncare_backend.model.repository.RequestRepository;
 
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -44,7 +46,7 @@ public class AutoAssignService {
     }
 
     // 필수 조건 필터 메소드
-    private List<CareworkerEntity> filterCareworker(RequestEntity requestEntity){
+    public List<CareworkerEntity> filterCareworker(RequestEntity requestEntity){
         List<CareworkerEntity> all = careworkersRepository.findAll();
 
         // 근무중인 상태 요양 보호사 필터링
@@ -97,7 +99,19 @@ public class AutoAssignService {
                 return true;
             }
         }
-
         return false;
+    }
+
+    // filterCareworker이용해서 컨트롤러에서 받은 requestNo값으로 필수조건 필터링
+    public List<CareworkerDto> filterCareworkers(Integer requestNo) {
+        RequestEntity requestEntity = requestRepository.findById(requestNo).orElse(null);
+        if (requestEntity == null) {
+            return new ArrayList<>();
+        }
+        List<CareworkerEntity> careworkerEntities = filterCareworker(requestEntity);
+        if (careworkerEntities == null){
+            return new ArrayList<>();
+        }
+        return careworkerEntities.stream().map(careworkerEntity -> CareworkerDto.entityToDto(careworkerEntity)).toList();
     }
 }
