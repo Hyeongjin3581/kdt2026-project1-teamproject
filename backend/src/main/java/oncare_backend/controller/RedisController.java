@@ -65,7 +65,7 @@ public class RedisController {
     
     // [3] Redis 개별조회
     @GetMapping("/user/find")
-    public UserDto find(@RequestParam(name = "user_id") Integer userNo ) throws JsonMappingException, JsonProcessingException {
+    public UserDto find(@RequestParam(name = "userId") Integer userNo ) throws JsonMappingException, JsonProcessingException {
         String findKey = "user:"+ userNo;
         String value = stringRedisTemplate.opsForValue().get(findKey);
         if (value == null) {
@@ -79,7 +79,7 @@ public class RedisController {
     
     // [4] Redis 삭제
     @DeleteMapping("/user")
-    public boolean delete( @RequestParam (name="user_no") Integer userNo){
+    public boolean delete( @RequestParam (name="userNo") Integer userNo){
         String deleteKey = "user:"+ userNo;
         boolean result = stringRedisTemplate.delete(deleteKey);
 

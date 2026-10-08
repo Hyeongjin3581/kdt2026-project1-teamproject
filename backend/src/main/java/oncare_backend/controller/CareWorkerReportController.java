@@ -33,25 +33,25 @@ public class CareWorkerReportController {
     
     // [2] 센터 별 근무기록 불러오기
     @GetMapping ("/center")
-    public List<CareworkerReportDto> findAllByCenter(@RequestParam(name = "center_no") Integer centerNo){
+    public List<CareworkerReportDto> findAllByCenter(@RequestParam(name = "centerNo") Integer centerNo){
         return careWorkerReportService.findAllByCenter(centerNo);
     }
 
     // [3] 요양보호사 별 근무기록 불러오기
     @GetMapping("/careworker")
-    public List<CareworkerReportDto> findAllByCareworker(@RequestParam(name = "careworker_no") Integer careworkerNo) {
+    public List<CareworkerReportDto> findAllByCareworker(@RequestParam(name = "careworkerNo") Integer careworkerNo) {
         return careWorkerReportService.findAllByCareworker(careworkerNo);
     }
     
     // [4] 근무 기록 레코드 -> 근무기록상태 바꾸기
     @PutMapping("")
-    public boolean updateReport( @RequestParam(name="careworker_report_no")Integer careworkersReportNo,
-                                 @RequestParam(name="work_status")String status ){
+    public boolean updateReport( @RequestParam(name="careworkerReportNo")Integer careworkersReportNo,
+                                 @RequestParam(name="workStatus")String status ){
         return careWorkerReportService.updateReport(careworkersReportNo, status);
     }
     // [5] 근무 기록 삭제
     @DeleteMapping("")
-    public boolean deleteReport( @RequestParam(name="careworker_report_no")Integer careworkersReportNo ){
+    public boolean deleteReport( @RequestParam(name="careworkerReportNo")Integer careworkersReportNo ){
         return careWorkerReportService.deleteReport(careworkersReportNo);
     }
 
@@ -81,7 +81,7 @@ public class CareWorkerReportController {
 
     // 요청 번호를 받아 필수 조건을 통과한 요양보호사 중 상위 3명을 반환
     @GetMapping("/candidates")
-    public List<CareWorkerRecommendationDto> candidates(@RequestParam("request_no") Integer requestNo) {
+    public List<CareWorkerRecommendationDto> candidates(@RequestParam("requestNo") Integer requestNo) {
         return autoAssignService.top3Careworkers(requestNo);
     }
 
