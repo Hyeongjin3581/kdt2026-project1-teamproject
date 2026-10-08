@@ -94,7 +94,7 @@ export default function Dashboard() {
   );
   return (
     <div className="space-y-5">
-      <SectionTitle title="오늘의 운영 현황" subtitle="센터 운영 상황을 한눈에 확인하고 바로 업무를 처리하세요." action={<button onClick={() => go("auto")} className="rounded-lg bg-teal-600 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-teal-700">✦ 다음 주 자동편성</button>} />
+      <SectionTitle title="오늘의 운영 현황" subtitle="센터 운영 상황을 한눈에 확인하고 바로 업무를 처리하세요." />
       <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
         {[
           ["오늘 방문 예정", String(visits.length), "건", "info", "TODAY", "schedule"],

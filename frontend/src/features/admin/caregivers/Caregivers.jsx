@@ -9,10 +9,13 @@ import LoadStatus from "../../../components/common/LoadStatus";
 import { buildAdminModel, emptyModel, emptyRaw } from "../../../utils/adminAdapters";
 import CaregiverRecord from "./CaregiverRecord";
 import CaregiverFormModal from "./CaregiverFormModal";
+import PendingApprovalModal from "./PendingApprovalModal";
 
 export default function Caregivers() {
   const [recordId, setRecordId] = useState(null);
-  const [formTarget, setFormTarget] = useState(null); // null: 닫힘, "new": 등록, 요양보호사 DTO: 수정
+  const [formTarget, setFormTarget] = useState(null); // null: 닫힘, 요양보호사 DTO: 수정
+  const [approvalOpen, setApprovalOpen] = useState(false); // 가입 승인 창
+  const [pendingCount, setPendingCount] = useState(0);      // 승인 대기 건수 (0 이면 표시 없음)
   const [model, setModel] = useState(emptyModel);
   const [issues, setIssues] = useState([]);
   const [status, setStatus] = useState("loading");
@@ -56,7 +59,16 @@ export default function Caregivers() {
       setStatus("error");
     }
   }
-  useEffect(() => { loadData(); }, []);
+  // 가입 승인 대기 건수 : GET /api/careworkers/pending (시스템 관리자만 가능, 권한이 없거나 실패하면 0건으로 본다)
+  async function loadPendingCount() {
+    try {
+      const response = await axios.get("http://localhost:8080/api/careworkers/pending", { withCredentials: true });
+      setPendingCount(response.data.length);
+    } catch (error) {
+      setPendingCount(0);
+    }
+  }
+  useEffect(() => { loadData(); loadPendingCount(); }, []);
   const { centers, caregivers } = model;
   const record = caregivers.find((c) => c.id === recordId) ?? null;
   // 요양보호사 삭제 : DELETE /api/careworkers?careworkerNo=번호 (쿼리 파라미터로 전달)
@@ -76,7 +88,11 @@ export default function Caregivers() {
   if (status !== "ok") return <LoadStatus status={status} onRetry={loadData} error={loadError} />;
   return (
     <div className="space-y-5">
-      <SectionTitle title="요양보호사 관리" subtitle="선택한 센터에 등록된 근무 인력입니다. 주 52시간 근로기준을 기준으로 근무시간을 관리합니다." action={<button onClick={() => setFormTarget("new")} className="rounded-lg bg-teal-600 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-teal-700">+ 요양보호사 등록</button>} />
+      <SectionTitle title="요양보호사 관리" subtitle="선택한 센터에 등록된 근무 인력입니다. 주 52시간 근로기준을 기준으로 근무시간을 관리합니다." action={
+        <button onClick={() => setApprovalOpen(true)} className={`inline-flex items-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-bold transition ${pendingCount > 0 ? "border-amber-300 bg-amber-50 text-amber-800 hover:bg-amber-100" : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"}`}>
+          요양보호사 가입 승인
+          {pendingCount > 0 && <span className="inline-flex h-5 min-w-5 items-center justify-center gap-0.5 rounded-full bg-rose-500 px-1.5 text-[11px] font-bold text-white">✓ {pendingCount}</span>}
+        </button>} />
       {issues.length > 0 && <Panel className="p-4 text-sm text-amber-800">
         <p>요양보호사 목록은 조회했습니다. 추가 정보 조회 실패로 근무시간·배정 건수·근무 기록은 확인할 수 없습니다.</p>
         {issues.map((issue, index) => <p key={index} className="mt-1 text-xs">{issue.config?.url} · {issue.response ? `HTTP ${issue.response.status}` : "응답 없음"}</p>)}
@@ -114,7 +130,8 @@ export default function Caregivers() {
       </div>
       {visible.length === 0 && <Panel className="p-10 text-center text-sm text-slate-400">선택한 센터에 등록된 요양보호사가 없습니다.</Panel>}
       {record && <CaregiverRecord c={record} onClose={() => setRecordId(null)} onChanged={loadData} />}
-      {formTarget && <CaregiverFormModal careworker={formTarget === "new" ? null : formTarget} onClose={() => setFormTarget(null)} onSaved={() => { setFormTarget(null); loadData(); }} />}
+      {approvalOpen && <PendingApprovalModal centers={centers} onClose={() => setApprovalOpen(false)} onApproved={() => { loadData(); loadPendingCount(); }} />}
+      {formTarget && <CaregiverFormModal careworker={formTarget} onClose={() => setFormTarget(null)} onSaved={() => { setFormTarget(null); loadData(); }} />}
     </div>
   );
 }
