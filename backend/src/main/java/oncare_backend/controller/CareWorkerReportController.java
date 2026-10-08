@@ -96,9 +96,9 @@ public class CareWorkerReportController {
         return careWorkerReportService.findMyConfirmed(careworkerNo);
     }
 
-    // 확정된 요청을 거절
+    // 요양보호사가 확정된 요청을 거절
     @PutMapping("/cancel")
-    public boolean cancel(@RequestBody AssignCareworkerDto assignCareworkerDto){
-        return careWorkerReportService.cancel(assignCareworkerDto);
+    public boolean cancel(@RequestBody AssignmentActionDto assignmentActionDto){
+        return careWorkerReportService.cancel(assignmentActionDto);
     }
 }
