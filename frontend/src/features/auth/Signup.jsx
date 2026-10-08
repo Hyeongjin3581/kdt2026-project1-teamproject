@@ -52,23 +52,44 @@ export default function Signup() {
     setAdminVerified(false);
     setAdminMessage("");
   };
-  const sendVerificationEmail = () => {
+
+  // Gmail 인증번호 발송 (POST /user/email/send)
+  const sendVerificationEmail = async () => {
     if (!/^[^\s@]+@gmail\.com$/i.test(email)) {
       setVerificationMessage("Gmail 주소를 입력해주세요.");
       return;
     }
-    setEmailSent(true);
-    setEmailVerified(false);
-    setVerificationMessage("인증번호를 Gmail로 발송했습니다. 테스트 인증번호는 123456입니다.");
-  };
-  const verifyEmail = () => {
-    if (verificationCode === "123456") {
-      setEmailVerified(true);
-      setVerificationMessage("이메일 인증이 완료되었습니다.");
-      return;
+    try {
+      const response = await axios.post("http://localhost:8080/user/email/send", {email} , {withCredentials : true});
+      if(response.data){
+        setEmailSent(true);
+        setEmailVerified(false);
+        setVerificationCode("");
+        // setVerificationMessage("인증번호를 Gmail로 발송했습니다. 테스트 인증번호는 123456입니다.");
+        setVerificationMessage("인증번호를 Gmail로 발송했습니다. 5분 안에 입력해주세요. (스팸함도 확인)");
+      } else {
+        setVerificationMessage("발송하지 못했습니다. 1분 후에 다시 시도해주세요.")
+      }
+    } catch {
+      setVerificationMessage("서버에 연결할 수 없습니다. 실행 상태를 확인하세요.")
     }
-    setVerificationMessage("인증번호가 일치하지 않습니다. 다시 확인해주세요.");
   };
+
+  // Gmail 인증번호 확인 (POST /user/email/verify)
+  const verifyEmail = async () => {
+    try {
+      const response = await axios.post("http://localhost:8080/user/email/verify", {email, code: verificationCode }, {withCredentials: true});
+      if (response.data) {
+        setEmailVerified(true);
+        setVerificationMessage("이메일 인증이 완료되었습니다.")
+      } else {
+        setVerificationMessage("인증번호가 일치하지 않거나 만료되었습니다.")
+      }
+    } catch {
+      setVerificationMessage("서버에 연결할 수 없습니다. 실행 상태를 확인하세요.")
+    }
+  };
+
   const verifyAdminCode = () => {
     if (adminCode === "123456") {
       setAdminVerified(true);
