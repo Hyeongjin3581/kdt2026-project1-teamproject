@@ -6,7 +6,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
@@ -16,7 +15,6 @@ import oncare_backend.model.entity.CareRecipientEntity;
 import oncare_backend.model.entity.CareworkerEntity;
 import oncare_backend.model.repository.CareRecipientRepository;
 import oncare_backend.model.repository.CareWorkerReportRepository;
-import oncare_backend.model.repository.CareworkersRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

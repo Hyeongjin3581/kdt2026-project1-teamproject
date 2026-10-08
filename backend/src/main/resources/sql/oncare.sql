@@ -5,10 +5,25 @@
 --   요양보호사 가입 승인 확인용 : careworker15, careworker16 은 승인대기 상태라 로그인되지 않고, 관리자 화면에 ✓ 표시가 뜬다.
 -- ※ 서버를 켤 때마다(create-drop) 이 데이터로 새로 시작하므로 매번 가입하지 않아도 된다.
 
--- 샘플 데이터 (테이블은 JPA 엔티티가 생성하므로 INSERT 만 작성)
+-- 샘플 데이터 (테이블은 JPA 엔티티가 생성하며, 상태 컬럼은 아래에서 존재 여부를 확인한다)
 -- INSERT IGNORE : 이미 같은 번호가 있으면 건너뛰어 재시작해도 오류가 나지 않는다.
 -- 위도/경도는 추천(거리 점수) 계산에 쓰이므로 동 단위 대략 좌표를 함께 넣는다.
 -- 비밀번호는 모두 같은 BCrypt 해시이다.
+
+-- 보호자 상태 컬럼 추가: JPA가 이미 생성했거나 재실행하는 경우에는 건너뛴다.
+SET @guardian_state_ddl = IF(
+    EXISTS (
+        SELECT 1 FROM information_schema.COLUMNS
+        WHERE TABLE_SCHEMA = DATABASE()
+          AND TABLE_NAME = 'guardians'
+          AND LOWER(COLUMN_NAME) = 'guardian_state'
+    ),
+    'SELECT 1',
+    'ALTER TABLE guardians ADD COLUMN guardian_State VARCHAR(20) NOT NULL DEFAULT ''use'''
+);
+PREPARE guardian_state_statement FROM @guardian_state_ddl;
+EXECUTE guardian_state_statement;
+DEALLOCATE PREPARE guardian_state_statement;
 
 -- 1. 사용자 카테고리
 INSERT IGNORE INTO usercategory (user_category_no, user_category_name) VALUES

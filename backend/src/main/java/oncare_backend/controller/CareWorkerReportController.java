@@ -51,7 +51,7 @@ public class CareWorkerReportController {
     }
     // [5] 근무 기록 삭제
     @DeleteMapping("")
-    public boolean deleteReport( @RequestParam(name="careworkersReportNo")Integer careworkersReportNo ){
+    public boolean deleteReport( @RequestParam(name="careworkerReportNo")Integer careworkersReportNo ){
         return careWorkerReportService.deleteReport(careworkersReportNo);
     }
 
