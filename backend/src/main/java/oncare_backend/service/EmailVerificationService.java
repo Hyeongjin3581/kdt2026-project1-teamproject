@@ -27,7 +27,7 @@ public class EmailVerificationService {
         if (email == null) return false; // 이메일이 비어있으면 false
         email = email.trim().toLowerCase(); // 대소문자, 공백 통일
         
-        if (!email.matches("^[^\\s@]+@gmail\\.com$")) return false; // Gmail 형식이 아닐 경우 false
+        if (!email.matches("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$")) return false; // Gmail 형식이 아닐 경우 false
         if (Boolean.TRUE.equals(stringRedisTemplate.hasKey("EVCOOL:"+email))) return false; // 60초동안 발송을 제한
             
         String code = String.format("%06d", random.nextInt(1_000_000)); // 000000~999999 까지 임의의 6자리 코드 생성
