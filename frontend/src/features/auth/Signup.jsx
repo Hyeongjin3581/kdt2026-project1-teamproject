@@ -7,9 +7,9 @@ import axios from "axios";
 import CaregiverSignupForm from "./CaregiverSignupForm"; // 요양보호사 전용 가입 폼 (2026. 10. 06 병합)
 
 // 가입할 때 선택하는 직급 : 백엔드 usercategory 테이블의 번호와 맞춘다. (2 = 요양보호사는 CaregiverSignupForm 으로 가입)
+// 센터 관리자(3)는 가입으로 만들지 않으므로 목록에서 뺐다.
 const POSITIONS = [
   { value: "guardian", label: "보호자", userCategoryNo: 1, admin: false },
-  { value: "center", label: "센터 관리자", userCategoryNo: 3, admin: true },
   { value: "system", label: "시스템 관리자", userCategoryNo: 4, admin: true },
   { value: "caregiver", label: "요양보호사", userCategoryNo: 2, admin: false }, // 선택 시 CaregiverSignupForm 사용
 ];
@@ -24,7 +24,7 @@ export default function Signup() {
   const [role, setRole] = useState(location.state?.role === "caregiver" ? "caregiver" : "guardian"); // 선택한 직급 (POSITIONS 의 value)
   const toLogin = () => role === "caregiver" ? navigate("/login", { state: { role: "caregiver" } }) : navigate("/login");
   const position = POSITIONS.find((p) => p.value === role);
-  const isAdmin = position.admin; // 센터·시스템 관리자는 관리자 인증코드가 필요
+  const isAdmin = position.admin; // 시스템 관리자는 관리자 인증코드가 필요
   const [done, setDone] = useState(false);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -33,7 +33,8 @@ export default function Signup() {
   const [passwordConfirm, setPasswordConfirm] = useState("");
   const [submitError, setSubmitError] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [email, setEmail] = useState("");
+  const [userId, setUserId] = useState("");  // 로그인 아이디 (user.user_id)
+  const [email, setEmail] = useState("");    // 이메일 (user.email) : 아이디와 별개로 저장
   const [verificationCode, setVerificationCode] = useState("");
   const [emailSent, setEmailSent] = useState(false);
   const [emailVerified, setEmailVerified] = useState(false);
@@ -112,8 +113,16 @@ export default function Signup() {
       setSubmitError("보호자 이름을 입력해주세요.");
       return;
     }
-    if (!email || !password) {
-      setSubmitError("아이디(이메일)와 비밀번호를 입력해주세요.");
+    if (!userId.trim() || !email.trim() || !password) {
+      setSubmitError("아이디, 이메일, 비밀번호를 입력해주세요.");
+      return;
+    }
+    if (/\s/.test(userId.trim())) {
+      setSubmitError("아이디에는 공백을 사용할 수 없습니다.");
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      setSubmitError("이메일 형식을 확인해주세요.");
       return;
     }
     if (password.length < 8) {
@@ -127,11 +136,17 @@ export default function Signup() {
     const userCategoryNo = position.userCategoryNo;
     setSubmitting(true);
     try {
+      // 같은 아이디가 이미 있으면 서버에 보내지 않는다 (서버에 아이디 중복 검사가 없음)
+      const users = await axios.get("http://localhost:8080/user", { withCredentials: true });
+      if (users.data.some((u) => u.userId === userId.trim())) {
+        setSubmitError("이미 사용 중인 아이디입니다.");
+        return;
+      }
       // axios.post("통신할주소", { body }, { 옵션 }) → 컨트롤러가 boolean 을 반환
       const response = await axios.post(
         "http://localhost:8080/user",
         // 보호자(1)는 guardianName, guardianRelationship 도 함께 보내 서버가 user 와 guardians 를 한 번에 만들게 한다. (관리자는 보내지 않음)
-        { userId: email, userPassword: password, email, phoneNumber: phone, userCategoryNo, ...(role === "guardian" ? { guardianName: name.trim(), guardianRelationship: relationship } : {}) },
+        { userId: userId.trim(), userPassword: password, email: email.trim(), phoneNumber: phone, userCategoryNo, ...(role === "guardian" ? { guardianName: name.trim(), guardianRelationship: relationship } : {}) },
         { withCredentials: true }
       );
       if (response.data) setDone(true);
@@ -151,7 +166,7 @@ export default function Signup() {
           <div>
             <p className="font-mono text-xs tracking-[.22em] text-teal-100">CREATE ACCOUNT</p>
             <h1 className="mt-4 font-display text-4xl font-extrabold leading-tight">온케어와 함께<br />돌봄을 시작하세요.</h1>
-            <p className="mt-5 max-w-sm text-sm leading-6 text-teal-50/90">보호자는 Gmail 인증 후 가입하고, 요양보호사·관리자 계정은 센터 승인 후 이용할 수 있습니다.</p>
+            <p className="mt-5 max-w-sm text-sm leading-6 text-teal-50/90">보호자는 Gmail 인증 후 가입하고, 요양보호사 계정은 관리자 승인 후 이용할 수 있습니다.</p>
           </div>
           <p className="text-xs text-teal-100/80">ONCARE · 재가 방문요양 운영 시스템</p>
         </div>
@@ -188,7 +203,8 @@ export default function Signup() {
                     {RELATIONSHIPS.map((r) => <option key={r} value={r}>{r}</option>)}
                   </select>
                 </label>}
-                <div className="text-xs font-semibold text-slate-600 sm:col-span-2">아이디 (이메일)
+                <label className="text-xs font-semibold text-slate-600 sm:col-span-2">아이디<input autoComplete="username" value={userId} onChange={(event) => setUserId(event.target.value)} className={field} placeholder="로그인에 사용할 아이디" /></label>
+                <div className="text-xs font-semibold text-slate-600 sm:col-span-2">이메일
                   <div className="mt-1.5 flex gap-2">
                     <input type="email" value={email} onChange={(event) => { setEmail(event.target.value); setEmailVerified(false); }} disabled={role === "guardian" && emailVerified} className="min-w-0 flex-1 rounded-lg border border-slate-200 px-3 py-2.5 text-sm font-normal outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-100 disabled:bg-slate-50" placeholder="you@gmail.com" />
                     {role === "guardian" && <button type="button" onClick={sendVerificationEmail} disabled={emailVerified} className="shrink-0 rounded-lg border border-teal-200 bg-teal-50 px-3 text-xs font-bold text-teal-700 transition hover:bg-teal-100 disabled:cursor-default disabled:border-emerald-200 disabled:bg-emerald-50 disabled:text-emerald-700">{emailVerified ? "인증 완료" : emailSent ? "재발송" : "인증 메일"}</button>}
