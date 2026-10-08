@@ -65,7 +65,7 @@ public class RedisController {
     
     // [3] Redis 개별조회
     @GetMapping("/user/find")
-    public UserDto find(@RequestParam(name = "userId") Integer userNo ) throws JsonMappingException, JsonProcessingException {
+    public UserDto find(@RequestParam(name = "userNo") Integer userNo ) throws JsonMappingException, JsonProcessingException {
         String findKey = "user:"+ userNo;
         String value = stringRedisTemplate.opsForValue().get(findKey);
         if (value == null) {
