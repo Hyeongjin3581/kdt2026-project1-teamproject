@@ -14,7 +14,8 @@ public class ChatMessageEntity extends BaseTime{
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer messageNo;
 
+    private Integer senderNo; // 보낸 사람 회원번호
+    private String sender; // 화면에 보일 이름
     private String roomId;
-    private String sender;
     private String content;
 }
