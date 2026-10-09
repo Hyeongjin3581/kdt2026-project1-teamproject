@@ -28,7 +28,7 @@ public class CareworkerReviewEntity extends BaseTime{
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer reviewNo;
 
-    @Column private Double rating;
+    @Column private Integer rating;
     @Column private String reviewContent;
 
     // 근무기록 연결 : 한 근무당 후기 한 개

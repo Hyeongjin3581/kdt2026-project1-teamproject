@@ -17,7 +17,7 @@ public class CareworkerReviewDto {
     private Integer careworkersReportNo;
     private Integer guardianNo; 
 
-    private Double rating;
+    private Integer rating;
     private String reviewContent;
     private LocalDateTime createDate;
     private LocalDateTime updateDate;

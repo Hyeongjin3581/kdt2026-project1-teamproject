@@ -179,3 +179,5 @@ UPDATE careworkers SET latitude = 37.4580, longitude = 126.7800 WHERE careworker
 UPDATE careworkers SET latitude = 37.2530, longitude = 127.0150 WHERE careworker_no = 8 AND latitude = 0 AND longitude = 0;
 UPDATE careworkers SET latitude = 37.2510, longitude = 127.0710 WHERE careworker_no = 9 AND latitude = 0 AND longitude = 0;
 UPDATE careworkers SET latitude = 37.3050, longitude = 126.9900 WHERE careworker_no = 10 AND latitude = 0 AND longitude = 0;
+
+
