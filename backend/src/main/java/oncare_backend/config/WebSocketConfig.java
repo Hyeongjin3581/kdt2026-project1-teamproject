@@ -1,5 +1,6 @@
 package oncare_backend.config;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
@@ -13,8 +14,11 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
 */
 
 @Configuration
-@EnableWebSocketMessageBroker // 스톰 브로커 기능 켜기
+@EnableWebSocketMessageBroker // STOMP 브로커 기능 켜기
+@RequiredArgsConstructor
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
+    private final ChatHandshakeInterceptor chatHandshakeInterceptor;
+
     @Override
     public void configureMessageBroker(MessageBrokerRegistry registry) {
         registry.enableSimpleBroker("/sub"); // 구독 주소 -> 받는 사람 , 구독자 전원에게 배달
@@ -24,6 +28,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/ws-chat") // 소켓 연결 주소
-                .setAllowedOriginPatterns("*"); // CORS : 모든 도메인 허용
+                .addInterceptors(chatHandshakeInterceptor) // /ws-chat으로 오는 연결 chatHandshakeInterceptor 여기서 토큰 검사
+                .setAllowedOriginPatterns("http://localhost:5173"); // CORS : 이주소 프론트(리액트) 에서 오는것만 연결 허용
     }
 }
