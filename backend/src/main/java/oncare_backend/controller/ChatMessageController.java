@@ -22,6 +22,12 @@ public class ChatMessageController {
         if (userNo == null){
             return;
         }
+
+        // 당사자가 아니거나, 근무기록이 확정 상태가 아니면 종료 -> 메시지 전송 차단
+        if (!chatMessageService.canEnter(chatMessageDto.getRoomId(), userNo)){
+            return;
+        }
+
         // *** 전송하기전에 먼저 DB에 저장 ***
         ChatMessageDto saved = chatMessageService.save(chatMessageDto,userNo);
         if (saved == null){

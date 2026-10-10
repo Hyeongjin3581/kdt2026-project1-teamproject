@@ -15,6 +15,7 @@ public class ChatController {
     private final ChatMessageService chatMessageService;
     private final JwtUtil jwtUtil;
 
+    // 메시지 과거 기록 조회
     @GetMapping("/messages")
     public List<ChatMessageDto> findByRoom(@RequestParam String roomId,
                                            @CookieValue(value = "accessToken",required = false)String accessToken){
