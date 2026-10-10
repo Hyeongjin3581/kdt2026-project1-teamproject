@@ -16,6 +16,7 @@ import Centers from "./features/admin/centers/Centers";
 import Inquiries from "./features/admin/inquiries/Inquiries";
 import GuardianApp from "./features/guardian/GuardianApp";
 import CaregiverApp from "./features/caregiver/CaregiverApp";
+import ChatTest from "@/features/chat/ChatTest.jsx";
 
 function OncareApp() {
 
@@ -89,6 +90,7 @@ function OncareApp() {
       <Route path="/caregiver/*" element={role !== "caregiver" ? <Navigate to="/login" replace />
         : careworkerNo === null ? <div className="grid min-h-screen place-items-center text-sm text-slate-500">요양보호사 정보를 확인하는 중...</div>
           : <CaregiverApp careworkerNo={careworkerNo} user={user} logout={logout} />} />
+      <Route path="/chat-test" element={<ChatTest />} />
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   );
