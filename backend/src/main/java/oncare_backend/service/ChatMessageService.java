@@ -22,7 +22,7 @@ public class ChatMessageService {
     private final UserRepository userRepository;
     private final CareWorkerReportRepository reportRepository;
 
-    // 메시지 저장, 저장된 메시지 dto로 다시 반환
+    //[*] 메시지 저장, 저장된 메시지 dto로 다시 반환
     public ChatMessageDto save(ChatMessageDto messageDto, Integer userNo){
         UserEntity user = userRepository.findById(userNo).orElse(null);
         if (user == null){
@@ -34,13 +34,15 @@ public class ChatMessageService {
         return ChatMessageDto.entityToDto(saved);
     }
 
-    // roomId로 과거 내역 오름차순으로 찾기
+
+    // [*] roomId로 과거 내역 오름차순으로 찾기
     public List<ChatMessageDto> findByRoom(String roomId){
         List<ChatMessageEntity> findByRoom = chatMessageRepository.findByRoomIdOrderByMessageNo(roomId);
         return findByRoom.stream().map(ChatMessageDto::entityToDto).toList();
     }
 
-    // userNo가 roomId에 들어갈 수 있는지 확인
+
+    // [*] userNo가 roomId에 들어갈 수 있는지 확인
     public boolean canEnter(String roomId, Integer userNo){
         if (roomId == null || userNo == null){
             return false;
