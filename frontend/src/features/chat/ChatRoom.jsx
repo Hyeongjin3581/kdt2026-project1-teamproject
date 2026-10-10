@@ -16,6 +16,7 @@ export default function ChatRoom({roomId}){
             .then(function (res){
                 setMyUserNo(res.data.userNo);
             })
+
     }, []);
 
     /*
@@ -87,6 +88,7 @@ export default function ChatRoom({roomId}){
             params:{roomId},
             withCredentials: true
         }).then(function (res){
+            if (!Array.isArray(res.data)) return;
             // 불러오는 동안 이미 도착한 새 메시지 중, 과거 목록에 없는 것마 남김
             setMessages((prev)=>{
                 const received =prev.filter((m)=> !res.data.some((h)=> h.messageNo === m.messageNo));
