@@ -75,6 +75,8 @@ export function buildVisits({ requests, reports, careworkers }) {
                 tone: stateTone[status] ?? "neutral",
                 cancelled,
                 done,
+                reportNo: report?.careworkersReportNo,       // 채팅방 번호로 쓸 근무기록 번호
+                chatOpen: report?.workStatus === "확정",       // 확정일 때만 채팅 가능
             };
         })
         .sort((a, b) => a.iso.localeCompare(b.iso));
