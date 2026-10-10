@@ -5,6 +5,7 @@ import Badge from "../../../components/common/Badge";
 import LoadStatus from "../../../components/common/LoadStatus";
 import CaregiverPageTitle from "../CaregiverPageTitle";
 import { buildVisits, visitStatusMeta } from "../../../utils/caregiverAdapters";
+import ChatModal from "../../chat/ChatModal";
 
 // 방문 시작 24시간 전부터는 요양보호사가 직접 취소할 수 없다 (센터에서 다른 요양보호사를 구할 시간이 필요하므로)
 const CANCEL_LIMIT_MS = 24 * 60 * 60 * 1000;
@@ -20,6 +21,7 @@ export default function CaregiverSchedule({ careworkerNo, onChanged }) {
   const [date, setDate] = useState("");
   const [busyNo, setBusyNo] = useState(null);
   const [message, setMessage] = useState("");
+  const [chatRoom, setChatRoom] = useState(null); // 열린 채팅방 (null 이면 닫힘)
   const [now, setNow] = useState(Date.now()); // 취소 가능 여부(24시간 전)를 계속 맞추기 위해 1분마다 갱신
   useEffect(() => { const timer = setInterval(() => setNow(Date.now()), 60000); return () => clearInterval(timer); }, []);
 
@@ -161,6 +163,7 @@ export default function CaregiverSchedule({ careworkerNo, onChanged }) {
                 <td className="px-5 py-4 text-slate-600">{v.address}</td>
                 <td className="px-5 py-4"><Badge tone={visitStatusMeta[v.status]?.tone}>{visitStatusMeta[v.status]?.label ?? v.status}</Badge></td>
                 <td className="px-5 py-4 text-right">
+                  <button type="button" onClick={() => setChatRoom({ roomId: v.reportNo, title: `${v.recipientName} 수급자 보호자 채팅` })} className="mr-2 rounded-lg border border-teal-200 px-3 py-1.5 text-xs font-bold text-teal-700 hover:bg-teal-50">채팅</button>
                   <button type="button" onClick={() => finish(v, "cancel")} disabled={busyNo !== null || msUntilStart(v, now) <= CANCEL_LIMIT_MS} title={msUntilStart(v, now) <= CANCEL_LIMIT_MS ? "방문 시작 24시간 전부터는 취소할 수 없습니다. 센터에 문의해주세요." : "방문 취소"} className="mr-2 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent">취소</button>
                   <button type="button" onClick={() => finish(v, "complete")} disabled={busyNo !== null} className="rounded-lg bg-teal-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-teal-700 disabled:opacity-50">{busyNo === v.reportNo ? "처리 중..." : "방문 완료"}</button>
                 </td>
@@ -171,6 +174,7 @@ export default function CaregiverSchedule({ careworkerNo, onChanged }) {
         <p className="border-t border-slate-100 bg-slate-50 px-5 py-3 text-xs leading-5 text-slate-500">방문 시작 24시간 전부터는 직접 취소할 수 없습니다. 급한 사정이면 소속 센터에 문의해주세요.</p>
         {filtered.length === 0 && <p className="px-5 py-12 text-center text-sm text-slate-400">{confirmed.length === 0 ? "확정된 방문 일정이 없습니다." : "선택한 날짜에 방문 일정이 없습니다."}</p>}
       </Panel>
+      {chatRoom && <ChatModal roomId={chatRoom.roomId} title={chatRoom.title} onClose={() => setChatRoom(null)} />}
     </div>
   );
 }
