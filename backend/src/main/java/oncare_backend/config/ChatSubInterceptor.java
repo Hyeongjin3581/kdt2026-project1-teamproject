@@ -16,7 +16,7 @@ public class ChatSubInterceptor implements ChannelInterceptor {
     private final ChatMessageService chatMessageService;
 
     // 메시지 브로커로 들어가기 직전에 호출 -> preSend
-    // Message<?> -> 지나가는 메시지 한 통 , MessageChannerl -> 메시지 지나가는 통로 , 여기선 안쓰임
+    // Message<?> -> 지나가는 메시지 한 통 , MessageChannel -> 메시지 지나가는 통로 , 여기선 안쓰임
     @Override
     public @Nullable Message<?> preSend(Message<?> message, MessageChannel channel) {
         // 메시지 헤더(명령, 목적지, 세션 정보)를 쉽게 꺼내 쓰기 위해 STOMP 전용 도구로 감쌈 -> getCommand(), getDestination()등에 사용
