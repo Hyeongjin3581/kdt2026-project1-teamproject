@@ -1,6 +1,6 @@
 import ChatRoom from "./ChatRoom";
 
-export default function ChatModal({ roomId, title, onClose }) {
+export default function ChatModal({ roomId, title, peerName, onClose }) {
     function stopClick(e) {
         e.stopPropagation();   // 팝업 안쪽을 눌러도 닫히지 않게
     }
@@ -15,7 +15,7 @@ export default function ChatModal({ roomId, title, onClose }) {
                         닫기
                     </button>
                 </div>
-                <ChatRoom roomId={String(roomId)} />
+                <ChatRoom roomId={String(roomId)} peerName={peerName} />
             </div>
         </div>
     );

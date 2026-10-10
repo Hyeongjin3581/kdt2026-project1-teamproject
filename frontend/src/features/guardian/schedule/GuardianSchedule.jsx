@@ -63,7 +63,7 @@ export default function GuardianSchedule({ recipient }) {
                   <td className="px-5 py-4">
                     {v.chatOpen && (
                       <button type="button"
-                              onClick={() => setChatRoom({ roomId: v.reportNo, title: `${v.caregiver} 채팅` })}
+                              onClick={() => setChatRoom({ roomId: v.reportNo, title: `${v.caregiver} 채팅`, peerName: v.caregiver })}
                               className="rounded-lg bg-teal-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-teal-700">
                         채팅
                       </button>
@@ -79,7 +79,7 @@ export default function GuardianSchedule({ recipient }) {
       <Panel className="flex items-center gap-2 border-teal-200 bg-teal-50/70 p-3 text-xs text-teal-800">
         <span className="text-teal-500">ℹ</span> 일정 변경이 필요하시면 <b>요청 · 문의</b> 메뉴에서 센터에 문의해 주세요.
       </Panel>
-      {chatRoom && <ChatModal roomId={chatRoom.roomId} title={chatRoom.title} onClose={() => setChatRoom(null)} />}
+      {chatRoom && <ChatModal roomId={chatRoom.roomId} title={chatRoom.title} peerName={chatRoom.peerName} onClose={() => setChatRoom(null)} />}
     </div>
   );
 }

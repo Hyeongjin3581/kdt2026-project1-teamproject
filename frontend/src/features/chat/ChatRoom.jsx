@@ -3,7 +3,7 @@ import { Client } from "@stomp/stompjs";
 import axios from "axios";
 
 
-export default function ChatRoom({roomId}){
+export default function ChatRoom({roomId, peerName}){   // peerName : 상대방 표시 이름 (없으면 서버가 준 sender 를 그대로 보여 준다)
     const [messages, setMessages] = useState([]); // 받을 메시지 목록
     const [input, setInput] = useState("");    // 입력창 내용
     const [connected, setConnected] = useState(false);
@@ -107,14 +107,14 @@ export default function ChatRoom({roomId}){
     return(
         <div className="mx-auto mt-10 flex h-[70vh] w-full max-w-md flex-col rounded-2xl border border-slate-200 bg-white">
             <div className="border-b border-slate-200 px-4 py-3 text-sm font-bold text-slate-800">
-                방 {roomId} {connected ? "🟢" : "⚪ 연결 중"}
+                {connected ? "🟢 연결됨" : "⚪ 연결 중"}
             </div>
 
             <div className="flex-1 space-y-2 overflow-y-auto p-4">
                 {messages.map((m) => (
                     <div key={m.messageNo} className={m.senderNo === myUserNo ? "flex justify-end" : "flex justify-start"}>
                         <div className={`max-w-[70%] rounded-2xl px-3 py-2 text-sm ${m.senderNo === myUserNo ? "bg-teal-600 text-white" : "bg-slate-100 text-slate-800"}`}>
-                            {m.senderNo !== myUserNo && <p className="mb-0.5 text-[11px] font-bold text-slate-500">{m.sender}</p>}
+                            {m.senderNo !== myUserNo && <p className="mb-0.5 text-[11px] font-bold text-slate-500">{peerName ?? m.sender}</p>}
                             <p>{m.content}</p>
                             <p className="mt-0.5 text-right text-[10px] opacity-60">{m.date}</p>
                         </div>
