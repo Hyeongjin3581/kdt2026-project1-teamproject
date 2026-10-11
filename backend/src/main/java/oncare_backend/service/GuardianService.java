@@ -26,7 +26,6 @@ public class GuardianService {
 	}
 
 	// 2. 보호자 수정 (보호자 페이지)
-	// 10/11일 @Transactional 추가 , 전달된 값만 수정하도록 변경
 	@Transactional // 트랜잭션이 없으면 엔티티 값만 바뀌고 DB에 반영(더티체킹)되지 않으므로 추가
 	public boolean update(GuardianDto guardianDto){
 		if (guardianDto == null || guardianDto.getGuardianNo() == null) {

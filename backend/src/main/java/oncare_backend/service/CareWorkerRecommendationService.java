@@ -81,7 +81,7 @@ public class CareWorkerRecommendationService {
         }
         Map<Integer, Long> workCountMap = getWorkCountMap(workerNos);
 
-        // [2][4] 보호사마다 거리와 점수를 계산
+        // [4] 보호사마다 거리와 점수를 계산
         List<CareWorkerRecommendationDto> recommendations = new ArrayList<>();
         for (CareworkerEntity worker : targets) {
             double distanceKm = haversineService.distanceKm(recipientLat, recipientLng, worker.getLatitude(), worker.getLongitude());
