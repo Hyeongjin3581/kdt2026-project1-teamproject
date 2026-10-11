@@ -1,5 +1,7 @@
 package oncare_backend.service;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -65,20 +67,29 @@ public class CareworkerReviewService {
 }
 
 // [2] 요양보호사별 받은 후기 목록 조회
-        // 1. careworkerNo 확인
-        // 2. 해당 요양보호사의 근무기록에 연결된 후기들 조회
-        //    Review -> Report -> Careworker 관계 이용
-        // 3. Entity List -> DTO List 변환
-        // 4. 반환
+        // careworkerNo 입력받기
+        public List<CareworkerReviewDto> getReviewsByCareworker(Integer careworkerNo){
+        // 해당 요양보호사가 받은 후기 Entity 조회 
+            List<CareworkerReviewEntity> reviewList = 
+            careworkerReviewRepository.findByCareworkerReportEntity_CareworkerEntity_CareworkerNo(careworkerNo);
+        // Entity List를 Dto로 변환후 반환
+            return reviewList.stream().map(careworkerReviewEntity -> 
+                CareworkerReviewDto.entityToDto(careworkerReviewEntity)).toList();
+        }
 
 
 // [3] 특정 근무기록의 후기 조회
         // 1. careworkersReportNo 확인
-        // 2. 해당 근무기록에 작성된 후기 조회
-        // 3. 없으면 null
-        // 4. Entity -> DTO 변환
-        // 5. 반환
-
+        public CareworkerReviewDto getReviewByReport(Integer careworkerReportNo){
+            // 2. ReportEntity 찾기 없으면 null
+            CareworkerReportEntity careworkerReportEntity = careWorkerReportRepository.findById(careworkerReportNo).orElse(null);
+            if ( careworkerReportEntity == null ) return null;
+            // 3. ReviewEntity 찾기 없으면 null
+            CareworkerReviewEntity careworkerReviewEntity = careworkerReviewRepository.findByCareworkerReportEntity(careworkerReportEntity);
+            if ( careworkerReviewEntity == null ) return null;
+            // Entity -> Dto 변환 후 반환
+            return CareworkerReviewDto.entityToDto(careworkerReviewEntity);
+        }
 
 // [4] 보호자가 작성한 후기 목록 조회
         // 1. guardianNo 확인
