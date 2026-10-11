@@ -106,23 +106,56 @@ public class CareworkerReviewService {
 
 
 // [5] 후기 수정
+        public boolean updateReview(CareworkerReviewDto reviewDto){
         // 1. reviewNo, guardianNo 확인
+        if ( reviewDto.getReviewNo() == null || reviewDto.getGuardianNo() == null ) return false; 
         // 2. reviewNo로 기존 후기 찾기
+        CareworkerReviewEntity careworkerReviewEntity = 
+        careworkerReviewRepository.findById(reviewDto.getReviewNo()).orElse(null);
         // 3. 없으면 false
+        if ( careworkerReviewEntity == null ) return false;
         // 4. 실제 작성 보호자와 수정 요청 guardianNo가 같은지 확인
-        // 5. 평점 범위 확인
-        // 6. rating, reviewContent 수정
-        // 7. save()
-        // 8. true 반환
+        if ( !reviewDto.getGuardianNo().equals(careworkerReviewEntity.getGuardianEntity().getGuardianNo())) {
+            return false;
+        }
+        // 5. 수정할 값이 하나라도 있는지 확인
+        if ( reviewDto.getRating() == null && reviewDto.getReviewContent() == null) 
+            return false;
+        // 6. rating있으면 범위 확인 후 수정
+        if ( reviewDto.getRating() != null ){
+            if ( reviewDto.getRating() < 1 || reviewDto.getRating() > 10 )
+                return false;
+             careworkerReviewEntity.setRating(reviewDto.getRating());
+        } 
+       
+        // 7. reviewContent 있으면 수정
+        if (reviewDto.getReviewContent() != null) {
+            careworkerReviewEntity.setReviewContent(reviewDto.getReviewContent());
+        }
+        // 8. save()
+        careworkerReviewRepository.save(careworkerReviewEntity); 
+        // 9. true 반환
+        return true;
+        }
 
 
 // [6] 후기 삭제
+        public boolean deleteReview(CareworkerReviewDto reviewDto){
         // 1. reviewNo, guardianNo 확인
+        if ( reviewDto.getReviewNo() == null || reviewDto.getGuardianNo() == null ) return false; 
         // 2. reviewNo로 기존 후기 찾기
+        CareworkerReviewEntity careworkerReviewEntity = 
+        careworkerReviewRepository.findById(reviewDto.getReviewNo()).orElse(null);
         // 3. 없으면 false
+        if ( careworkerReviewEntity == null ) return false;
         // 4. 실제 작성 보호자와 삭제 요청 guardianNo가 같은지 확인
+        if ( !reviewDto.getGuardianNo().equals(careworkerReviewEntity.getGuardianEntity().getGuardianNo())) {
+            return false;
+        }
         // 5. delete()
+        careworkerReviewRepository.delete(careworkerReviewEntity);
         // 6. true 반환
-
+        return true;
+        }
 // 다 만들고 권한로직도 만들 예정(본인(요양사)이 본인 후기만 볼 수 있게) // 주소창에서 숫자바꾼다고 다른 후기 못 본다는 말 
 }
