@@ -24,8 +24,8 @@ public class VacancyDto {
     private String preferredGender;                // 선호 성별
     private String requestContent;                 // 요청 내용
 
-    private Integer centerNo;                           // 결원 낸 요양보호사의 센터 번호 ( 센터별 필터용 )
-    private String cancelledCareworkerName;       // 거절/취소한 요양보호사 이름 ( "홍길동, 김철수" 형식 , 마지막 이름이 가장 최근 )
+    private Integer centerNo;                                 // 결원 낸 요양보호사의 센터 번호 ( 센터별 필터용 )
+    private String cancelledCareworkerName;       // 거절/취소한 요양보호사 이름 ( 마지막 이름이 가장 최근 )
 
     private boolean urgent;                             // 긴급 결원 여부 ( 방문까지 24시간 이내 )
     private long hoursLeft;                              // 방문 시작까지 남은 시간

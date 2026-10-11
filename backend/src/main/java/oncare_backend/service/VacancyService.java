@@ -159,4 +159,49 @@ public class VacancyService {
 
         return vacancy;
     }
+
+    // [2]결원 방문을 거절/취소한 요양보호사를 제외하고 대체 후보 상위 3명을 반환
+    public List<CareWorkerRecommendationDto> vacancyDetail(Integer requestNo) {
+
+        if (requestNo == null) {
+            return List.of();
+        }
+
+        RequestEntity requestEntity = requestRepository.findById(requestNo).orElse(null);
+        if (requestEntity == null || requestEntity.getCarerecipientEntity() == null) {
+            return List.of();
+        }
+
+        // 배정 API 가 신청 상태만 허용하므로 신청 상태일 때만 추천
+        if (!"신청".equals(requestEntity.getRequestState())) {
+            return List.of();
+        }
+
+        // 해당 요청을 거절/취소한 요양보호사 번호 목록
+        List<Integer> excludedNo = new ArrayList<>();
+        List<CareworkerReportEntity> report = vacancyRepository.findByRequestEntity_RequestNo(requestNo);
+        for (CareworkerReportEntity careworkerReportEntity : report) {
+            if (!"취소".equals(careworkerReportEntity.getWorkStatus())) continue;
+            if (careworkerReportEntity.getCareworkerEntity() == null) continue;
+            excludedNo.add(careworkerReportEntity.getCareworkerEntity().getCareworkerNo());
+        }
+
+        // 기존 필수조건 필터 ( 근무상태 , 선호성별 , 근무가능시간 , 일정중복 ) 를 통과한 요양보호사 중에서
+        // 거절/취소한 요양보호사 , 가입 승인 전인 요양보호사는 제외
+        // 기존 필터는 취소 기록을 일정중복에서 건너뛰므로 제외하지 않으면 거절한 사람이 다시 추천됨.
+        List<CareworkerEntity> candidate = new ArrayList<>();
+        for (CareworkerEntity careworkerEntity : autoAssignService.filterCareworker(requestEntity)) {
+            if (excludedNo.contains(careworkerEntity.getCareworkerNo())) continue;           // 거절/취소한 요양보호사
+            if (!"승인완료".equals(careworkerEntity.getSignState())) continue;                 // 승인 대기
+            candidate.add(careworkerEntity);
+        }
+        if (candidate.isEmpty()) {
+            return List.of();
+        }
+
+        // 점수 계산과 상위 3명 추출은 기존 추천 메소드를 그대로 사용
+        Integer careRecipientNo = requestEntity.getCarerecipientEntity().getCareRecipientNo();
+        return careWorkerRecommendationService.recommendCandidates(careRecipientNo, candidate);
+    }
+
 }   // end
