@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import oncare_backend.model.dto.CareworkerReviewDto;
+import oncare_backend.model.dto.GuardianDto;
 import oncare_backend.model.entity.CareworkerReportEntity;
 import oncare_backend.model.entity.CareworkerReviewEntity;
 import oncare_backend.model.entity.GuardianEntity;
@@ -70,10 +71,10 @@ public class CareworkerReviewService {
         // careworkerNo 입력받기
         public List<CareworkerReviewDto> getReviewsByCareworker(Integer careworkerNo){
         // 해당 요양보호사가 받은 후기 Entity 조회 
-            List<CareworkerReviewEntity> reviewList = 
+            List<CareworkerReviewEntity> workerReviewsList = 
             careworkerReviewRepository.findByCareworkerReportEntity_CareworkerEntity_CareworkerNo(careworkerNo);
         // Entity List를 Dto로 변환후 반환
-            return reviewList.stream().map(careworkerReviewEntity -> 
+            return workerReviewsList.stream().map(careworkerReviewEntity -> 
                 CareworkerReviewDto.entityToDto(careworkerReviewEntity)).toList();
         }
 
@@ -93,10 +94,15 @@ public class CareworkerReviewService {
 
 // [4] 보호자가 작성한 후기 목록 조회
         // 1. guardianNo 확인
+        public List<CareworkerReviewDto> getReviewsByGuardian(Integer guardianNo){
         // 2. 해당 보호자가 작성한 후기들 조회
-        // 3. Entity List -> DTO List 변환
-        // 4. 반환
-        // ※ 마이페이지 '내가 작성한 후기'가 필요할 경우 사용
+            List<CareworkerReviewEntity> guardianReviewsList =
+            careworkerReviewRepository.findByGuardianEntity_GuardianNo(guardianNo);
+        // 3. Entity List -> DTO List 변환후 반환
+            return guardianReviewsList.stream().map(careworkerReviewEntity ->
+                CareworkerReviewDto.entityToDto(careworkerReviewEntity)).toList();
+        }
+        // ※ 마이페이지 '내가 작성한 후기'화면이 필요할 경우 사용
 
 
 // [5] 후기 수정

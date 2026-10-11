@@ -24,13 +24,18 @@ public class CareworkerReviewController {
         return careworkerReviewService.createReview(reviewDto);
     }
 
-    @GetMapping("")
-    public List<CareworkerReviewDto> getReviews(@RequestParam(name = "careworkerNo") Integer careworkerNo){
+    @GetMapping("/careworker")
+    public List<CareworkerReviewDto> getReviewsByCareworker(@RequestParam(name = "careworkerNo") Integer careworkerNo){
         return careworkerReviewService.getReviewsByCareworker(careworkerNo);
     }
 
     @GetMapping("detail")
     public CareworkerReviewDto getReview(@RequestParam (name = "careworkersReportNo") Integer careworkersReportNo){
         return careworkerReviewService.getReviewByReport(careworkersReportNo);
+    }
+
+    @GetMapping("/guardian")
+    public List<CareworkerReviewDto> getReviewsByGuardian(@RequestParam(name = "guardianNo" ) Integer guardianNo){
+        return careworkerReviewService.getReviewsByCareworker(guardianNo);
     }
 }

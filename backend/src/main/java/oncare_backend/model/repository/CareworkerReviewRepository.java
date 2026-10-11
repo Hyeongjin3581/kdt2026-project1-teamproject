@@ -11,4 +11,6 @@ public interface CareworkerReviewRepository extends JpaRepository<CareworkerRevi
     CareworkerReviewEntity findByCareworkerReportEntity(CareworkerReportEntity careworkerReportEntity);
 
     List<CareworkerReviewEntity> findByCareworkerReportEntity_CareworkerEntity_CareworkerNo(Integer careworkersNo);
+
+    List<CareworkerReviewEntity> findByGuardianEntity_GuardianNo(Integer guardianNo);
 }
