@@ -39,10 +39,10 @@ export default function Caregivers() {
       // 수급자별 방문 요청, 센터별 근무기록
       const [requestLists, reportLists] = await Promise.all([
         Promise.all(recipientsRes.data.map((r) =>
-          axios.get("/request/carerecipient", { params: { carerecipient_no: r.careRecipientNo }, withCredentials: true }).catch(optionalError)
+          axios.get("/request/carerecipient", { params: { careRecipientNo: r.careRecipientNo }, withCredentials: true }).catch(optionalError)
         )),
         Promise.all([...new Set(careworkersRes.data.map((c) => c.centerNo))].map((no) =>
-          axios.get("/careworkerreport/center", { params: { center_no: no }, withCredentials: true }).catch(optionalError)
+          axios.get("/careworkerreport/center", { params: { centerNo: no }, withCredentials: true }).catch(optionalError)
         )),
       ]);
       setModel(buildAdminModel({

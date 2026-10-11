@@ -188,7 +188,12 @@ export function buildAdminModel(raw, opts = {}) {
 
   const inMonth = (iso) => iso?.startsWith(monthPrefix);
   const vacancyEvents = [
-    ...reports.filter((r) => r.cancelled && inMonth(r.workDate)).map((r) => ({
+    // 결원 = 요양보호사가 취소한 근무기록(취소)이 있고, 그 요청이 아직 새 요양보호사를 기다리는 상태(신청)인 것
+    //  - 보호자가 서비스 자체를 취소한 경우(요청 상태가 취소)는 결원이 아니므로 뺀다
+    //  - 이미 다른 요양보호사에게 다시 배정된 요청(배정중·배정완료)도 더 이상 결원이 아니므로 뺀다
+    //  - 같은 요청에서 여러 번 취소돼도 가장 최근 취소 한 건만 보여 준다
+    ...[...reports.filter((r) => r.cancelled && r.req?.requestState === "신청" && inMonth(r.workDate))
+      .reduce((byReq, r) => byReq.set(r.requestNo, r), new Map()).values()].map((r) => ({
       date: parseDate(r.workDate).getDate(),
       kind: "vacancy",
       count: 1,
