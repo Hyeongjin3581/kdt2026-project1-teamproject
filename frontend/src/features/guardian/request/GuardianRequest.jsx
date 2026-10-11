@@ -85,7 +85,7 @@ export default function GuardianRequest({ guardian, recipients, activeRecipientI
     setEditing(true);
   };
 
-  // 문의 수정 : PUT /guardianinquiry (body), 서비스 신청 수정 : PUT /request?request_no=번호 (body)
+  // 문의 수정 : PUT /guardianinquiry (body), 서비스 신청 수정 : PUT /request?requestNo=번호 (body)
   const saveEdit = async () => {
     const raw = selectedRequest.raw;
     try {
@@ -105,7 +105,7 @@ export default function GuardianRequest({ guardian, recipients, activeRecipientI
     }
   };
 
-  // 문의 삭제 : DELETE /guardianinquiry (body 에 { inquiryNo }), 서비스 신청 취소 : DELETE /request?request_no=번호
+  // 문의 삭제 : DELETE /guardianinquiry?inquiryNo=번호, 서비스 신청 취소 : DELETE /request?requestNo=번호
   const removeItem = async () => {
     const raw = selectedRequest.raw;
     if (!window.confirm(selectedRequest.source === "inquiry" ? "이 문의를 삭제할까요?" : "이 서비스 신청을 취소할까요?")) return;

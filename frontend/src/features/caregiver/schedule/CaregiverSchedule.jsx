@@ -33,7 +33,7 @@ export default function CaregiverSchedule({ careworkerNo, onChanged }) {
         axios.get("http://localhost:8080/careworkerreport/careworker", { params: { careworkerNo: careworkerNo }, withCredentials: true }),
         axios.get("http://localhost:8080/carerecipient", { withCredentials: true }),
       ]);
-      // 수락 대기 배정 : GET /careworkerreport/findMyAssignments?carworkerNo=번호 (서버 파라미터 이름이 carworkerNo)
+      // 수락 대기 배정 : GET /careworkerreport/findMyAssignments?careworkerNo=번호
       const assignedRes = await axios.get("http://localhost:8080/careworkerreport/findMyAssignments", { params: { careworkerNo: careworkerNo }, withCredentials: true })
         .catch(() => ({ data: mineRes.data.filter((r) => r.workStatus === "배정") })); // API 가 아직 없는 서버면 내 근무기록에서 '배정'만 골라 쓴다
       // 근무기록에는 요청 번호만 있어서, 수급자별 요청을 받아 수급자 이름·주소를 연결한다

@@ -28,10 +28,10 @@ export default function AutoScheduling() {
       // 수급자별 방문 요청, 센터별 근무기록
       const [requestLists, reportLists] = await Promise.all([
         Promise.all(recipientsRes.data.map((r) =>
-          axios.get("http://localhost:8080/request/carerecipient", { params: { carerecipient_no: r.careRecipientNo }, withCredentials: true }).catch(() => ({ data: [] }))
+          axios.get("http://localhost:8080/request/carerecipient", { params: { careRecipientNo: r.careRecipientNo }, withCredentials: true }).catch(() => ({ data: [] }))
         )),
         Promise.all(centersRes.data.map((c) => c.centerNo).map((no) =>
-          axios.get("http://localhost:8080/careworkerreport/center", { params: { center_no: no }, withCredentials: true }).catch(() => ({ data: [] }))
+          axios.get("http://localhost:8080/careworkerreport/center", { params: { centerNo: no }, withCredentials: true }).catch(() => ({ data: [] }))
         )),
       ]);
       setModel(buildAdminModel({
@@ -56,7 +56,7 @@ export default function AutoScheduling() {
     const a = assignTarget;
     if (!pickedCw) return;
     try {
-      if (a.reportNo) await axios.delete("http://localhost:8080/careworkerreport", { params: { careworker_report_no: a.reportNo }, withCredentials: true });
+      if (a.reportNo) await axios.delete("http://localhost:8080/careworkerreport", { params: { careworkersReportNo: a.reportNo }, withCredentials: true });
       const response = await axios.post(
         "http://localhost:8080/careworkerreport",
         { careworkerNo: Number(pickedCw), requestNo: a.requestNo, workDate: a.iso, workStartTime: a.start, workEndTime: a.end, workStatus: "예정" },
@@ -70,12 +70,12 @@ export default function AutoScheduling() {
     }
   };
 
-  // 배정 제외 : 근무기록 삭제 (DELETE /careworkerreport?careworker_report_no=번호)
+  // 배정 제외 : 근무기록 삭제 (DELETE /careworkerreport?careworkersReportNo=번호)
   const exclude = async (a) => {
     if (!a.reportNo) return;
     if (!window.confirm(`${a.recipient} 수급자의 ${a.date} 배정을 제외할까요?`)) return;
     try {
-      const response = await axios.delete("http://localhost:8080/careworkerreport", { params: { careworker_report_no: a.reportNo }, withCredentials: true });
+      const response = await axios.delete("http://localhost:8080/careworkerreport", { params: { careworkersReportNo: a.reportNo }, withCredentials: true });
       if (response.data) loadData();
       else alert("배정 제외에 실패했습니다.");
     } catch (error) {

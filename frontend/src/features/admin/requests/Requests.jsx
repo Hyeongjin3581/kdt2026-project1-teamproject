@@ -56,7 +56,7 @@ export default function Requests() {
   }
   useEffect(() => { loadData(); }, []);
 
-  // 자동배정(후보 추천) : GET /careworkerreport/candidates?request_no=번호 → 상위 3명 [{ careworkerNo, careworkerName, distanceKm, workCount, distanceScore, workScore, totalScore }]
+  // 자동배정(후보 추천) : GET /careworkerreport/candidates?requestNo=번호 → 상위 3명 [{ careworkerNo, careworkerName, distanceKm, workCount, distanceScore, workScore, totalScore }]
   // 직접 선택 목록 : GET /careworkerreport/available?requestNo=번호 → 필수 조건(근무중·성별·근무가능 시간·일정 겹침 없음)을 통과한 요양보호사 전체 [{ careworkerNo, careworkerName, ... }]
   // 이 API 가 아직 없는 서버면 전체 요양보호사 목록에서 고르게 한다.
   const [assignTarget, setAssignTarget] = useState(null);
@@ -92,7 +92,7 @@ export default function Requests() {
         { careworkerNo: Number(pickedCw), requestNo: a.requestNo, workDate: a.iso, workStartTime: toServerTime(a.start), workEndTime: toServerTime(a.end), workStatus: "배정" },
         { withCredentials: true }
       );
-      // 요양보호사의 수락을 기다리는 상태 : PUT /request?request_no=번호 (body 에 { requestState })
+      // 요양보호사의 수락을 기다리는 상태 : PUT /request?requestNo=번호 (body 에 { requestState })
       if (response.data) await axios.put("http://localhost:8080/request", { requestState: "배정중" }, { params: { requestNo: a.requestNo }, withCredentials: true });
       if (response.data) { setAssignTarget(null); loadData(); }
       else alert("담당자 지정에 실패했습니다.");
@@ -102,7 +102,7 @@ export default function Requests() {
     }
   };
 
-  // 배정 제외 : 근무기록 삭제 (DELETE /careworkerreport?careworker_report_no=번호) + 요청 '신청'으로 복귀
+  // 배정 제외 : 근무기록 삭제 (DELETE /careworkerreport?careworkersReportNo=번호) + 요청 '신청'으로 복귀
   const exclude = async (a) => {
     if (!a.reportNo) return;
     if (!window.confirm(`${a.recipient} 수급자의 ${a.date} 배정을 제외할까요?`)) return;

@@ -9,7 +9,7 @@ const statusTone = (s) => (s === "완료" ? "ok" : s === "취소" ? "warning" : 
 export default function CaregiverRecord({ c, onClose, onChanged }) {
   const rows = c.records;
 
-  // 근무 기록 상태 변경 : PUT /careworkerreport?careworker_report_no=번호&work_status=상태
+  // 근무 기록 상태 변경 : PUT /careworkerreport?careworkersReportNo=번호&workStatus=상태
   const changeStatus = async (reportNo, status) => {
     try {
       const response = await axios.put("/careworkerreport", null, { params: { careworkersReportNo: reportNo, workStatus: status }, withCredentials: true });
@@ -21,7 +21,7 @@ export default function CaregiverRecord({ c, onClose, onChanged }) {
     }
   };
 
-  // 근무 기록 삭제 : DELETE /careworkerreport?careworker_report_no=번호
+  // 근무 기록 삭제 : DELETE /careworkerreport?careworkersReportNo=번호
   const removeReport = async (reportNo) => {
     if (!window.confirm("이 근무 기록을 삭제할까요?")) return;
     try {
