@@ -117,4 +117,6 @@ public class CareworkerReviewService {
         // 4. 실제 작성 보호자와 삭제 요청 guardianNo가 같은지 확인
         // 5. delete()
         // 6. true 반환
+
+// 다 만들고 권한로직도 만들 예정(본인(요양사)이 본인 후기만 볼 수 있게) // 주소창에서 숫자바꾼다고 다른 후기 못 본다는 말 
 }

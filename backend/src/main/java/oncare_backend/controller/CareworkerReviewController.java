@@ -28,4 +28,9 @@ public class CareworkerReviewController {
     public List<CareworkerReviewDto> getReviews(@RequestParam(name = "careworkerNo") Integer careworkerNo){
         return careworkerReviewService.getReviewsByCareworker(careworkerNo);
     }
+
+    @GetMapping("detail")
+    public CareworkerReviewDto getReview(@RequestParam (name = "careworkersReportNo") Integer careworkersReportNo){
+        return careworkerReviewService.getReviewByReport(careworkersReportNo);
+    }
 }
