@@ -26,21 +26,30 @@ public class GuardianService {
 	}
 
 	// 2. 보호자 수정 (보호자 페이지)
+	@Transactional // 트랜잭션이 없으면 엔티티 값만 바뀌고 DB에 반영(더티체킹)되지 않으므로 추가
 	public boolean update(GuardianDto guardianDto){
 		if (guardianDto == null || guardianDto.getGuardianNo() == null) {
-        return false;
-    }
+			return false;
+		}
 		Optional<GuardianEntity> guardianEntity = guardianRepository.findById(guardianDto.getGuardianNo());
 		if (guardianEntity.isPresent()){
 			GuardianEntity gEntity = guardianEntity.get();
-			gEntity.setGuardianName(guardianDto.getGuardianName());
-			gEntity.setGuardianRelationship(guardianDto.getGuardianRelationship());
-			return true;
+
+			// 탈퇴(delete) 상태인 보호자는 수정 불가
+			if ("delete".equals(gEntity.getGuardianState())) { return false; }
+
+			// 전달된 값만 수정 ( 빈 값으로 덮어쓰면 nullable = false 컬럼에서 저장 오류 발생 )
+			if (guardianDto.getGuardianName() != null && !guardianDto.getGuardianName().isBlank()) {
+				gEntity.setGuardianName(guardianDto.getGuardianName());
+			}
+			if (guardianDto.getGuardianRelationship() != null && !guardianDto.getGuardianRelationship().isBlank()) {
+				gEntity.setGuardianRelationship(guardianDto.getGuardianRelationship());
+			}
+			return true; // 트랜잭션 종료 시점에 변경된 값이 자동으로 update 됨
 		}
 		return false;
 	}
 	
-
 	// 3. 보호자 탈퇴--> 행을 삭제하지 않고 상태만 변경
 	@Transactional
 	public boolean delete(Integer guardianNo) {
