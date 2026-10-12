@@ -5,6 +5,7 @@ import java.util.List;
 
 import oncare_backend.model.dto.AssignCareworkerDto;
 import oncare_backend.model.dto.AssignmentActionDto;
+import oncare_backend.model.dto.CareworkerDto;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -187,5 +188,42 @@ public class CareWorkerReportService{
         // 조회용이라 dto로 변경
         List<CareworkerReportDto> careworkerReportDtos = list.stream().map(careworkerReportEntity -> CareworkerReportDto.entityToDto(careworkerReportEntity)).toList();
         return careworkerReportDtos;
+    }
+
+    // 요양보호사별 확정된 요청 전체조회
+    public List<CareworkerReportDto> findMyConfirmed(Integer careworkerNo) {
+        List<CareworkerReportEntity> reportList = careWorkerReportRepository.findByCareworkerEntity_CareworkerNo(careworkerNo);
+        return reportList.stream().filter(careworkerReportEntity -> "확정".equals(careworkerReportEntity.getWorkStatus()))
+                .map(careworkerReportEntity -> CareworkerReportDto.entityToDto(careworkerReportEntity)).toList();
+    }
+
+    // 요양보호사가 확정된 요청을 취소
+    public boolean cancel(AssignmentActionDto actionDto) {
+        CareworkerReportEntity reportEntity = careWorkerReportRepository.findById(actionDto.getCareworkersReportNo()).orElse(null);
+        if (reportEntity == null){
+            return false;
+        }
+        // 확정 상태일때만
+        if (!"확정".equals(reportEntity.getWorkStatus())){
+            return false;
+        }
+        reportEntity.setWorkStatus("취소");
+        reportEntity.getRequestEntity().setRequestState("신청");
+        return true;
+    }
+
+    // 요양보호사 확정된 요청을 완료
+    public boolean complete(AssignmentActionDto actionDto) {
+        CareworkerReportEntity reportEntity = careWorkerReportRepository.findById(actionDto.getCareworkersReportNo()).orElse(null);
+        if (reportEntity == null){
+            return false;
+        }
+        // 확정 상태일때만
+        if (!"확정".equals(reportEntity.getWorkStatus())){
+            return false;
+        }
+        reportEntity.setWorkStatus("완료");
+        reportEntity.getRequestEntity().setRequestState("완료");
+        return true;
     }
 }

@@ -7,7 +7,7 @@ import org.springframework.stereotype.Service;
 @Transactional
 public class HaversineService {
 
-    // 두 좌표 사이 거리 메소드
+    // 두 좌표 사이 거리 구하는 메소드
     public double distanceKm(double lat1, double lng1, double lat2, double lng2){
         double R = 6371; // 지구의 반지름
         double dLat = Math.toRadians(lat1 - lat2);

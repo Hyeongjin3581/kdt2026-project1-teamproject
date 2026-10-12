@@ -3,6 +3,7 @@ package oncare_backend.controller;
 import lombok.RequiredArgsConstructor;
 import oncare_backend.model.dto.CareworkerSignupDto;
 import oncare_backend.model.dto.UserDto;
+import oncare_backend.service.EmailVerificationService;
 import oncare_backend.service.JwtUtil;
 import oncare_backend.service.RedisTokenService;
 import oncare_backend.service.UserService;
@@ -15,6 +16,8 @@ import jakarta.servlet.http.HttpServletResponse;
 
 import java.time.Duration;
 import java.util.List;
+import java.util.Map;
+
 
 
 @RestController
@@ -23,6 +26,7 @@ import java.util.List;
 public class UserController {
     private final UserService userService;
     private final JwtUtil jwtUtil;
+    private final EmailVerificationService emailVerificationService;
 
     // 회원가입
     @PostMapping
@@ -30,6 +34,18 @@ public class UserController {
         return userService.save(userDto);
     }
 
+    // 보호자 회원가입 시 : Gmail 인증번호 발송
+    @PostMapping("/email/send")
+    public boolean sendEmailCode(@RequestBody Map<String, String> body) {
+        return emailVerificationService.send(body.get("email"));
+    }
+
+    // 보호자 회원가입 시 : Gmail 인증번호 확인
+    @PostMapping("/email/verify")
+    public boolean verifyEmailCode(@RequestBody Map<String, String> body){
+        return emailVerificationService.verify(body.get("email"), body.get("code"));
+    }
+    
     // 요양보호사 가입 신청: 계정 정보와 프로필 정보를 한 번에 전달받는다.
     @PostMapping("/careworker")
     public boolean registerCareworker(@RequestBody CareworkerSignupDto signupDto) {

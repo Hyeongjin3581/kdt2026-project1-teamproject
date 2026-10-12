@@ -6,7 +6,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
@@ -16,7 +15,6 @@ import oncare_backend.model.entity.CareRecipientEntity;
 import oncare_backend.model.entity.CareworkerEntity;
 import oncare_backend.model.repository.CareRecipientRepository;
 import oncare_backend.model.repository.CareWorkerReportRepository;
-import oncare_backend.model.repository.CareworkersRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -83,7 +81,7 @@ public class CareWorkerRecommendationService {
         }
         Map<Integer, Long> workCountMap = getWorkCountMap(workerNos);
 
-        // [2][4] 보호사마다 거리와 점수를 계산
+        // [4] 보호사마다 거리와 점수를 계산
         List<CareWorkerRecommendationDto> recommendations = new ArrayList<>();
         for (CareworkerEntity worker : targets) {
             double distanceKm = haversineService.distanceKm(recipientLat, recipientLng, worker.getLatitude(), worker.getLongitude());

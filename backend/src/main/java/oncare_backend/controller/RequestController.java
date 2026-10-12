@@ -24,29 +24,29 @@ public class RequestController {
     // [1] 서비스요청 추가
     @PostMapping ("")
     public boolean saveRequest(@RequestBody RequestDto requestDto, 
-                                @RequestParam(name="carerecipient_no")Integer carerecipientNo){
+                                @RequestParam(name="careRecipientNo")Integer carerecipientNo){
         return requestService.saveRequest(requestDto, carerecipientNo);
     }
     
     // [2] 수급자 별 서비스요청 출력
     @GetMapping("/carerecipient")
-    public List<RequestDto> findAllByCareRecipients(@RequestParam(name = "carerecipient_no") Integer careRecipientNo){
+    public List<RequestDto> findAllByCareRecipients(@RequestParam(name = "careRecipientNo") Integer careRecipientNo){
         return requestService.findAllByCareRecipients(careRecipientNo);
     }
     @GetMapping ("/guardian")
     // [3] 보호자 별 서비스요청 출력
-    public List<RequestDto> findAllByGuardians(@RequestParam(name = "guardian_no") Integer guardianNo){
+    public List<RequestDto> findAllByGuardians(@RequestParam(name = "guardianNo") Integer guardianNo){
         return requestService.findAllByGuardians(guardianNo);
     }
     // [4] 서비스 요청사항 수정
     @PutMapping ("")
     public boolean updateRequest(@RequestBody RequestDto requestDto,
-                                @RequestParam (name = "request_no")Integer requestNo){
+                                @RequestParam (name = "requestNo")Integer requestNo){
         return requestService.updateRequest(requestNo, requestDto);
     }
     // [5] 서비스 요청 삭제
     @DeleteMapping ("")
-    public boolean deleteRequest(@RequestParam (name = "request_no")Integer requestNo){
+    public boolean deleteRequest(@RequestParam (name = "requestNo")Integer requestNo){
         return requestService.deleteRequest(requestNo);
     }
 }

@@ -11,6 +11,7 @@ import oncare_backend.model.dto.RequestDto;
 import oncare_backend.model.entity.CareRecipientEntity;
 import oncare_backend.model.entity.RequestEntity;
 import oncare_backend.model.repository.CareRecipientRepository;
+import oncare_backend.model.repository.GuardianInquiryRepository;
 import oncare_backend.model.repository.RequestRepository;
 
 @Service 
@@ -19,6 +20,7 @@ public class RequestService {
 
     @Autowired private RequestRepository requestRepository;
     @Autowired private CareRecipientRepository careRecipientRepository;
+    @Autowired private GuardianInquiryRepository guardianInquiryRepository;
 
     // [1] 서비스요청 추가
     // 수급자 식별을 위한 수급자 번호와, 요청 레코드를 담은 DTO를 새로 등록
@@ -114,6 +116,9 @@ public class RequestService {
         RequestEntity entity = requestRepository.findById(requestNo).orElse(null);
 
         if (entity == null) return false;
+        // 이 방문을 가리키는 문의는 연결만 끊는다 (문의는 남기고, FK 때문에 요청 삭제가 막히지 않도록)
+        guardianInquiryRepository.findByRequestEntity_RequestNo(requestNo)
+                .forEach(inquiry -> inquiry.setRequestEntity(null));
         requestRepository.deleteById(requestNo);
 
         return true;

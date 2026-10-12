@@ -7,8 +7,8 @@ import org.springframework.stereotype.Repository;
 
 import oncare_backend.model.entity.GuardianInquiryEntity;
 
-@Repository 
+@Repository
 public interface  GuardianInquiryRepository extends JpaRepository <GuardianInquiryEntity , Integer> {
-    List<GuardianInquiryEntity> findByInquiryStatus(String inquiryStatus);
-
+    // 요청 번호로 문의 조회 (요청 삭제 전에 연결을 끊을 때 사용)
+    List<GuardianInquiryEntity> findByRequestEntity_RequestNo(Integer requestNo);
 }

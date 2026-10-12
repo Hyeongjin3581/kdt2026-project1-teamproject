@@ -51,7 +51,7 @@ public class CareworkerReviewController {
     // 4. 보호자 기준 전체 조회
     @GetMapping("/guardian")
     public List<CareworkerReviewDto> getReviewsByGuardian(@RequestParam(name = "guardianNo" ) Integer guardianNo){
-        return careworkerReviewService.getReviewsByCareworker(guardianNo);
+        return careworkerReviewService.getReviewsByGuardian(guardianNo);
     }
 
     // 5. 후기 수정(보호자만)

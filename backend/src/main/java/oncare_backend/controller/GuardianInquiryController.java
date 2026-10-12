@@ -13,7 +13,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import oncare_backend.model.dto.GuardianInquiryAnswerDto;
 import oncare_backend.model.dto.GuardianInquiryDto;
+import oncare_backend.model.dto.InquiryScheduleOptionDto;
 import oncare_backend.service.GuardianInquiryService;
 
 @RestController 
@@ -46,14 +48,20 @@ public class GuardianInquiryController {
 	public List<GuardianInquiryDto>GuardianInquiryFindAll() {
 		return guardianInquiryService.GuardianInquiryFindAll();
 	}
+	// 기본 보호자CRUD기능
 
+	// 5. 문의 응답 팝업 : 기존 근무자 + 희망 시간 기준 추천 3명
+	//    GET /guardianinquiry/schedule-options?inquiryNo=15
+	@GetMapping("/schedule-options")
+	public InquiryScheduleOptionDto GuardianInquiryScheduleOptions(@RequestParam Integer inquiryNo) {
+		return guardianInquiryService.GuardianInquiryScheduleOptions(inquiryNo);
+	}
 
-	// 5. 문의 상태 조회
-	@GetMapping("/receipt")
-	public List<GuardianInquiryDto>GuardianInquiryfindByInquiryStatus(@RequestParam(name = "guardian_no")Integer guadianNo){
-		return guardianInquiryService.getReceiptStatus(guadianNo);
+	// 6. 문의 응답 · 응답 수정 (배정 변경 포함)
+	//    PUT /guardianinquiry/answer  body : { inquiryNo, answerContent, applySchedule, careworkerNo }
+	@PutMapping("/answer")
+	public boolean GuardianInquiryAnswer(@RequestBody GuardianInquiryAnswerDto guardianInquiryAnswerDto) {
+		return guardianInquiryService.GuardianInquiryAnswer(guardianInquiryAnswerDto);
 	}
 }
-// 기본 보호자CRUD기능
-
 
