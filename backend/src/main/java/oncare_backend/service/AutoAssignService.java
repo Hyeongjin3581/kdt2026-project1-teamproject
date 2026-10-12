@@ -72,7 +72,7 @@ public class AutoAssignService {
                 .toList();
 
         return availabilityList.stream()
-            .filter(careworkerEntity -> !isFree(careworkerEntity, requestEntity, excludeRequestNo))
+            .filter(careworkerEntity -> !isBusy(careworkerEntity, requestEntity))
                 .toList();
     }
 
@@ -105,8 +105,8 @@ public class AutoAssignService {
         return false;
     }
 
-    // 근무 기록 비교 : 겹치는 일정이 있으면 true
-    private boolean isFree(CareworkerEntity cw, RequestEntity request, Integer excludeRequestNo) {
+    // 근무 기록 비교
+    private boolean isBusy(CareworkerEntity cw, RequestEntity request) {
         // 근무 기록에서 요청한 day랑 비교해서 근무기록 테이블에서 행 가져오기
         List<CareworkerReportEntity> date = careWorkerReportRepository.findByCareworkerEntityAndWorkDate(cw, request.getVisitDate());
         for (CareworkerReportEntity report : date) {
