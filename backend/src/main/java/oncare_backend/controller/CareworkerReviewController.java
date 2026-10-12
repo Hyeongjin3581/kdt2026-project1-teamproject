@@ -27,42 +27,71 @@ public class CareworkerReviewController {
 
     // 1. 후기 등록
     @PostMapping("")
-    public boolean createReview(@RequestBody CareworkerReviewDto reviewDto){
-        return careworkerReviewService.createReview(reviewDto);
+    public boolean createReview(
+        @RequestBody CareworkerReviewDto reviewDto,
+        @CookieValue (value = "accessToken", required = false)String accessToken){
+
+            if (accessToken==null)return false;
+            Integer loginUserNo = jwtUtil.getUserNoFromAccessToken(accessToken);
+            if (loginUserNo==null) return false;
+        return careworkerReviewService.createReview(reviewDto, loginUserNo);
     }
 
     // 2. 요양보호사 본인 후기 조회
     @GetMapping("/careworker/my")
     public List<CareworkerReviewDto> getMyCareworkerReviews(@CookieValue(value = "accessToken", required = false) String accessToken){
-        if (accessToken == null) return null;
+        if (accessToken == null) return List.of();
 
         Integer loginUserNo = jwtUtil.getUserNoFromAccessToken(accessToken);
 
-        if (loginUserNo == null) return null;
+        if (loginUserNo == null) return List.of();
         return careworkerReviewService.getReviewsByLoginUser(loginUserNo);
     }
 
     // 3. 특정 후기 조회
-    @GetMapping("detail")
-    public CareworkerReviewDto getReview(@RequestParam (name = "careworkersReportNo") Integer careworkersReportNo){
-        return careworkerReviewService.getReviewByReport(careworkersReportNo);
+    @GetMapping("/detail")
+    public CareworkerReviewDto getReview(
+        @RequestParam (name = "careworkersReportNo") Integer careworkersReportNo,
+        @CookieValue (value = "accessToken" , required = false) String accessToken
+    ){
+        if(accessToken==null) return null;
+        Integer loginUserNo = jwtUtil.getUserNoFromAccessToken(accessToken);
+        if(loginUserNo == null) return null;
+        return careworkerReviewService.getReviewByReport(careworkersReportNo, loginUserNo);
     }
 
     // 4. 보호자 기준 전체 조회
-    @GetMapping("/guardian")
-    public List<CareworkerReviewDto> getReviewsByGuardian(@RequestParam(name = "guardianNo" ) Integer guardianNo){
-        return careworkerReviewService.getReviewsByGuardian(guardianNo);
+    @GetMapping("/guardian/my")
+    public List<CareworkerReviewDto> getMyGuardianReviews(
+        @CookieValue(value = "accessToken", required = false) String accessToken
+    ){
+        if (accessToken==null) return List.of();
+        Integer loginUserNo = jwtUtil.getUserNoFromAccessToken(accessToken);
+        if (loginUserNo == null) return List.of();
+        return careworkerReviewService.getReviewsByGuardianLoginUser(loginUserNo);
     }
 
     // 5. 후기 수정(보호자만)
     @PutMapping("")
-    public boolean updateReview(@RequestBody CareworkerReviewDto reviewDto){
-        return careworkerReviewService.updateReview(reviewDto);
+    public boolean updateReview(
+        @RequestBody CareworkerReviewDto reviewDto,
+        @CookieValue(value = "accessToken", required = false) String accessToken
+    ){
+        if (accessToken==null) return false;
+        Integer loginUserNo = jwtUtil.getUserNoFromAccessToken(accessToken);
+        if (loginUserNo == null) return false;
+        return careworkerReviewService.updateReview(reviewDto, loginUserNo);
     }
 
     // 6. 후기 삭제(보호자만)
     @DeleteMapping("")
-    public boolean deleteReview(@RequestBody CareworkerReviewDto reviewDto){
-        return careworkerReviewService.deleteReview(reviewDto);
+    public boolean deleteReview(
+        @RequestBody CareworkerReviewDto reviewDto,
+        @CookieValue(value = "accessToken", required = false) String accessToken
+    ){
+        if (accessToken==null) return false;
+        Integer loginUserNo = jwtUtil.getUserNoFromAccessToken(accessToken);
+        if (loginUserNo == null) return false;
+        return careworkerReviewService.deleteReview(reviewDto, loginUserNo);
     }
 }
