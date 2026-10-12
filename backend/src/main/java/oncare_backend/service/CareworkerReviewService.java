@@ -6,13 +6,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import oncare_backend.model.dto.CareworkerReviewDto;
-import oncare_backend.model.dto.GuardianDto;
 import oncare_backend.model.entity.CareworkerEntity;
 import oncare_backend.model.entity.CareworkerReportEntity;
 import oncare_backend.model.entity.CareworkerReviewEntity;
 import oncare_backend.model.entity.GuardianEntity;
 import oncare_backend.model.repository.CareWorkerReportRepository;
-import oncare_backend.model.repository.CareWorkerRepository;
 import oncare_backend.model.repository.CareworkerReviewRepository;
 import oncare_backend.model.repository.CareworkersRepository;
 import oncare_backend.model.repository.GuardianRepository;
