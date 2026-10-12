@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import oncare_backend.model.entity.CareworkerEntity;
 import oncare_backend.model.entity.CareworkerReportEntity;
 import oncare_backend.model.entity.CareworkerReviewEntity;
 
@@ -13,4 +14,6 @@ public interface CareworkerReviewRepository extends JpaRepository<CareworkerRevi
     List<CareworkerReviewEntity> findByCareworkerReportEntity_CareworkerEntity_CareworkerNo(Integer careworkersNo);
 
     List<CareworkerReviewEntity> findByGuardianEntity_GuardianNo(Integer guardianNo);
+
+    CareworkerEntity findByUserEntity_UserNo(Integer userNo);
 }

@@ -7,11 +7,14 @@ import org.springframework.stereotype.Service;
 
 import oncare_backend.model.dto.CareworkerReviewDto;
 import oncare_backend.model.dto.GuardianDto;
+import oncare_backend.model.entity.CareworkerEntity;
 import oncare_backend.model.entity.CareworkerReportEntity;
 import oncare_backend.model.entity.CareworkerReviewEntity;
 import oncare_backend.model.entity.GuardianEntity;
 import oncare_backend.model.repository.CareWorkerReportRepository;
+import oncare_backend.model.repository.CareWorkerRepository;
 import oncare_backend.model.repository.CareworkerReviewRepository;
+import oncare_backend.model.repository.CareworkersRepository;
 import oncare_backend.model.repository.GuardianRepository;
 
 @Service 
@@ -23,6 +26,8 @@ public class CareworkerReviewService {
     @Autowired private CareWorkerReportRepository careWorkerReportRepository;
     // 어떤 보호자의 후기인지
     @Autowired private GuardianRepository guardianRepository;
+
+    @Autowired private CareworkersRepository careworkersRepository;
 
     // [1] 요양서비스 후기 등록
     public boolean createReview(CareworkerReviewDto reviewDto){
@@ -77,6 +82,17 @@ public class CareworkerReviewService {
             return workerReviewsList.stream().map(careworkerReviewEntity -> 
                 CareworkerReviewDto.entityToDto(careworkerReviewEntity)).toList();
         }
+// [2-1] 인증
+public List<CareworkerReviewDto> getReviewsByLoginUser(Integer loginUserNo) {
+    // 1. loginUserNo로 CareworkerEntity 찾기
+    CareworkerEntity careworkerEntity = careworkersRepository.findByUserEntity_UserNo(loginUserNo).orElse(null);
+    // 2. 없으면 null 또는 빈 리스트 반환
+    if ( careworkerEntity == null ) return List.of(); 
+    // 3. careworkerNo 꺼내기
+    Integer careworkerNo = careworkerEntity.getCareworkerNo();
+    // 4. 기존 후기 Repository로 해당 요양보호사 후기 조회
+    return getReviewsByCareworker(careworkerNo);
+}
 
 
 // [3] 특정 근무기록의 후기 조회

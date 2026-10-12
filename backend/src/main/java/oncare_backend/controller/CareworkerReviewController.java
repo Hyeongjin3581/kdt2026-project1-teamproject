@@ -3,6 +3,7 @@ package oncare_backend.controller;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import oncare_backend.model.dto.CareworkerReviewDto;
 import oncare_backend.service.CareworkerReviewService;
+import oncare_backend.service.JwtUtil;
 
 @RestController 
 @RequestMapping("/api/review")
@@ -21,31 +23,44 @@ public class CareworkerReviewController {
 
     @Autowired private CareworkerReviewService careworkerReviewService;
 
+    @Autowired private JwtUtil jwtUtil;
+
+    // 1. 후기 등록
     @PostMapping("")
     public boolean createReview(@RequestBody CareworkerReviewDto reviewDto){
         return careworkerReviewService.createReview(reviewDto);
     }
 
-    @GetMapping("/careworker")
-    public List<CareworkerReviewDto> getReviewsByCareworker(@RequestParam(name = "careworkerNo") Integer careworkerNo){
-        return careworkerReviewService.getReviewsByCareworker(careworkerNo);
+    // 2. 요양보호사 본인 후기 조회
+    @GetMapping("/careworker/my")
+    public List<CareworkerReviewDto> getMyCareworkerReviews(@CookieValue(value = "accessToken", required = false) String accessToken){
+        if (accessToken == null) return null;
+
+        Integer loginUserNo = jwtUtil.getUserNoFromAccessToken(accessToken);
+
+        if (loginUserNo == null) return null;
+        return careworkerReviewService.getReviewsByLoginUser(loginUserNo);
     }
 
+    // 3. 특정 후기 조회
     @GetMapping("detail")
     public CareworkerReviewDto getReview(@RequestParam (name = "careworkersReportNo") Integer careworkersReportNo){
         return careworkerReviewService.getReviewByReport(careworkersReportNo);
     }
 
+    // 4. 보호자 기준 전체 조회
     @GetMapping("/guardian")
     public List<CareworkerReviewDto> getReviewsByGuardian(@RequestParam(name = "guardianNo" ) Integer guardianNo){
         return careworkerReviewService.getReviewsByCareworker(guardianNo);
     }
 
+    // 5. 후기 수정(보호자만)
     @PutMapping("")
     public boolean updateReview(@RequestBody CareworkerReviewDto reviewDto){
         return careworkerReviewService.updateReview(reviewDto);
     }
 
+    // 6. 후기 삭제(보호자만)
     @DeleteMapping("")
     public boolean deleteReview(@RequestBody CareworkerReviewDto reviewDto){
         return careworkerReviewService.deleteReview(reviewDto);
