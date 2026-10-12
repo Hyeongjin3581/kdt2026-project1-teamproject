@@ -96,13 +96,12 @@ export default function AccountModal({ guardian, recipients = [], onClose, onLog
             ) : (
               <div className="space-y-3">
                 <div className="grid grid-cols-2 gap-3">
-                  <label className="block text-xs font-semibold text-slate-600">아이디<input className={`${fieldCls} bg-slate-50`} value={user?.userId ?? ""} disabled /></label>
-                  <label className="block text-xs font-semibold text-slate-600">연락처<input className={fieldCls} value={form.phone} onChange={(e) => update("phone", e.target.value)} /></label>
+                  <label className="block text-xs font-semibold text-slate-600">이름<input className={fieldCls} defaultValue="이수현" /></label>
+                  <label className="block text-xs font-semibold text-slate-600">연락처<input className={fieldCls} defaultValue="010-1234-5678" /></label>
                 </div>
-                <label className="block text-xs font-semibold text-slate-600">이메일<input type="email" className={fieldCls} value={form.email} onChange={(e) => update("email", e.target.value)} /></label>
-                <label className="block text-xs font-semibold text-slate-600">비밀번호 변경 (새 비밀번호)<input type="password" className={fieldCls} value={form.password} onChange={(e) => update("password", e.target.value)} placeholder="변경할 경우에만 입력" /></label>
-                <label className="block text-xs font-semibold text-slate-600">비밀번호 확인<input type="password" className={fieldCls} value={form.passwordConfirm} onChange={(e) => update("passwordConfirm", e.target.value)} placeholder="비밀번호를 한 번 더 입력" /></label>
-                {message && <p className="text-xs font-semibold text-rose-600">{message}</p>}
+                <label className="block text-xs font-semibold text-slate-600">이메일<input type="email" className={fieldCls} defaultValue="lee.sh@family.kr" /></label>
+                <label className="block text-xs font-semibold text-slate-600">비밀번호 변경 (새 비밀번호)<input type="password" className={fieldCls} placeholder="변경할 경우에만 입력" /></label>
+                <label className="block text-xs font-semibold text-slate-600">비밀번호 확인<input type="password" className={fieldCls} placeholder="비밀번호를 한 번 더 입력" /></label>
                 <div className="flex justify-end pt-1">
                   <button onClick={saveInfo} className="rounded-lg bg-teal-600 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-teal-700">저장하기</button>
                 </div>
@@ -110,19 +109,30 @@ export default function AccountModal({ guardian, recipients = [], onClose, onLog
             )
           )}
           {tab === "recipient" && (
-            <div className="space-y-3">
-              <p className="text-xs text-slate-500">등록된 어르신의 정보를 수정하거나 삭제할 수 있습니다.</p>
-              {recipients.length === 0 && <p className="rounded-lg border border-dashed border-slate-200 px-4 py-6 text-center text-xs text-slate-400">등록된 어르신이 없습니다.</p>}
-              {recipients.map((r) => (
-                <div key={r.id} className="flex items-center justify-between rounded-lg border border-slate-200 px-4 py-3">
-                  <div>
-                    <p className="text-sm font-bold text-slate-800">{r.name} 어르신</p>
-                    <p className="text-xs text-slate-400">{r.address} · {r.age}세 · {r.gender === "female" ? "여성" : "남성"}</p>
-                  </div>
-                  <button onClick={() => setEditingRecipient(r.raw)} className="rounded-lg border border-teal-200 px-3 py-1.5 text-xs font-bold text-teal-700 transition hover:bg-teal-50">수정 · 삭제</button>
+            recipientSaved ? (
+              <div className="py-6 text-center">
+                <div className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-teal-100 text-xl text-teal-600">✓</div>
+                <p className="mt-3 text-sm font-semibold text-slate-800">수급자 연결이 변경되었습니다.</p>
+                <p className="mt-1 text-xs text-slate-500">센터 승인 후 최종 반영됩니다.</p>
+                <button onClick={() => setRecipientSaved(false)} className="mt-4 text-xs text-teal-600 hover:underline">다시 변경하기</button>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <p className="text-xs text-slate-500">현재 연결된 어르신을 확인하거나 새 연결코드로 어르신을 변경할 수 있습니다.</p>
+                <div className="rounded-lg border border-slate-200 px-4 py-3">
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">현재 연결 수급자</p>
+                  <p className="mt-1 text-sm font-bold text-slate-800">김순자 어르신</p>
+                  <p className="text-xs text-slate-400">안산시 본오동 · 요양 3등급</p>
                 </div>
-              ))}
-            </div>
+                <label className="block text-xs font-semibold text-slate-600">새 어르신 연결코드
+                  <input className={fieldCls} placeholder="센터에서 받은 6자리 코드" maxLength={6} />
+                </label>
+                <p className="rounded-lg bg-amber-50 px-3 py-2 text-[11px] text-amber-700">수급자 변경은 센터 담당자 승인 후 반영됩니다. 기존 방문 일정과 기록은 유지됩니다.</p>
+                <div className="flex justify-end">
+                  <button onClick={() => setRecipientSaved(true)} className="rounded-lg bg-teal-600 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-teal-700">변경 요청</button>
+                </div>
+              </div>
+            )
           )}
           {tab === "withdraw" && (
             <div className="space-y-4">

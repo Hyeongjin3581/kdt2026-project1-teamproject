@@ -154,6 +154,7 @@ export default function GuardianHome({ go, guardianName, onRecipientChanged, rec
                   <p className="text-xs leading-5 text-slate-600">{msg}</p>
                 </div>
               ))}
+              {alerts.length === 0 && <p className="px-3 py-5 text-center text-xs text-slate-400">새 알림이 없습니다.</p>}
             </div>
           </Panel>
 

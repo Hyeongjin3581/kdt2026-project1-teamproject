@@ -40,7 +40,7 @@ export default function Inquiries() {
     }
     useEffect(() => { loadData(); }, []);
 
-    // 문의 삭제 : DELETE /guardianinquiry (body 에 { inquiryNo })
+    // 문의 삭제 : DELETE /guardianinquiry?inquiryNo=번호
     const removeInquiry = async (inquiry) => {
         if (!window.confirm("이 문의를 삭제할까요?")) return;
         try {
