@@ -12,7 +12,8 @@ import oncare_backend.model.entity.CareRecipientEntity;
 import oncare_backend.model.repository.CareRecipientRepository;
 import oncare_backend.model.entity.GuardianEntity;
 import oncare_backend.model.repository.GuardianRepository;
-@Service 
+import oncare_backend.model.repository.RequestRepository;
+@Service
 public class CareRecipientService {
 
 	@Autowired
@@ -20,6 +21,9 @@ public class CareRecipientService {
 
 	@Autowired
 	private GuardianRepository guardianRepository;
+
+	@Autowired
+	private RequestRepository requestRepository;
 
     @Autowired
     private GeoCodingService geoCodingService;
@@ -120,6 +124,10 @@ public class CareRecipientService {
 		Optional<CareRecipientEntity> careRecipientEntity = careRecipientRepository
 				.findById(careRecipientNo);
 		if (careRecipientEntity.isPresent()) {
+			// 서비스 요청(방문 이력)이 있는 수급자는 삭제하지 않음 ( 외래키 오류 500 방지 )
+			if (!requestRepository.findByCarerecipientEntity_CareRecipientNo(careRecipientNo).isEmpty()) {
+				return false;
+			}
 			careRecipientRepository.delete(careRecipientEntity.get());
 			return true;
 		}

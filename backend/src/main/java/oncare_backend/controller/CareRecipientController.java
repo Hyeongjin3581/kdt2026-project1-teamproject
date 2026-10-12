@@ -22,7 +22,7 @@ public class CareRecipientController {
 	@Autowired
 	private CareRecipientService careRecipientService;
 
-	// 1. 수급자 등록
+	// 1. 수급자 등록 --> 유효성검사 보호자만 해야함. 
 	@PostMapping("")
 	public boolean CareRecipientSave(@RequestBody CareRecipientDto careRecipientDto) {
 		return careRecipientService.CareRecipientSave(careRecipientDto);
@@ -46,7 +46,7 @@ public class CareRecipientController {
 		return careRecipientService.CareRecipientModify(careRecipientDto);
 	}
 
-	// 5. 수급자 삭제
+	// 5. 수급자 삭제 --> 보호자  + 관리자 
 	@DeleteMapping("")
 	public boolean CareRecipientDelete(@RequestParam(name="careRecipientNo")Integer careRecipientNo) {
 		return careRecipientService.CareRecipientDelete(careRecipientNo);

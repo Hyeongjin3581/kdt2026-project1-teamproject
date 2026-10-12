@@ -190,13 +190,13 @@ public class UserController {
     }
 
     // 유저탈퇴
-    @DeleteMapping
-    public boolean delete(@RequestParam Integer no){
-        return userService.delete(no);
+    @PutMapping("/state")
+    public boolean delete(@RequestBody UserDto userDto){
+        return userService.delete(userDto);
     }
 
     // 유저수정
-    @PutMapping
+    @PutMapping("")
     public boolean update(@RequestBody UserDto userDto){
         return userService.update(userDto);
     }

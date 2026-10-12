@@ -16,7 +16,7 @@ import oncare_backend.model.repository.CenterRepository;
 import oncare_backend.model.repository.UserRepository;
 
 @Service
-public class CareworkersService {
+public class CareworkersService implements ActiveUserCheck {
     @Autowired 
     private CareworkersRepository careworkerRepository;
 
@@ -71,6 +71,10 @@ public class CareworkersService {
         List<CareworkerDto> careworkerDtos = new ArrayList<>();
 
         careworkerEntities.forEach(careworkerEntity -> {
+            // 탈퇴(회원 상태 delete)한 요양보호사는 목록에서 제외
+            if (!isActiveUser(careworkerEntity.getUserEntity())) {
+                return;
+            }
             CareworkerDto careworkerDto = CareworkerDto.entityToDto(careworkerEntity);
             careworkerDtos.add(careworkerDto);
         });

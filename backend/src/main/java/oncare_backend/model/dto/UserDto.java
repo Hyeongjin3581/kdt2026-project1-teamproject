@@ -21,6 +21,8 @@ public class UserDto {
     private String guardianName;          // 보호자 가입 시에만 사용
     private String guardianRelationship;  // 보호자 가입 시에만 사용
 
+    private String userState;             // use: 이용 중, delete: 탈퇴
+
     public UserEntity dtoToEntity(){
         return UserEntity.builder()
                 .userId(this.userId)
@@ -39,6 +41,7 @@ public class UserDto {
                 .email(user.getEmail())
                 .userCategoryNo(user.getUserCategoryEntity().getUserCategoryNo())
                 .userCategoryName(user.getUserCategoryEntity().getUserCategoryName())
+                .userState(user.getUserState())
                 .build();
     }
 }

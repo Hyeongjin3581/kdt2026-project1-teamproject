@@ -17,15 +17,17 @@ import oncare_backend.model.entity.CareworkerReportEntity;
 import oncare_backend.model.entity.RequestEntity;
 import oncare_backend.model.repository.CareWorkerReportRepository;
 import oncare_backend.model.repository.CareWorkerRepository;
+import oncare_backend.model.repository.CareworkerReviewRepository;
 import oncare_backend.model.repository.RequestRepository;
 
 @Service
 @Transactional 
-public class CareWorkerReportService{
+public class CareWorkerReportService implements ActiveUserCheck {
 
     @Autowired private CareWorkerReportRepository careWorkerReportRepository;
     @Autowired private CareWorkerRepository careWorkerRepository;
     @Autowired private RequestRepository requestRepository;
+    @Autowired private CareworkerReviewRepository careworkerReviewRepository;
 
 
     // [1] 근무기록 생성
@@ -64,6 +66,9 @@ public class CareWorkerReportService{
         // 2. 뽑아온 entity -> dto화 한 후 배열에 저장
         List<CareworkerReportDto> list = new ArrayList<>();
         for (CareworkerReportEntity entity : entities) {
+            // 탈퇴한 보호자의 오늘 이후 방문은 제외 ( 지난 근무 기록은 보존 )
+            if (isWithdrawnVisit(entity.getRequestEntity())) continue;
+
             CareworkerReportDto dto = CareworkerReportDto.entityToDto(entity);
             list.add(dto);
         }
@@ -80,6 +85,9 @@ public class CareWorkerReportService{
         // 2. 엔티티들을 dto화하여 배열에 저장하기
         List<CareworkerReportDto> list = new ArrayList<>();
         for(CareworkerReportEntity entity : entities){
+            // 탈퇴한 보호자의 오늘 이후 방문은 제외 ( 지난 근무 기록은 보존 )
+            if (isWithdrawnVisit(entity.getRequestEntity())) continue;
+
             CareworkerReportDto dto = CareworkerReportDto.entityToDto(entity);
             list.add(dto);
         }
@@ -107,6 +115,8 @@ public class CareWorkerReportService{
         CareworkerReportEntity entity = careWorkerReportRepository.findById(careworkersReportNo).orElse(null);
 
         if (entity == null) return false;
+        // 리뷰가 달린 근무기록은 삭제하지 않음 ( 외래키 오류 500 방지 )
+        if (careworkerReviewRepository.findByCareworkerReportEntity(entity) != null) return false;
 
         careWorkerReportRepository.deleteById(careworkersReportNo);
 
@@ -184,7 +194,9 @@ public class CareWorkerReportService{
         List<CareworkerReportEntity> careworkerReports = careWorkerReportRepository.findByCareworkerEntity_CareworkerNo(careworkerNo);
         // 필터 이용해서 근무기록에 배정 상태인 것 추출
         List<CareworkerReportEntity> list =
-                careworkerReports.stream().filter(careworkerReportEntity -> "배정".equals(careworkerReportEntity.getWorkStatus())).toList();
+                careworkerReports.stream().filter(careworkerReportEntity -> "배정".equals(careworkerReportEntity.getWorkStatus()))
+                        .filter(careworkerReportEntity -> !isWithdrawnVisit(careworkerReportEntity.getRequestEntity()))   // 탈퇴한 보호자의 방문 제외
+                        .toList();
         // 조회용이라 dto로 변경
         List<CareworkerReportDto> careworkerReportDtos = list.stream().map(careworkerReportEntity -> CareworkerReportDto.entityToDto(careworkerReportEntity)).toList();
         return careworkerReportDtos;
@@ -194,6 +206,7 @@ public class CareWorkerReportService{
     public List<CareworkerReportDto> findMyConfirmed(Integer careworkerNo) {
         List<CareworkerReportEntity> reportList = careWorkerReportRepository.findByCareworkerEntity_CareworkerNo(careworkerNo);
         return reportList.stream().filter(careworkerReportEntity -> "확정".equals(careworkerReportEntity.getWorkStatus()))
+                .filter(careworkerReportEntity -> !isWithdrawnVisit(careworkerReportEntity.getRequestEntity()))   // 탈퇴한 보호자의 방문 제외
                 .map(careworkerReportEntity -> CareworkerReportDto.entityToDto(careworkerReportEntity)).toList();
     }
 

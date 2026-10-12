@@ -154,13 +154,26 @@ public class UserService {
         return UserDto.entityToDto(userEntity);
     }
 
-    // 회원삭제
-    public boolean delete(Integer no) {
-        UserEntity userEntity = userRepository.findById(no).orElse(null);
+    // 회원탈퇴
+    // 행을 지우지 않고 상태만 delete 로 바꿈 ( 보호자 , 수급자 , 근무기록 등 연결된 데이터는 보존 )
+    public boolean delete(UserDto userDto) {
+        if (userDto == null || userDto.getUserNo() == null) {
+            return false;
+        }
+        UserEntity userEntity = userRepository.findById(userDto.getUserNo()).orElse(null);
         if (userEntity == null){
             return false;
         }
-        userRepository.deleteById(no);
+        if ("delete".equals(userEntity.getUserState())) {
+            return false;                                   // 이미 탈퇴한 회원
+        }
+        userEntity.setUserState("delete");
+
+        // 보호자 회원이면 보호자 상태도 함께 탈퇴로 변경 ( 보호자 목록에서 제외 )
+        GuardianEntity guardianEntity = guardianRepository.findByUserEntity_UserNo(userEntity.getUserNo());
+        if (guardianEntity != null) {
+            guardianEntity.setGuardianState("delete");
+        }
         return true;
     }
 
@@ -170,6 +183,9 @@ public class UserService {
         UserEntity userEntity = userRepository.findById(userDto.getUserNo()).orElse(null);
         if (userEntity == null){
             return false;
+        }
+        if ("delete".equals(userEntity.getUserState())) {
+            return false;                                   // 탈퇴한 회원은 수정 불가
         }
 
         UserCategoryEntity userCategoryEntity = null;
@@ -198,6 +214,9 @@ public class UserService {
         // 1. 입력받은 아이디 존재여부 확인
         UserEntity userEntity = userRepository.findByUserId(userDto.getUserId());
         if (userEntity == null) { return null; }
+
+        // 탈퇴한 회원은 로그인 불가
+        if ("delete".equals(userEntity.getUserState())) { return null; }
 
         // 2. 아이디 존재 시 평문 - 암호문 비교
         boolean isPasswordCorrect = passwordEncoder.matches(userDto.getUserPassword(),userEntity.getUserPassword());

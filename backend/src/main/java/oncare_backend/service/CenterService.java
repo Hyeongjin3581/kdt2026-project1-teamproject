@@ -4,6 +4,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import oncare_backend.model.dto.CenterDto;
 import oncare_backend.model.entity.CenterEntity;
+import oncare_backend.model.repository.CareworkersRepository;
 import oncare_backend.model.repository.CenterRepository;
 import org.springframework.stereotype.Service;
 
@@ -16,6 +17,7 @@ import java.util.Optional;
 @Transactional
 public class CenterService {
     private final CenterRepository centerRepository;
+    private final CareworkersRepository careworkersRepository;
 
     public boolean save(CenterDto centerDto) {
         CenterEntity centerEntity = centerDto.dtoToEntity();
@@ -42,6 +44,10 @@ public class CenterService {
     public boolean delete(Integer no) {
         CenterEntity centerEntity = centerRepository.findById(no).orElse(null);
         if (centerEntity == null){
+            return false;
+        }
+        // 소속 요양보호사가 있는 센터는 삭제하지 않음 ( 외래키 오류 500 방지 )
+        if (!careworkersRepository.findByCenterEntity_CenterNo(no).isEmpty()) {
             return false;
         }
         centerRepository.deleteById(no);
