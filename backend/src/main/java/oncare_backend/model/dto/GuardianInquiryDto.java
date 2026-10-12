@@ -18,6 +18,7 @@ public class GuardianInquiryDto {
     private Integer wishStartTime;      // 희망 시작시간
     private Integer wishEndTime;       // 희망 종료시간
     private String inquiryContent;           // 요청 내용
+    private String inquiryStatus;       // 문의상태
 
     private LocalDateTime createDate;
     private LocalDateTime updateDate;
@@ -28,6 +29,7 @@ public class GuardianInquiryDto {
         .wishStartTime(this.wishStartTime)
         .wishEndTime(this.wishEndTime)
         .inquiryContent(this.inquiryContent)
+        .inquiryStatus(this.inquiryStatus)
         .build();
     }
 
@@ -42,6 +44,7 @@ public class GuardianInquiryDto {
     .inquiryContent(entity.getInquiryContent())
     .createDate(entity.getCreateDate())
     .updateDate(entity.getUpdateDate())
+    .inquiryStatus(entity.getInquiryStatus())
     .build();
     }
 }

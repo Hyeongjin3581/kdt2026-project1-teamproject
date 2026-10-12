@@ -46,6 +46,14 @@ public class GuardianInquiryController {
 	public List<GuardianInquiryDto>GuardianInquiryFindAll() {
 		return guardianInquiryService.GuardianInquiryFindAll();
 	}
-}
 
+
+	// 5. 문의 상태 조회
+	@GetMapping("/receipt")
+	public List<GuardianInquiryDto>GuardianInquiryfindByInquiryStatus(@RequestParam(name = "guardian_no")Integer guadianNo){
+		return guardianInquiryService.getReceiptStatus(guadianNo);
+	}
+}
 // 기본 보호자CRUD기능
+
+

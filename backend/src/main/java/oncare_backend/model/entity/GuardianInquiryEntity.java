@@ -1,7 +1,6 @@
 package oncare_backend.model.entity;
 
 import java.time.LocalDate;
-import java.time.LocalTime;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -42,5 +41,10 @@ public class GuardianInquiryEntity extends BaseTime{
     private Integer wishEndTime;
     
     @Column (length = 1000)
-    private String inquiryContent;
+    private String inquiryContent;  
+
+    @Column(name = "inquiry_status")
+    private String inquiryStatus; 
+
+    
 }

@@ -18,7 +18,9 @@ import oncare_backend.model.repository.InquiryCategoryRepository;
 @Service 
 public class GuardianInquiryService {
 
-	@Autowired
+	private final GuardianService guardianService;
+
+    @Autowired
 	private GuardianInquiryRepository guardianInquiryRepository;
 
 	@Autowired
@@ -26,6 +28,10 @@ public class GuardianInquiryService {
 
 	@Autowired
 	private InquiryCategoryRepository inquiryCategoryRepository;
+
+    GuardianInquiryService(GuardianService guardianService) {
+        this.guardianService = guardianService;
+    }
 
 	// 1. 보호자 문의 생성
 	@Transactional
@@ -40,6 +46,8 @@ public class GuardianInquiryService {
 		if (guardianOptional.isEmpty() || categoryOptional.isEmpty()) { return false; }
 
 		GuardianInquiryEntity guardianInquiryEntity = guardianInquiryDto.dtoToEntity();
+		guardianInquiryEntity.setInquiryStatus("접수");	// 문의 신청 시 접수상태로
+
 		guardianInquiryEntity.setGuardianEntity(guardianOptional.get());
 		guardianInquiryEntity.setInquiryCategoryEntity(categoryOptional.get());
 		GuardianInquiryEntity savedEntity = guardianInquiryRepository.save(guardianInquiryEntity);
@@ -98,4 +106,11 @@ public class GuardianInquiryService {
 				.map(GuardianInquiryDto::entityToDto)
 				.toList();
 	}
+
+	// 5. 접수 상태 문의 조회
+	@Transactional(readOnly = true)
+	public List<GuardianInquiryDto> getReceiptStatus(Integer guadianNo) {
+    	Optional<GuardianEntity> guadianEntity = guardianRepository.findById(guadianNo);
+		GuardianEntity guardianEntity = guadianEntity.get();
+}
 }
