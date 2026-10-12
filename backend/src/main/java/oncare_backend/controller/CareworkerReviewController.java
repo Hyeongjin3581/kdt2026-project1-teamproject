@@ -38,7 +38,7 @@ public class CareworkerReviewController {
 
     @GetMapping("/guardian")
     public List<CareworkerReviewDto> getReviewsByGuardian(@RequestParam(name = "guardianNo" ) Integer guardianNo){
-        return careworkerReviewService.getReviewsByCareworker(guardianNo);
+        return careworkerReviewService.getReviewsByGuardian(guardianNo);
     }
 
     @PutMapping("")
