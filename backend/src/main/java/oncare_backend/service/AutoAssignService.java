@@ -72,7 +72,7 @@ public class AutoAssignService {
                 .toList();
 
         return availabilityList.stream()
-            .filter(careworkerEntity -> !isBusy(careworkerEntity, requestEntity))
+            .filter(careworkerEntity -> !isBusy(careworkerEntity, requestEntity, excludeRequestNo))
                 .toList();
     }
 
@@ -81,7 +81,7 @@ public class AutoAssignService {
         return "근무중".equals(cw.getCareworkerState())
             && genderOk(cw, request.getPreferredGender())
             && canWork(cw, request)
-            && !isFree(cw, request, excludeRequestNo);
+            && !isBusy(cw, request, excludeRequestNo);
     }
 
     // 선호 성별 비교 (null 이면 무관으로 처리 → 기존 preferredGender.equals() 의 NPE 방지)
@@ -106,7 +106,7 @@ public class AutoAssignService {
     }
 
     // 근무 기록 비교
-    private boolean isBusy(CareworkerEntity cw, RequestEntity request) {
+    private boolean isBusy(CareworkerEntity cw, RequestEntity request, Integer excludeRequestNo) {
         // 근무 기록에서 요청한 day랑 비교해서 근무기록 테이블에서 행 가져오기
         List<CareworkerReportEntity> date = careWorkerReportRepository.findByCareworkerEntityAndWorkDate(cw, request.getVisitDate());
         for (CareworkerReportEntity report : date) {
