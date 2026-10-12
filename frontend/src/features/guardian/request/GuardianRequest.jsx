@@ -34,7 +34,7 @@ export default function GuardianRequest({ guardian, recipients, activeRecipientI
   const updateTime = (iso, key, value) => {
     setPreferredTimes((current) => ({ ...current, [iso]: { ...current[iso], [key]: value } }));
   };
-  const needsSchedule = requestType !== "담당자 관련 문의" && requestType !== "기타 문의";
+  const needsSchedule = categories.find((c) => c.inquiryCategoryName === requestType)?.inquiryCategoryNo === 1; // 방문 시간 변경 요청만 희망 일정 입력
   const selectedRecipient = recipients.find((recipient) => recipient.id === activeRecipientId) ?? recipients[0];
   const selectedRequest = history.find((request) => request.id === selectedRequestId);
   const selectedVisit = visits.find((visit) => visit.id === selectedVisitId);
@@ -58,7 +58,9 @@ export default function GuardianRequest({ guardian, recipients, activeRecipientI
       setRequestType((current) => current || categoriesRes.data[0]?.inquiryCategoryName || "");
       setVisits(buildVisits({ requests: requestsRes.data, reports: reportLists.flatMap((res) => res.data), careworkers: careworkersRes.data }).filter((v) => !v.cancelled));
       setHistory(buildHistory({
-        inquiries: inquiriesRes.data.filter((i) => i.guardianNo === guardian?.guardianNo),
+        // 이 보호자의 문의 중 선택한 어르신 것만 (방문 연결이 없는 예전 문의는 어느 어르신인지 몰라 그대로 보여 준다)
+        inquiries: inquiriesRes.data.filter((i) => i.guardianNo === guardian?.guardianNo
+          && (i.careRecipientNo == null || i.careRecipientNo === selectedRecipient?.id)),
         categories: categoriesRes.data,
         requests: requestsRes.data,
       }));
@@ -71,10 +73,10 @@ export default function GuardianRequest({ guardian, recipients, activeRecipientI
   }
   useEffect(() => { loadData(); }, [selectedRecipient?.id, guardian?.guardianNo]);
 
-  // 선택한 내역(문의/서비스 신청) 수정·삭제 : 문의는 진행 상태가 없어 항상, 서비스 신청은 "신청" 상태일 때만 가능
+  // 선택한 내역(문의/서비스 신청) 수정·삭제 : 문의는 관리자 응답 전까지만, 서비스 신청은 "신청" 상태일 때만 가능
   const [editing, setEditing] = useState(false);
   const [editForm, setEditForm] = useState({ categoryNo: "", date: "", start: "", end: "", content: "" });
-  const canManage = selectedRequest && (selectedRequest.source === "inquiry" || selectedRequest.raw.requestState === "신청");
+  const canManage = selectedRequest && (selectedRequest.source === "inquiry" ? !selectedRequest.raw.answerContent : selectedRequest.raw.requestState === "신청");
   const updateEdit = (key, value) => setEditForm((current) => ({ ...current, [key]: value }));
 
   const startEdit = () => {
@@ -128,23 +130,29 @@ export default function GuardianRequest({ guardian, recipients, activeRecipientI
   };
 
   // 요청 보내기 : 선택한 날짜마다 문의 1건씩 등록 (POST /guardianinquiry), 날짜가 필요 없는 유형은 1건
+  //   requestNo : 선택한 방문 일정(서비스 요청) → 관리자가 이 방문의 시간을 바꾼다
   const sendRequest = async () => {
     if (!selectedRecipient || !selectedVisit || !guardian) return;
     const category = categories.find((c) => c.inquiryCategoryName === requestType);
     if (!category) return;
-    const content = `[${selectedRecipient.name} 어르신 · ${selectedVisit.date} ${selectedVisit.time}] ${requestContent.trim()}`.trim();
+    if (needsSchedule && orderedDates.length === 0) { alert("희망 날짜를 1개 이상 선택해주세요."); return; }
+    if (!requestContent.trim()) { alert("내용을 입력해주세요."); return; }
+    const content = requestContent.trim(); // 수급자·방문 정보는 requestNo 로 연결되므로 내용에 붙이지 않는다
     const invalid = needsSchedule && orderedDates.find((d) => toServerTime(preferredTimes[d.iso]?.start ?? "09:00") >= toServerTime(preferredTimes[d.iso]?.end ?? "12:00"));
     if (invalid) { alert(`${invalid.label}(${invalid.day}) 종료 시간은 시작 시간보다 늦어야 합니다.`); return; }
-    const bodies = needsSchedule && orderedDates.length > 0
+    const inquiryGroup = `G${guardian.guardianNo}-${Date.now()}`; // 묶음 번호 : 이번에 함께 보내는 문의끼리 같은 값
+    const bodies = needsSchedule
       ? orderedDates.map((d) => ({
           guardianNo: guardian.guardianNo,
           inquiryCategoryNo: category.inquiryCategoryNo,
+          requestNo: selectedVisit.id,
+          inquiryGroup,
           wishDate: d.iso,
           wishStartTime: toServerTime(preferredTimes[d.iso]?.start ?? "09:00"),
           wishEndTime: toServerTime(preferredTimes[d.iso]?.end ?? "12:00"),
           inquiryContent: content,
         }))
-      : [{ guardianNo: guardian.guardianNo, inquiryCategoryNo: category.inquiryCategoryNo, inquiryContent: content }];
+      : [{ guardianNo: guardian.guardianNo, inquiryCategoryNo: category.inquiryCategoryNo, requestNo: selectedVisit.id, inquiryGroup, inquiryContent: content }];
     try {
       const results = await Promise.all(bodies.map((body) => axios.post("http://localhost:8080/guardianinquiry", body, { withCredentials: true })));
       if (results.every((res) => res.data)) {
@@ -182,6 +190,7 @@ export default function GuardianRequest({ guardian, recipients, activeRecipientI
             <dl className="mt-1 divide-y divide-slate-100">
               {selectedRequest.details.map(([label, value]) => <div key={label} className="grid gap-2 py-4 sm:grid-cols-[110px_1fr]"><dt className="text-xs font-bold text-slate-400">{label}</dt><dd className="text-sm leading-6 text-slate-700">{value}</dd></div>)}
             </dl>
+            {selectedRequest.source === "inquiry" && selectedRequest.raw.answerContent && <p className="mt-3 rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-500">센터에서 응답한 문의는 수정·삭제할 수 없습니다.</p>}
             {editing && <div className="mt-3 grid gap-3 rounded-xl border border-slate-100 bg-slate-50/60 p-4 sm:grid-cols-2">
               {selectedRequest.source === "inquiry" && <label className="block text-xs font-semibold text-slate-600 sm:col-span-2">문의 유형
                 <select value={editForm.categoryNo} onChange={(e) => updateEdit("categoryNo", e.target.value)} className={field}>{categories.map((c) => <option key={c.inquiryCategoryNo} value={c.inquiryCategoryNo}>{c.inquiryCategoryName}</option>)}</select>

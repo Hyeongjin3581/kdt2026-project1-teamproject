@@ -1,6 +1,7 @@
 //
 import { TODAY } from "../constants";
 import { toHhmm } from "./timeFormat";
+import { inquiryStatus } from "./inquiryStatus";
 
 // 보호자 화면용 데이터 변환 (axios 로 받아온 백엔드 DTO -> 화면에서 쓰는 모양)
 const DAY_KR = ["일", "월", "화", "수", "목", "금", "토"];
@@ -87,6 +88,11 @@ export function buildHistory({ inquiries, categories, requests }) {
         const type = nameOf.get(i.inquiryCategoryNo) ?? "문의";
         const created = typeof i.createDate === "string" ? i.createDate.slice(0, 10) : i.wishDate ?? "-";
         const wish = i.wishDate ? `${i.wishDate} ${hhmm(i.wishStartTime)}~${hhmm(i.wishEndTime)}` : "-";
+        const answered = Boolean(i.answerContent); // 관리자 응답이 있으면 응답 완료
+        const toMinute = (t) => (typeof t === "string" ? t.replace("T", " ").slice(0, 16) : null); // "2026-10-06T10:00:00" → "2026-10-06 10:00"
+        const answeredAt = toMinute(i.answerDate);
+        const appliedAt = toMinute(i.scheduleAppliedDate); // 센터가 희망 일정으로 방문을 옮긴 시각
+        const { label, tone } = inquiryStatus(i);
         return {
             id: `INQ-${i.inquiryNo}`,
             source: "inquiry",
@@ -95,10 +101,15 @@ export function buildHistory({ inquiries, categories, requests }) {
             kind: type.includes("문의") ? "문의" : "요청",
             type,
             service: "방문요양 서비스",
-            status: "접수 완료",
-            tone: "info",
+            status: label,
+            tone,
             summary: (i.inquiryContent ?? "").slice(0, 40),
-            details: [["문의 유형", type], ["희망 일정", wish], ["요청 내용", i.inquiryContent ?? "-"]],
+            details: [
+                ["문의 유형", type], ["희망 일정", wish], ["요청 내용", i.inquiryContent ?? "-"],
+                ["센터 답변", answered ? i.answerContent : "아직 답변이 없습니다."],
+                ...(answeredAt ? [["답변 일시", answeredAt]] : []),
+                ...(appliedAt ? [["일정 변경", `희망 일정(${wish})으로 방문이 변경되었습니다. (${appliedAt})`]] : []),
+            ],
         };
     });
     const fromRequests = requests.map((q) => ({
