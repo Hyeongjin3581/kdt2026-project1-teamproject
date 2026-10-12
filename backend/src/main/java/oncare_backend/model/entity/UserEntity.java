@@ -15,6 +15,7 @@ public class UserEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer userNo;
 
+    @Column(unique = true)
     private String userId;
     private String userPassword;
     private String phoneNumber;
