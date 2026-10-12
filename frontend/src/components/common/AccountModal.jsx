@@ -53,17 +53,17 @@ export default function AccountModal({ guardian, recipients = [], onClose, onLog
     }
   };
 
-  // 계정 탈퇴 : DELETE /user?no=회원번호 (쿼리 파라미터로 전달)
+  // 계정 탈퇴 : PUT /user/state (body { userNo }) → 회원 상태를 delete 로 변경 (데이터는 보존)
   const withdraw = async () => {
     setMessage("");
     if (confirmText !== "탈퇴합니다") { setMessage("확인 문구를 정확히 입력해주세요."); return; }
     try {
-      const response = await axios.delete("/user", { params: { no: guardian.userNo }, withCredentials: true });
+      const response = await axios.put("/user/state", { userNo: guardian.userNo }, { withCredentials: true });
       if (response.data) onLogout();
       else setMessage("탈퇴 처리에 실패했습니다.");
     } catch (error) {
       console.error(error);
-      setMessage("탈퇴할 수 없습니다. 연결된 보호자·수급자 정보가 남아 있으면 센터에 문의해주세요.");
+      setMessage("서버 통신 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
     }
   };
 
@@ -136,7 +136,7 @@ export default function AccountModal({ guardian, recipients = [], onClose, onLog
           )}
           {tab === "withdraw" && (
             <div className="space-y-4">
-              <p className="rounded-lg bg-red-50 px-4 py-3 text-xs text-red-600">탈퇴하면 계정이 삭제되며 되돌릴 수 없습니다.</p>
+              <p className="rounded-lg bg-red-50 px-4 py-3 text-xs text-red-600">탈퇴하면 계정이 비활성화되어 다시 로그인할 수 없습니다. 수급자·방문 기록은 보존됩니다.</p>
               <label className="block text-xs font-semibold text-slate-600">확인 문구 입력<span className="ml-1 font-normal text-slate-400">("탈퇴합니다" 라고 입력)</span>
                 <input className={fieldCls} value={confirmText} onChange={(e) => setConfirmText(e.target.value)} placeholder="탈퇴합니다" />
               </label>

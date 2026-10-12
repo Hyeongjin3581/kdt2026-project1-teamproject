@@ -116,7 +116,7 @@ export default function GuardianRequest({ guardian, recipients, activeRecipientI
         ? await axios.delete("http://localhost:8080/guardianinquiry", { params: { inquiryNo: raw.inquiryNo }, withCredentials: true })
         : await axios.delete("/request", { params: { requestNo: raw.requestNo }, withCredentials: true });
       if (response.data) { setEditing(false); setSelectedRequestId(null); loadData(); }
-      else alert("처리에 실패했습니다.");
+      else alert(selectedRequest.source === "inquiry" ? "센터에서 응답한 문의는 삭제할 수 없습니다." : "이미 배정된 방문은 삭제할 수 없습니다.");
     } catch (error) {
       console.error(error);
       alert("서버 통신 오류가 발생했습니다.");

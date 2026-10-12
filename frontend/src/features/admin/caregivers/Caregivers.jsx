@@ -71,16 +71,17 @@ export default function Caregivers() {
   useEffect(() => { loadData(); loadPendingCount(); }, []);
   const { centers, caregivers } = model;
   const record = caregivers.find((c) => c.id === recordId) ?? null;
-  // 요양보호사 삭제 : DELETE /api/careworkers?careworkerNo=번호 (쿼리 파라미터로 전달)
+  // 요양보호사 탈퇴 : PUT /user/state (body { userNo }) → 회원 상태를 delete 로 변경
+  // 근무기록은 보존되고 , 요양보호사 목록 · 추천 · 배정에서 제외된다
   const removeCareworker = async (c) => {
-    if (!window.confirm(`${c.name} 요양보호사를 삭제할까요? 이 작업은 되돌릴 수 없습니다.`)) return;
+    if (!window.confirm(`${c.name} 요양보호사를 탈퇴 처리할까요? 계정이 비활성화되며 근무기록은 보존됩니다.`)) return;
     try {
-      const response = await axios.delete("/api/careworkers", { params: { careworkerNo: c.id }, withCredentials: true });
+      const response = await axios.put("/user/state", { userNo: c.raw.userNo }, { withCredentials: true });
       if (response.data) loadData();
-      else alert("삭제에 실패했습니다.");
+      else alert("탈퇴 처리에 실패했습니다. 이미 탈퇴한 계정일 수 있습니다.");
     } catch (error) {
       console.error(error);
-      alert("삭제할 수 없습니다. 연결된 근무기록이 있으면 먼저 정리해야 합니다.");
+      alert("서버 통신 오류가 발생했습니다.");
     }
   };
   const center = useCenter();
@@ -122,7 +123,7 @@ export default function Caregivers() {
               <div className="mt-4 grid grid-cols-[1fr_auto_auto] gap-2">
                 <button disabled={issues.length > 0} onClick={() => setRecordId(c.id)} className="rounded-lg border border-slate-200 py-2 text-xs font-bold text-slate-600 transition hover:bg-slate-50">근무 기록 보기</button>
                 <button onClick={() => setFormTarget(c.raw)} className="rounded-lg border border-teal-200 px-3 py-2 text-xs font-bold text-teal-700 transition hover:bg-teal-50">수정</button>
-                <button onClick={() => removeCareworker(c)} className="rounded-lg border border-red-200 px-3 py-2 text-xs font-bold text-red-600 transition hover:bg-red-50">삭제</button>
+                <button onClick={() => removeCareworker(c)} className="rounded-lg border border-red-200 px-3 py-2 text-xs font-bold text-red-600 transition hover:bg-red-50">탈퇴</button>
               </div>
             </Panel>
           );

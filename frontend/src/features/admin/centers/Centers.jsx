@@ -83,10 +83,10 @@ export default function Centers() {
         try {
             const response = await axios.delete("/center", { params: { no: c.centerNo }, withCredentials: true });
             if (response.data) loadData();
-            else alert("삭제에 실패했습니다.");
+            else alert("소속 요양보호사가 있는 센터는 삭제할 수 없습니다.");
         } catch (error) {
             console.error(error);
-            alert("삭제할 수 없습니다. 소속 요양보호사가 있으면 먼저 정리해야 합니다.");
+            alert("서버 통신 오류가 발생했습니다.");
         }
     };
 
