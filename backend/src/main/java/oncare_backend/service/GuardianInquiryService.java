@@ -32,7 +32,7 @@ public class GuardianInquiryService {
 	// 문의 카테고리 1번 = 방문 시간 변경 요청 (2번 방문 요일 변경 요청은 1번으로 통합됨)
 	private static final Integer SCHEDULE_CATEGORY_NO = 1;
 
-	@Autowired
+    @Autowired
 	private GuardianInquiryRepository guardianInquiryRepository;
 
 	@Autowired
@@ -69,6 +69,8 @@ public class GuardianInquiryService {
 		if (guardianOptional.isEmpty() || categoryOptional.isEmpty()) { return false; }
 
 		GuardianInquiryEntity guardianInquiryEntity = guardianInquiryDto.dtoToEntity();
+		guardianInquiryEntity.setInquiryStatus("접수");	// 문의 신청 시 접수상태로
+
 		guardianInquiryEntity.setGuardianEntity(guardianOptional.get());
 		guardianInquiryEntity.setInquiryCategoryEntity(categoryOptional.get());
 
