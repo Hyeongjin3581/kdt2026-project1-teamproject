@@ -69,7 +69,6 @@ public class GuardianInquiryService {
 		if (guardianOptional.isEmpty() || categoryOptional.isEmpty()) { return false; }
 
 		GuardianInquiryEntity guardianInquiryEntity = guardianInquiryDto.dtoToEntity();
-		guardianInquiryEntity.setInquiryStatus("접수");	// 문의 신청 시 접수상태로
 
 		guardianInquiryEntity.setGuardianEntity(guardianOptional.get());
 		guardianInquiryEntity.setInquiryCategoryEntity(categoryOptional.get());
