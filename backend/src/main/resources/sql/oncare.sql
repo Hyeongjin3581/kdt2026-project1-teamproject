@@ -139,10 +139,9 @@ INSERT IGNORE INTO careworkersreport
 (10, '2026-10-09', 14, 18, '배정', 6, 16),
 (11, '2026-10-10', 10, 14, '확정', 8, 17);
 
--- 9. 문의 카테고리
+-- 9. 문의 카테고리 (2번 '방문 요일 변경 요청'은 1번 '방문 시간 변경 요청'으로 통합 - 2026.10.08)
 INSERT IGNORE INTO inquirycategory (inquiry_category_no, inquiry_category_name) VALUES
 (1, '방문 시간 변경 요청'),
-(2, '방문 요일 변경 요청'),
 (3, '담당자 관련 문의'),
 (4, '기타 문의');
 
@@ -174,11 +173,11 @@ INSERT IGNORE INTO caregiveravailability
 INSERT IGNORE INTO guardianinquiry
 (inquiry_no, guardian_no, inquiry_category_no, wish_date, wish_start_time, wish_end_time, inquiry_content, create_date, update_date) VALUES
 (1, 1, 1, '2026-10-08', 10, 14, '방문 시간을 오전 10시로 옮기고 싶습니다.',         '2026-10-05 09:10:00', '2026-10-05 09:10:00'),
-(2, 2, 2, '2026-10-09', 14, 18, '다음 주 방문 요일을 목요일로 바꿀 수 있을까요?',   '2026-10-05 11:20:00', '2026-10-05 11:20:00'),
+(2, 2, 1, '2026-10-09', 14, 18, '다음 주 방문 요일을 목요일로 바꿀 수 있을까요?',   '2026-10-05 11:20:00', '2026-10-05 11:20:00'),
 (3, 3, 3, NULL, NULL, NULL,      '담당 요양보호사를 여자 분으로 바꿔 주세요.',         '2026-10-04 15:40:00', '2026-10-04 15:40:00'),
 (4, 1, 4, NULL, NULL, NULL,      '방문 후 일지는 어디서 확인하나요?',                  '2026-10-04 17:00:00', '2026-10-04 17:00:00'),
 (5, 2, 1, '2026-10-10', 9, 13,   '병원 일정 때문에 시간을 앞당기고 싶습니다.',        '2026-10-06 08:30:00', '2026-10-06 08:30:00'),
-(6, 3, 2, '2026-10-12', 13, 17,  '요일을 월요일에서 화요일로 변경 요청합니다.',       '2026-10-06 10:05:00', '2026-10-06 10:05:00');
+(6, 3, 1, '2026-10-12', 13, 17,  '요일을 월요일에서 화요일로 변경 요청합니다.',       '2026-10-06 10:05:00', '2026-10-06 10:05:00');
 
 
 -- ================= 추가 샘플 데이터 (oncare2026_expanded) =================
@@ -324,11 +323,11 @@ INSERT IGNORE INTO guardianinquiry
 (inquiry_no, guardian_no, inquiry_category_no, wish_date, wish_start_time, wish_end_time, inquiry_content, create_date, update_date) VALUES
 (7, 1, 1, '2026-10-14', 10, 14, '수요일 방문을 오전으로 옮기고 싶습니다.', '2026-10-06 09:00:00', '2026-10-06 09:00:00'),
 (8, 2, 1, '2026-10-10', 13, 17, '병원 예약 때문에 시간을 늦춰 주세요.', '2026-10-06 11:30:00', '2026-10-06 11:30:00'),
-(9, 3, 2, '2026-10-15', 9, 13, '다음 주 방문 요일을 변경하고 싶습니다.', '2026-10-06 14:10:00', '2026-10-06 14:10:00'),
+(9, 3, 1, '2026-10-15', 9, 13, '다음 주 방문 요일을 변경하고 싶습니다.', '2026-10-06 14:10:00', '2026-10-06 14:10:00'),
 (10, 4, 3, NULL, NULL, NULL, '여자 요양보호사로 바꿔 주실 수 있나요?', '2026-10-05 16:20:00', '2026-10-05 16:20:00'),
 (11, 5, 4, NULL, NULL, NULL, '방문 기록을 확인할 수 있는 방법이 궁금합니다.', '2026-10-05 10:45:00', '2026-10-05 10:45:00'),
 (12, 4, 1, '2026-10-16', 14, 18, '방문 시간을 오후로 옮겨 주세요.', '2026-10-07 08:50:00', '2026-10-07 08:50:00'),
-(13, 5, 2, '2026-10-17', 9, 12, '토요일에서 금요일로 요일 변경 요청합니다.', '2026-10-07 09:30:00', '2026-10-07 09:30:00'),
+(13, 5, 1, '2026-10-17', 9, 12, '토요일에서 금요일로 요일 변경 요청합니다.', '2026-10-07 09:30:00', '2026-10-07 09:30:00'),
 (14, 1, 4, NULL, NULL, NULL, '센터 운영 시간이 궁금합니다.', '2026-10-07 10:05:00', '2026-10-07 10:05:00');
 
 -- 10. 이미 DB 에 들어 있는 샘플 행은 INSERT IGNORE 로 건너뛰므로 좌표만 따로 맞춘다.
@@ -352,3 +351,52 @@ UPDATE careworkers SET latitude = 37.4580, longitude = 126.7800 WHERE careworker
 UPDATE careworkers SET latitude = 37.2530, longitude = 127.0150 WHERE careworker_no = 8 AND latitude = 0 AND longitude = 0;
 UPDATE careworkers SET latitude = 37.2510, longitude = 127.0710 WHERE careworker_no = 9 AND latitude = 0 AND longitude = 0;
 UPDATE careworkers SET latitude = 37.3050, longitude = 126.9900 WHERE careworker_no = 10 AND latitude = 0 AND longitude = 0;
+
+-- ================= 문의 응답 기능 (2026.10.11) =================
+
+-- 11. 문의 유형 통합 : 기존 DB 에 남아 있는 2번 문의를 1번으로 옮긴 뒤 2번 카테고리 삭제 (반드시 UPDATE 먼저)
+UPDATE guardianinquiry SET inquiry_category_no = 1 WHERE inquiry_category_no = 2;
+DELETE FROM inquirycategory WHERE inquiry_category_no = 2;
+
+-- 12. 문의 ↔ 방문(서비스 요청) 연결 : 보호자의 수급자에 속한 요청만 연결한다
+--     INSERT IGNORE 는 기존 DB 에서 건너뛰므로 UPDATE 로 넣고, IS NULL 조건으로 재시작 때 덮어쓰지 않는다
+UPDATE guardianinquiry SET request_no = 35 WHERE inquiry_no = 7  AND request_no IS NULL; -- 김영자 10/14 배정완료(정미숙 확정) → 정미숙 10/14 근무 불가 = 붉은 표시 확인용
+UPDATE guardianinquiry SET request_no = 31 WHERE inquiry_no = 13 AND request_no IS NULL; -- 문옥자 10/12 신청(담당자 없음) → 추천 3명만 표시
+UPDATE guardianinquiry SET request_no = 15 WHERE inquiry_no = 9  AND request_no IS NULL; -- 윤정자 10/12 신청
+UPDATE guardianinquiry SET request_no = 29 WHERE inquiry_no = 12 AND request_no IS NULL; -- 한복순 10/08 신청
+
+-- 13. 응답 완료 예시 (IS NULL 조건 : 관리자가 실제로 쓴 답변을 재시작 때 덮어쓰지 않음)
+UPDATE guardianinquiry
+SET answer_content = '보호자 포털의 방문 기록 메뉴에서 확인하실 수 있습니다.', answer_date = '2026-10-06 10:00:00'
+WHERE inquiry_no = 11 AND answer_content IS NULL;
+
+-- 14. 같은 방문(요청 34 : 박영수 10/13 배정중, 윤순희 배정)에 희망 날짜 2개를 고른 문의 (날짜마다 1건)
+--     15번 : 10/15 13~17 → 윤순희 근무 가능(10/15 13~19 등록) → 기존 근무자 선택 가능
+--     16번 : 10/16 14~18 → 윤순희 10/16 근무 가능 시간 없음 → 붉은 표시 / 15번 적용 후엔 '이미 변경됨' 경고
+INSERT IGNORE INTO guardianinquiry
+(inquiry_no, guardian_no, inquiry_category_no, request_no, wish_date, wish_start_time, wish_end_time, inquiry_content, create_date, update_date) VALUES
+(15, 1, 1, 34, '2026-10-15', 13, 17, '화요일 방문을 목요일 오후로 옮기고 싶습니다.', '2026-10-08 09:00:00', '2026-10-08 09:00:00'),
+(16, 1, 1, 34, '2026-10-16', 14, 18, '화요일 방문을 목요일 오후로 옮기고 싶습니다.', '2026-10-08 09:00:00', '2026-10-08 09:00:00');
+
+-- 15. 묶음 번호 : 15·16번은 보호자가 '요청 보내기' 한 번에 함께 보낸 문의 (IS NULL 조건으로 재시작 때 덮어쓰지 않음)
+UPDATE guardianinquiry SET inquiry_group = 'SAMPLE-1008-34' WHERE inquiry_no IN (15, 16) AND inquiry_group IS NULL;
+
+-- 16. [테스트] 서로 맞물린 시간 변경(수->목, 목->금) 확인용 방문 데이터 (2026.10.12)
+--     이순자 어르신(보호자 김민수 guardian01)의 수 10/14 · 목 10/15 09~13 방문을 이순옥 요양보호사(4번)가 둘 다 맡음 (확정)
+--     이순옥 근무 가능 : 10/14 · 10/15 · 10/16 09~18
+--     - '수->목' 문의를 먼저 열면 : 목 09~13 에 목요일 방문이 남아 있어 이순옥 근무 불가(붉은 카드)
+--     - '목->금' 을 먼저 이순옥으로 배정 변경하면 : 목요일이 비어 '수->목' 에서 이순옥 근무 가능
+--     번호는 101 부터 사용 (앱이 자동으로 만든 번호와 겹치지 않도록)
+INSERT IGNORE INTO requests
+(request_no, preferred_gender, request_state, visit_date, visit_start_time, visit_end_time, request_content, carerecipient_no) VALUES
+(101, '여자', '배정완료', '2026-10-14', 9, 13, '식사 준비 및 말벗 (테스트 : 수요일 방문)', 2),
+(102, '여자', '배정완료', '2026-10-15', 9, 13, '산책 및 가사 지원 (테스트 : 목요일 방문)', 2);
+
+INSERT IGNORE INTO careworkersreport
+(careworkers_report_no, work_date, work_start_time, work_end_time, work_status, careworker_no, request_no) VALUES
+(101, '2026-10-14', 9, 13, '확정', 4, 101),
+(102, '2026-10-15', 9, 13, '확정', 4, 102);
+
+INSERT IGNORE INTO caregiveravailability
+(availability_no, available_date, start_time, end_time, status, caregiver_no) VALUES
+(101, '2026-10-14', 9, 18, '근무가능', 4);
