@@ -20,6 +20,9 @@ public interface CareWorkerReportRepository extends JpaRepository<CareworkerRepo
 
     List<CareworkerReportEntity> findByCareworkerEntityAndWorkDate(CareworkerEntity careworkerEntity, LocalDate workDate);
 
+    // 요청 번호로 근무기록 조회 (문의 응답 시 기존 근무자 찾기)
+    List<CareworkerReportEntity> findByRequestEntity_RequestNo(Integer requestNo);
+
 
     // 후보 전체의 최근 30일 완료 근무횟수 집계
     // 한 요청(request_no)을 한 번의 방문 근무로 계산
