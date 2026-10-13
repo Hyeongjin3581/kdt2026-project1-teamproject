@@ -35,6 +35,7 @@ public class UserService {
     // 회원가입
     public boolean save(UserDto userDto) {
         if (userDto.getUserCategoryNo() == null || userDto.getUserCategoryNo() == 2) return false;
+        if (userRepository.findByUserId(userDto.getUserId()) != null) return false;   // 이미 있는 아이디 (탈퇴 회원 포함)
 
         boolean isGuardian = userDto.getUserCategoryNo() == 1;
         // 보호자는 Gmail 인증을 마쳐야만 가입 가능 (프론트 우회 방지)
@@ -92,6 +93,9 @@ public class UserService {
         if (signupDto.getHourWage() == null) return false;
         if (signupDto.getCareworkerAge() == null) return false;
         if (signupDto.getCenterNo() == null) return false;
+
+        // 이미 있는 아이디 (탈퇴 회원 포함)
+        if (userRepository.findByUserId(signupDto.getUserId()) != null) return false;
 
         // 요양보호사 사용자 유형과 신청자가 선택한 센터 확인
         UserCategoryEntity userCategoryEntity = userCategoryRepository.findById(2).orElse(null);
