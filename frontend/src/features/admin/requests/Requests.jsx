@@ -9,6 +9,8 @@ import { useCenter, inCenter } from "../../../context/CenterContext";
 import LoadStatus from "../../../components/common/LoadStatus";
 import { buildAdminModel, emptyModel, emptyRaw } from "../../../utils/adminAdapters";
 import useNotifyRefresh from "../useNotifyRefresh";
+import Pagination from "../../../components/common/Pagination";
+import { usePagination } from "../../../utils/usePagination";
 
 // 요청 상태별 탭 : 신청(미배정) → 배정중(요양보호사 수락 대기) → 배정완료(수락)
 const tabs = [
@@ -139,6 +141,8 @@ export default function Requests() {
   const all = assignments.filter(inCenter(center)).filter((a) => a.requestState !== "완료");
   const count = (s) => all.filter((a) => a.state === s).length;
   const list = tab === "all" ? all : all.filter((a) => a.state === tab);
+  // 페이징 : 한 페이지 10건, 탭·센터가 바뀌면 1페이지로 (위쪽 건수 카드·탭 숫자는 자르기 전 all 기준 그대로)
+  const { page, setPage, totalPages, pageItems, total } = usePagination(list, 10, [tab, center]);
 
   if (status !== "ok") return <LoadStatus status={status} onRetry={loadData} />;
   return (
@@ -162,7 +166,7 @@ export default function Requests() {
         </div>
         <div className="divide-y divide-slate-100">
           {list.length === 0 && <p className="px-5 py-10 text-center text-sm text-slate-400">해당하는 요청이 없습니다.</p>}
-          {list.map((a) => {
+          {pageItems.map((a) => {
             const sm = stateMeta[a.state];
             return (
               <div key={a.requestNo} className="flex flex-col gap-4 px-5 py-4 lg:flex-row lg:items-center">
@@ -188,6 +192,7 @@ export default function Requests() {
             );
           })}
         </div>
+        <Pagination page={page} totalPages={totalPages} total={total} onChange={setPage} />
       </Panel>
       {assignTarget && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm" onClick={() => setAssignTarget(null)}>

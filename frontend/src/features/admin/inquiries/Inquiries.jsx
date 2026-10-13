@@ -8,6 +8,8 @@ import LoadStatus from "../../../components/common/LoadStatus";
 import InquiryAnswerModal from "./InquiryAnswerModal";
 import { inquiryStatus } from "../../../utils/inquiryStatus";
 import useNotifyRefresh from "../useNotifyRefresh";
+import Pagination from "../../../components/common/Pagination";
+import { usePagination } from "../../../utils/usePagination";
 
 export default function Inquiries() {
     const [inquiries, setInquiries] = useState([]);
@@ -88,6 +90,9 @@ export default function Inquiries() {
         .map((i) => ({ ...i, guardian: guardianOf(i.guardianNo), category: categoryOf(i.inquiryCategoryNo), status: statusOf(i) }))
         .filter((i) => `${i.guardian?.guardianName ?? ""}${i.careRecipientName ?? ""}${i.category}${i.status}${i.inquiryContent ?? ""}`.includes(q))
         .sort((a, b) => b.inquiryNo - a.inquiryNo);
+    // 페이징 : 한 페이지 10건, 검색어가 바뀌면 1페이지로 (응답 뒤·새 알림 뒤 새로고침에서는 지금 페이지 유지)
+    // 함께 보낸 문의 · 참고 박스 · "#N 응답으로 변경됨" 은 자르기 전 전체 inquiries 로 계산한다
+    const { page, setPage, totalPages, pageItems, total } = usePagination(rows, 10, [q]);
 
     if (status !== "ok") return <LoadStatus status={status} onRetry={loadData} error={loadError} />;
     return (
@@ -101,7 +106,7 @@ export default function Inquiries() {
                     <table className="w-full min-w-[1040px] text-sm">
                         <thead className="bg-slate-50 text-left text-[11px] uppercase tracking-wide text-slate-400"><tr>{["번호", "보호자", "문의 유형", "방문 일정 (현재 → 희망)", "내용", "상태", ""].map((h) => <th key={h} className="whitespace-nowrap px-5 py-3">{h}</th>)}</tr></thead>
                         <tbody>
-                            {rows.map((i) => (
+                            {pageItems.map((i) => (
                                 <tr key={i.inquiryNo} className="border-t border-slate-100 align-top hover:bg-slate-50/70">
                                     <td className="px-5 py-4 font-mono text-slate-500">{i.inquiryNo}</td>
                                     {/* 보호자 · 관계 / 어르신 이름이 글자 단위로 꺾이지 않도록 한 줄씩 유지 */}
@@ -134,6 +139,7 @@ export default function Inquiries() {
                         </tbody>
                     </table>
                 </div>
+                <Pagination page={page} totalPages={totalPages} total={total} onChange={setPage} />
             </Panel>
             {answering && <InquiryAnswerModal inquiry={answering} siblings={siblingsOf(answering)} otherPending={otherPendingOf(answering)} changedBy={changedByOf(answering)} onClose={() => setAnswering(null)} onAnswered={() => { setAnswering(null); loadData({ silent: true }); }} />}
         </div>

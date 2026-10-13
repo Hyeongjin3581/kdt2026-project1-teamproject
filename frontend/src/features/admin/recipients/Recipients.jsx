@@ -7,6 +7,8 @@ import { useCenter, inCenter } from "../../../context/CenterContext";
 import LoadStatus from "../../../components/common/LoadStatus";
 import { buildAdminModel, emptyModel, emptyRaw } from "../../../utils/adminAdapters";
 import RecipientDetail from "./RecipientDetail";
+import Pagination from "../../../components/common/Pagination";
+import { usePagination } from "../../../utils/usePagination";
 
 export default function Recipients() {
   const [q, setQ] = useState("");
@@ -50,6 +52,8 @@ export default function Recipients() {
   useEffect(() => { loadData(); }, []);
   const { recipients } = model;
   const visible = useMemo(() => recipients.filter(inCenter(center)).filter((r) => `${r.name}${r.area}${r.cg}${r.guardian}`.includes(q)), [q, center, recipients]);
+  // 페이징 : 한 페이지 10명, 검색어·센터가 바뀌면 1페이지로
+  const { page, setPage, totalPages, pageItems, total } = usePagination(visible, 10, [q, center]);
   if (status !== "ok") return <LoadStatus status={status} onRetry={loadData} error={loadError} />;
   return (
     <div className="space-y-5">
@@ -64,7 +68,7 @@ export default function Recipients() {
           <table className="w-full min-w-[920px] text-sm">
             <thead className="bg-slate-50 text-left text-[11px] uppercase tracking-wide text-slate-400"><tr>{["수급자명", "성별", "거주 지역", "방문 요일", "담당 요양보호사", "연결된 보호자", "상태", ""].map((h) => <th key={h} className="px-5 py-3">{h}</th>)}</tr></thead>
             <tbody>
-              {visible.map((r) => (
+              {pageItems.map((r) => (
                 <tr key={r.id} className="border-t border-slate-100 hover:bg-slate-50/70">
                   <td className="px-5 py-4"><b className="text-slate-800">{r.name}</b><p className="mt-1 text-xs text-slate-400">{r.grade}</p></td>
                   <td className="px-5 py-4 text-slate-600">{r.gender}</td>
@@ -80,6 +84,7 @@ export default function Recipients() {
             </tbody>
           </table>
         </div>
+        <Pagination page={page} totalPages={totalPages} total={total} onChange={setPage} />
       </Panel>
       {detail && <RecipientDetail r={detail} onClose={() => setDetail(null)} onChanged={() => { setDetail(null); loadData(); }} />}
     </div>

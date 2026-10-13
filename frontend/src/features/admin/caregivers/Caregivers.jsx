@@ -11,6 +11,8 @@ import CaregiverRecord from "./CaregiverRecord";
 import CaregiverFormModal from "./CaregiverFormModal";
 import PendingApprovalModal from "./PendingApprovalModal";
 import CaregiverDetailModal from "./CaregiverDetailModal";
+import Pagination from "../../../components/common/Pagination";
+import { usePagination } from "../../../utils/usePagination";
 
 export default function Caregivers() {
   const [recordId, setRecordId] = useState(null);
@@ -92,6 +94,8 @@ export default function Caregivers() {
   const keyword = q.trim();
   const visible = caregivers.filter(inCenter(center))
     .filter((c) => `${c.name}${c.area}${centerShortOf(c.center)}${c.raw.careworkerState ?? ""}`.includes(keyword));
+  // 페이징 : 카드 3열 × 2줄 = 한 페이지 6명, 센터·검색어가 바뀌면 1페이지로
+  const { page, setPage, totalPages, pageItems, total } = usePagination(visible, 6, [center, keyword]);
   if (status !== "ok") return <LoadStatus status={status} onRetry={loadData} error={loadError} />;
   return (
     <div className="space-y-5">
@@ -111,7 +115,7 @@ export default function Caregivers() {
         <button onClick={loadData} className="mt-2 font-bold text-teal-700">다시 불러오기</button>
       </Panel>}
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-        {visible.map((c) => {
+        {pageItems.map((c) => {
           const pct = Math.min(100, (c.week / WEEK_LIMIT) * 100);
           const bar = c.week >= WEEK_LIMIT ? "bg-red-500" : c.week >= 48 ? "bg-amber-500" : "bg-teal-500";
           return (
@@ -141,6 +145,7 @@ export default function Caregivers() {
           );
         })}
       </div>
+      <Pagination page={page} totalPages={totalPages} total={total} onChange={setPage} plain />
       {visible.length === 0 && <Panel className="p-10 text-center text-sm text-slate-400">{keyword ? `'${keyword}' 에 해당하는 요양보호사가 없습니다.` : "선택한 센터에 등록된 요양보호사가 없습니다."}</Panel>}
       {detailId && <CaregiverDetailModal careworkerNo={detailId} stats={issues.length ? null : caregivers.find((c) => c.id === detailId)} onClose={() => setDetailId(null)} />}
       {record && <CaregiverRecord c={record} onClose={() => setRecordId(null)} onChanged={loadData} />}

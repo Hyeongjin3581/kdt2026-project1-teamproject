@@ -7,6 +7,8 @@ import { useCenter, inCenter } from "../../../context/CenterContext";
 import LoadStatus from "../../../components/common/LoadStatus";
 import { buildAdminModel, emptyModel, emptyRaw } from "../../../utils/adminAdapters";
 import CaregiverDetailModal from "../caregivers/CaregiverDetailModal";
+import Pagination from "../../../components/common/Pagination";
+import { usePagination } from "../../../utils/usePagination";
 
 export default function Guardians() {
   const [q, setQ] = useState("");
@@ -52,6 +54,8 @@ export default function Guardians() {
   useEffect(() => { loadData(); }, []);
   const { guardians } = model;
   const visible = useMemo(() => guardians.filter(inCenter(center)).filter((g) => `${g.name}${g.tel}${g.recipients.map((r) => r.name).join("")}`.includes(q)), [q, center, guardians]);
+  // 페이징 : 한 페이지 10명, 검색어·센터가 바뀌면 1페이지로
+  const { page, setPage, totalPages, pageItems, total } = usePagination(visible, 10, [q, center]);
   const refresh = () => {
     setQ("");
     setOpen(null);
@@ -69,7 +73,7 @@ export default function Guardians() {
           <table className="w-full min-w-[860px] text-sm">
             <thead className="bg-slate-50 text-left text-[11px] uppercase tracking-wide text-slate-400"><tr>{["보호자명", "연락처", "연결된 수급자", "관계", "가입일", "상태", ""].map((h) => <th key={h} className="px-5 py-3">{h}</th>)}</tr></thead>
             <tbody>
-              {visible.map((g) => (
+              {pageItems.map((g) => (
                 <Fragment key={g.id}>
                   <tr className="border-t border-slate-100 hover:bg-slate-50/70">
                     <td className="px-5 py-4"><b className="text-slate-800">{g.name}</b></td>
@@ -109,6 +113,7 @@ export default function Guardians() {
             </tbody>
           </table>
         </div>
+        <Pagination page={page} totalPages={totalPages} total={total} onChange={setPage} />
       </Panel>
       {caregiverNo && <CaregiverDetailModal careworkerNo={caregiverNo} stats={model.caregivers.find((c) => c.id === caregiverNo)} onClose={() => setCaregiverNo(null)} />}
     </div>
