@@ -200,9 +200,9 @@ export default function InquiryAnswerModal({ inquiry, siblings = [], otherPendin
                         <span className="grid h-7 w-7 place-items-center rounded-full bg-teal-100 text-xs font-bold text-teal-700">{idx + 1}</span>
                         <span className="flex-1">
                           <b className="text-sm text-slate-800">{c.careworkerName}</b>
-                          <span className="mt-0.5 block text-[11px] text-slate-500">거리 {Number(c.distanceKm).toFixed(1)}km · 최근 30일 {c.workCount}회</span>
+                          <span className="mt-0.5 block text-[11px] text-slate-500">거리 {Number(c.distanceKm).toFixed(1)}km · 최근 30일 {c.workCount}회{c.continuityCount !== undefined ? ` · 연속요양 ${c.continuityCount}회` : ""}</span>
                         </span>
-                        <span className="text-right"><span className="block font-mono text-sm font-bold text-teal-600">{Number(c.totalScore).toFixed(1)}점</span><span className="block text-[10px] text-slate-400">거리 {Number(c.distanceScore ?? 0).toFixed(0)} + 근무 {Number(c.workScore ?? 0).toFixed(0)}</span></span>
+                        <span className="font-mono text-sm font-bold text-teal-600">{Number(c.totalScore).toFixed(1)}점</span>
                       </button>
                     ))}
                   </div>

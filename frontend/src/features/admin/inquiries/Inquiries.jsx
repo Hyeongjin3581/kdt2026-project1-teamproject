@@ -97,17 +97,18 @@ export default function Inquiries() {
                 </div>
                 <div className="overflow-x-auto">
                     <table className="w-full min-w-[1040px] text-sm">
-                        <thead className="bg-slate-50 text-left text-[11px] uppercase tracking-wide text-slate-400"><tr>{["번호", "보호자", "문의 유형", "방문 일정 (현재 → 희망)", "내용", "상태", ""].map((h) => <th key={h} className="px-5 py-3">{h}</th>)}</tr></thead>
+                        <thead className="bg-slate-50 text-left text-[11px] uppercase tracking-wide text-slate-400"><tr>{["번호", "보호자", "문의 유형", "방문 일정 (현재 → 희망)", "내용", "상태", ""].map((h) => <th key={h} className="whitespace-nowrap px-5 py-3">{h}</th>)}</tr></thead>
                         <tbody>
                             {rows.map((i) => (
                                 <tr key={i.inquiryNo} className="border-t border-slate-100 align-top hover:bg-slate-50/70">
                                     <td className="px-5 py-4 font-mono text-slate-500">{i.inquiryNo}</td>
-                                    <td className="px-5 py-4">
+                                    {/* 보호자 · 관계 / 어르신 이름이 글자 단위로 꺾이지 않도록 한 줄씩 유지 */}
+                                    <td className="whitespace-nowrap px-5 py-4">
                                         {/* 보호자 목록에는 탈퇴한 보호자가 없으므로 찾지 못하면 탈퇴로 표시 */}
                                         <b className={i.guardian ? "text-slate-800" : "text-slate-400"}>{i.guardian?.guardianName ?? "탈퇴한 보호자"}</b>{i.guardian && <span className="ml-1 text-xs text-slate-400">({i.guardian.guardianRelationship})</span>}
                                         {i.careRecipientName && <span className="mt-0.5 block text-[11px] text-slate-400">{i.careRecipientName} 어르신</span>}
                                     </td>
-                                    <td className="px-5 py-4"><Badge tone="info">{i.category}</Badge></td>
+                                    <td className="whitespace-nowrap px-5 py-4"><Badge tone="info">{i.category}</Badge></td>
                                     <td className="whitespace-nowrap px-5 py-4 font-mono text-xs text-slate-600">
                                         {/* 현재 방문 일정(연결된 요청) → 희망 일정. 이미 옮겨졌으면 희망 일정 한 줄 + '변경 완료' */}
                                         {isMoved(i) ? (
@@ -119,8 +120,8 @@ export default function Inquiries() {
                                         </>}
                                         {pendingSiblingsOf(i).length > 0 && <span className="mt-1 block font-sans text-[10px] font-semibold text-teal-600">함께 보낸 문의 대기 {pendingSiblingsOf(i).length}건</span>}
                                     </td>
-                                    <td className="px-5 py-4 text-slate-600">{i.inquiryContent}</td>
-                                    <td className="px-5 py-4"><Badge tone={inquiryStatus(i).tone}>{i.status}</Badge></td>
+                                    <td className="min-w-[240px] px-5 py-4 text-slate-600">{i.inquiryContent}</td>
+                                    <td className="whitespace-nowrap px-5 py-4"><Badge tone={inquiryStatus(i).tone}>{i.status}</Badge></td>
                                     <td className="whitespace-nowrap px-5 py-4 text-right">
                                         <button onClick={() => setAnswering(i)} className={`mr-3 rounded-lg px-3 py-1.5 text-xs font-bold transition ${i.answerContent ? "border border-teal-200 text-teal-700 hover:bg-teal-50" : "bg-teal-600 text-white hover:bg-teal-700"}`}>{i.answerContent ? "응답 수정" : "응답하기"}</button>
                                         <button onClick={() => removeInquiry(i)} className="text-xs font-bold text-red-500 hover:underline">삭제</button>

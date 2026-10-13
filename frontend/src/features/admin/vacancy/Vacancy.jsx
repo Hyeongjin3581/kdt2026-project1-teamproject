@@ -33,12 +33,18 @@ const toEvent = (v) => ({
   cancelledNames: v.cancelledCareworkerName ? v.cancelledCareworkerName.split(", ") : [], // "홍길동, 김철수" → 이름 배열
   urgent: v.urgent,
   hoursLeft: v.hoursLeft,
+  startAt: new Date(`${v.visitDate}T${toHhmm(v.visitStartTime) || "00:00"}:00`), // 방문 시작 시각
 });
+
+// 방문 시작까지 1시간 이하로 남은 결원은 대체자를 구할 시간이 없으므로 화면에서 뺀다
+const HIDE_BEFORE_MS = 60 * 60 * 1000;
+const isOpenVacancy = (e, now) => {
+  if (Number.isNaN(e.startAt.getTime())) return e.hoursLeft > 1; // 시각을 못 읽으면 서버의 남은 시간으로 판단
+  return e.startAt.getTime() - now > HIDE_BEFORE_MS;
+};
 
 // 방문까지 남은 시간 표시 (24시간 이내면 긴급)
 const deadlineText = (e) => {
-  if (e.hoursLeft < 0) return "방문 시간 지남";
-  if (e.hoursLeft < 1) return "긴급 · 1시간 이내";
   if (e.urgent) return `긴급 · ${e.hoursLeft}시간 남음`;
   return `방문까지 ${e.hoursLeft}시간`;
 };
@@ -54,6 +60,8 @@ export default function Vacancy() {
   const [candidates, setCandidates] = useState({ requestNo: null, loading: false, list: [], error: false });
   const [busyNo, setBusyNo] = useState(null);
   const [message, setMessage] = useState("");
+  const [now, setNow] = useState(() => Date.now()); // 1분마다 갱신해 화면을 켜 둔 동안에도 임박한 결원을 뺀다
+  useEffect(() => { const timer = setInterval(() => setNow(Date.now()), 60 * 1000); return () => clearInterval(timer); }, []);
 
   // 결원 목록 : GET /vacancy → [{ requestNo, vacancyState, careRecipientName, visitDate, visitStartTime, visitEndTime, centerNo, cancelledCareworkerName, urgent, hoursLeft, ... }]
   // 서버에서 긴급 결원 먼저, 방문이 빠른 순으로 정렬되어 온다. refresh 가 true 면 화면을 유지한 채 다시 불러온다.
@@ -68,8 +76,9 @@ export default function Vacancy() {
       setCenters(buildCenters(centersRes.data));
       setVacancies(list);
       // 처음 열 때는 가장 급한 결원이 있는 달을 보여 준다
-      if (!refresh && list.length > 0) {
-        const [y, m] = list[0].iso.split("-").map(Number);
+      const firstOpen = list.find((e) => isOpenVacancy(e, Date.now()));
+      if (!refresh && firstOpen) {
+        const [y, m] = firstOpen.iso.split("-").map(Number);
         setMonth({ y, m: m - 1 });
       }
       setStatus("ok");
@@ -81,8 +90,8 @@ export default function Vacancy() {
   }
   useEffect(() => { loadData(); }, []);
 
-  // 선택한 센터의 결원 중 보고 있는 달의 결원
-  const events = vacancies.filter(inCenter(center));
+  // 선택한 센터의 결원 중 보고 있는 달의 결원 (서버는 지난 날짜만 빼 주므로, 방문 시작까지 1시간 이하로 남은 결원은 여기서 뺀다)
+  const events = vacancies.filter(inCenter(center)).filter((e) => isOpenVacancy(e, now));
   const monthPrefix = `${month.y}-${pad(month.m + 1)}`;
   const monthEvents = events.filter((e) => e.iso.startsWith(monthPrefix));
   const eventsOf = (d) => monthEvents.filter((e) => e.iso === toIso(month.y, month.m, d));
@@ -96,7 +105,7 @@ export default function Vacancy() {
   const moveMonth = (n) => setMonth((cur) => { const d = new Date(cur.y, cur.m + n, 1); return { y: d.getFullYear(), m: d.getMonth() }; });
   const select = (requestNo) => { setSelectedNo(requestNo); setMessage(""); };
 
-  // 대체 후보 재추천 : GET /vacancy/detail?requestNo=번호 → 거절/취소한 요양보호사를 뺀 상위 3명 [{ careworkerNo, careworkerName, distanceKm, workCount, totalScore, ... }]
+  // 대체 후보 재추천 : GET /vacancy/detail?requestNo=번호 → 거절/취소한 요양보호사를 뺀 상위 3명 [{ careworkerNo, careworkerName, distanceKm, workCount, continuityCount, totalScore, ... }]
   // 대체요청중(대체자 수락 대기)인 결원은 서버가 빈 목록을 주므로 조회하지 않는다.
   const evNo = ev?.requestNo ?? null;
   const evState = ev?.state ?? null;
@@ -172,7 +181,7 @@ export default function Vacancy() {
               );
             })}
           </div>
-          <p className="mt-4 rounded-lg bg-slate-50 p-3 text-[11px] leading-5 text-slate-500">표시된 날짜를 선택하면 오른쪽에 결원 정보와 대체 후보 추천이 함께 표시됩니다. 방문까지 24시간 이내로 남은 결원은 긴급으로 표시됩니다. 이미 지난 방문은 목록에서 제외됩니다.</p>
+          <p className="mt-4 rounded-lg bg-slate-50 p-3 text-[11px] leading-5 text-slate-500">표시된 날짜를 선택하면 오른쪽에 결원 정보와 대체 후보 추천이 함께 표시됩니다. 방문까지 24시간 이내로 남은 결원은 긴급으로 표시됩니다. 방문 시작까지 1시간 이하로 남았거나 이미 지난 방문은 목록에서 제외됩니다.</p>
         </Panel>
 
         {ev ? (
@@ -208,7 +217,7 @@ export default function Vacancy() {
             <Panel className="overflow-hidden">
               <div className="border-b border-slate-100 px-5 py-4">
                 <h2 className="font-display font-bold text-slate-900">대체 후보 재추천 <span className="text-sm font-normal text-slate-400">· 추천점수 순</span></h2>
-                <p className="mt-1 text-[11px] text-slate-400">거절/취소한 요양보호사는 제외 · 거리 70점 + 최근 30일 근무량 30점</p>
+                <p className="mt-1 text-[11px] text-slate-400">거절/취소한 요양보호사는 제외 · 거리 50점 + 최근 30일 근무량 30점 + 연속요양 20점</p>
               </div>
               <div className="divide-y divide-slate-100">
                 {ev.state === "대체요청중" ? (
@@ -225,9 +234,9 @@ export default function Vacancy() {
                       <span className={`grid h-7 w-7 place-items-center rounded-full font-mono text-xs font-bold ${i === 0 ? "bg-teal-600 text-white" : "bg-slate-100 text-slate-500"}`}>{i + 1}</span>
                       <div className="min-w-28 flex-1">
                         <b className="text-sm text-slate-800">{c.careworkerName}</b>
-                        <p className="text-[11px] text-slate-400">거리 {c.distanceKm}km · 최근 30일 근무 {c.workCount}회</p>
+                        <p className="text-[11px] text-slate-400">거리 {Number(c.distanceKm).toFixed(1)}km · 최근 30일 {c.workCount}회{c.continuityCount !== undefined ? ` · 연속요양 ${c.continuityCount}회` : ""}</p>
                       </div>
-                      <b className="font-mono text-lg text-teal-600">{c.totalScore}점</b>
+                      <b className="font-mono text-lg text-teal-600">{Number(c.totalScore).toFixed(1)}점</b>
                       <button onClick={() => assign(c)} disabled={busyNo !== null}
                         className="rounded-lg bg-teal-600 px-3 py-2 text-xs font-bold text-white transition hover:bg-teal-700 disabled:opacity-50">
                         {busyNo === c.careworkerNo ? "지정 중..." : "대체자로 지정"}

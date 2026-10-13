@@ -26,12 +26,12 @@ export const stateMeta = {
   unassigned: { tone: "danger", label: "미배정" },
 };
 
-const allCenter = { id: "all", name: "전체 센터", short: "전체 센터 통합" };
+const allCenter = { id: "all", name: "총괄 센터", short: "총괄 센터" };
 
 // 각 화면이 axios로 조회한 목록만 채워 넣고, 나머지는 빈 배열로 두기 위한 기본값
 export const emptyRaw = { centers: [], careworkers: [], guardians: [], recipients: [], users: [], requests: [], reports: [] };
 
-// 센터 목록 : [전체 센터, ...백엔드 센터] (센터 선택 드롭다운과 센터명 표시에 사용)
+// 센터 목록 : [총괄 센터, ...백엔드 센터] (요양보호사 소속 센터명 표시에 사용)
 export const buildCenters = (rawCenters) => [allCenter, ...rawCenters.map((c) => ({ id: c.centerNo, name: c.centerName, short: shortCenter(c.centerName) }))];
 const WEEK_DATES = Array.from({ length: 6 }, (_, i) => addDays(WEEK_START, i));
 const scheduleDays = WEEK_DATES.map((iso) => `${DAY_KR[parseDate(iso).getDay()]} ${parseDate(iso).getDate()}`);
@@ -128,6 +128,7 @@ export function buildAdminModel(raw, opts = {}) {
       area: areaOf(r.careRecipientAddress),
       guardian: g ? `${g.guardianName} (${g.guardianRelationship})` : guardianLeft ? "탈퇴한 보호자" : "-",
       cg: cw?.careworkerName ?? "미배정",
+      cgNo: cw?.careworkerNo ?? null,
       tone: guardianLeft ? "neutral" : cw ? "ok" : "warning",
       status: guardianLeft ? "보호자 탈퇴" : cw ? "돌봄 중" : pending ? "배정 대기" : "담당 조정 필요",
       center: (cw ?? anyCw)?.centerNo ?? null,
@@ -147,7 +148,7 @@ export function buildAdminModel(raw, opts = {}) {
     status: "정상",
     tone: "ok",
     center: guardianCenter(g.guardianNo),
-    recipients: recipients.filter((r) => r.guardianNo === g.guardianNo).map((r) => ({ name: r.name, area: r.area, cg: r.cg })),
+    recipients: recipients.filter((r) => r.guardianNo === g.guardianNo).map((r) => ({ name: r.name, area: r.area, cg: r.cg, cgNo: r.cgNo })),
   }));
 
   const todayIso = TODAY.slice(0, 10).replaceAll(".", "-");

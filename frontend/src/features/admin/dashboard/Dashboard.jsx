@@ -128,24 +128,7 @@ export default function Dashboard() {
           </Panel>
           <Panel className="overflow-hidden">
             <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
-              <div><h2 className="font-display font-bold text-slate-900">주 52시간 초과 위험 요양보호사</h2><p className="mt-0.5 text-xs text-slate-400">근로기준법 기준 · 이번 주 근무시간</p></div>
-              <button onClick={() => go("caregivers")} className="text-xs font-semibold text-teal-600 hover:underline">인력 관리 →</button>
-            </div>
-            <div className="divide-y divide-slate-100">
-              {overLimit.length === 0 && <p className="px-5 py-6 text-center text-sm text-slate-400">주 {WEEK_LIMIT}시간 초과 위험 요양보호사가 없습니다.</p>}
-              {overLimit.map((c) => (
-                <div key={c.id} className="flex items-center gap-4 px-5 py-3.5">
-                  <div className="grid h-9 w-9 place-items-center rounded-full bg-teal-100 text-sm font-bold text-teal-700">{c.name[0]}</div>
-                  <b className="flex-1 text-sm text-slate-800">{c.name} <span className="font-normal text-slate-400">요양보호사</span></b>
-                  <div className="w-28"><div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100"><div className={`h-full rounded-full ${c.week >= WEEK_LIMIT ? "bg-red-500" : "bg-amber-500"}`} style={{ width: `${Math.min(100, (c.week / WEEK_LIMIT) * 100)}%` }} /></div></div>
-                  <b className={`w-16 text-right font-mono text-sm ${c.week >= WEEK_LIMIT ? "text-red-600" : "text-amber-600"}`}>{c.week}/{WEEK_LIMIT}h</b>
-                </div>
-              ))}
-            </div>
-          </Panel>
-          <Panel className="overflow-hidden">
-            <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
-              <div><h2 className="font-display font-bold text-slate-900">오늘의 방문 일정</h2><p className="mt-0.5 text-xs text-slate-400">시간순 · 총 {visits.length}건{center === "all" && " · 전체 센터"}</p></div>
+              <div><h2 className="font-display font-bold text-slate-900">오늘의 방문 일정</h2><p className="mt-0.5 text-xs text-slate-400">시간순 · 총 {visits.length}건{center === "all" && " · 총괄 센터"}</p></div>
               <button onClick={() => go("schedule")} className="text-xs font-semibold text-teal-600 hover:underline">주간 일정 보기 →</button>
             </div>
             <div className="overflow-x-auto">

@@ -10,9 +10,12 @@ import { buildAdminModel, emptyModel, emptyRaw } from "../../../utils/adminAdapt
 import CaregiverRecord from "./CaregiverRecord";
 import CaregiverFormModal from "./CaregiverFormModal";
 import PendingApprovalModal from "./PendingApprovalModal";
+import CaregiverDetailModal from "./CaregiverDetailModal";
 
 export default function Caregivers() {
   const [recordId, setRecordId] = useState(null);
+  const [detailId, setDetailId] = useState(null); // 상세 조회할 요양보호사 번호 (null 이면 닫힘)
+  const [q, setQ] = useState("");                 // 검색어 (이름 · 지역 · 센터 · 근무 상태)
   const [formTarget, setFormTarget] = useState(null); // null: 닫힘, 요양보호사 DTO: 수정
   const [approvalOpen, setApprovalOpen] = useState(false); // 가입 승인 창
   const [pendingCount, setPendingCount] = useState(0);      // 승인 대기 건수 (0 이면 표시 없음)
@@ -85,7 +88,10 @@ export default function Caregivers() {
     }
   };
   const center = useCenter();
-  const visible = caregivers.filter(inCenter(center));
+  const centerShortOf = (no) => centers.find((x) => x.id === no)?.short ?? "";
+  const keyword = q.trim();
+  const visible = caregivers.filter(inCenter(center))
+    .filter((c) => `${c.name}${c.area}${centerShortOf(c.center)}${c.raw.careworkerState ?? ""}`.includes(keyword));
   if (status !== "ok") return <LoadStatus status={status} onRetry={loadData} error={loadError} />;
   return (
     <div className="space-y-5">
@@ -94,6 +100,11 @@ export default function Caregivers() {
           요양보호사 가입 승인
           {pendingCount > 0 && <span className="inline-flex h-5 min-w-5 items-center justify-center gap-0.5 rounded-full bg-rose-500 px-1.5 text-[11px] font-bold text-white">✓ {pendingCount}</span>}
         </button>} />
+      {/* 검색 : 보호자 관리와 같은 모양, 찾은 요양보호사의 이름을 누르면 상세 조회 */}
+      <Panel className="flex flex-wrap items-center gap-3 p-4">
+        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="요양보호사명, 거주 지역, 센터, 근무 상태 검색" className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-100 sm:w-80" />
+        <span className="text-xs text-slate-400">{keyword ? `검색 결과 ${visible.length}명` : `총 ${visible.length}명`} · 이름을 누르면 상세 정보를 볼 수 있습니다.</span>
+      </Panel>
       {issues.length > 0 && <Panel className="p-4 text-sm text-amber-800">
         <p>요양보호사 목록은 조회했습니다. 추가 정보 조회 실패로 근무시간·배정 건수·근무 기록은 확인할 수 없습니다.</p>
         {issues.map((issue, index) => <p key={index} className="mt-1 text-xs">{issue.config?.url} · {issue.response ? `HTTP ${issue.response.status}` : "응답 없음"}</p>)}
@@ -106,10 +117,11 @@ export default function Caregivers() {
           return (
             <Panel key={c.id} className="p-5 transition hover:shadow-md">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
+                {/* 이름을 누르면 요양보호사 상세 조회 */}
+                <button type="button" onClick={() => setDetailId(c.id)} className="group flex items-center gap-3 text-left">
                   <div className="grid h-11 w-11 place-items-center rounded-full bg-teal-100 font-display text-lg font-bold text-teal-700">{c.name[0]}</div>
-                  <div><b className="text-slate-900">{c.name}</b><p className="mt-0.5 text-xs text-slate-400">{c.gender}{center === "all" && ` · ${centers.find((x) => x.id === c.center)?.short}`}</p></div>
-                </div>
+                  <div><b className="text-slate-900 group-hover:text-teal-700 group-hover:underline">{c.name}</b><p className="mt-0.5 text-xs text-slate-400">{c.gender}{center === "all" && ` · ${centers.find((x) => x.id === c.center)?.short}`}</p></div>
+                </button>
                 <Badge tone={issues.length ? "neutral" : c.tone}>{issues.length ? c.raw.careworkerState : c.status}</Badge>
               </div>
               <div className="mt-4 rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-500">근무 가능 요일 · <b className="text-slate-700">{c.days}</b></div>
@@ -129,7 +141,8 @@ export default function Caregivers() {
           );
         })}
       </div>
-      {visible.length === 0 && <Panel className="p-10 text-center text-sm text-slate-400">선택한 센터에 등록된 요양보호사가 없습니다.</Panel>}
+      {visible.length === 0 && <Panel className="p-10 text-center text-sm text-slate-400">{keyword ? `'${keyword}' 에 해당하는 요양보호사가 없습니다.` : "선택한 센터에 등록된 요양보호사가 없습니다."}</Panel>}
+      {detailId && <CaregiverDetailModal careworkerNo={detailId} stats={issues.length ? null : caregivers.find((c) => c.id === detailId)} onClose={() => setDetailId(null)} />}
       {record && <CaregiverRecord c={record} onClose={() => setRecordId(null)} onChanged={loadData} />}
       {approvalOpen && <PendingApprovalModal centers={centers} onClose={() => setApprovalOpen(false)} onApproved={() => { loadData(); loadPendingCount(); }} />}
       {formTarget && <CaregiverFormModal careworker={formTarget} onClose={() => setFormTarget(null)} onSaved={() => { setFormTarget(null); loadData(); }} />}
