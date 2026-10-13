@@ -7,6 +7,7 @@ import LoadStatus from "../../../components/common/LoadStatus";
 import { buildAdminModel, emptyModel, emptyRaw } from "../../../utils/adminAdapters";
 import { toMin, conflictSet } from "../../../utils/scheduleUtils";
 import { WEEK_START } from "../../../constants";
+import CaregiverDetailModal from "../caregivers/CaregiverDetailModal";
 
 // weekStart(월요일)에서 n 주 떨어진 월요일 : "2026-10-05" + 1 -> "2026-10-12"
 const shiftWeek = (iso, n) => {
@@ -36,6 +37,9 @@ export default function Schedule() {
   const model = useMemo(() => (raw ? buildAdminModel(raw, { weekStart }) : emptyModel), [raw, weekStart]);
   const [status, setStatus] = useState("loading");
   const [loadError, setLoadError] = useState(null);
+  const [q, setQ] = useState("");                     // 요양보호사 이름 검색어
+  const [suggestOpen, setSuggestOpen] = useState(false); // 검색 후보 목록 열림
+  const [detailNo, setDetailNo] = useState(null);     // 상세 조회할 요양보호사 번호 (null 이면 닫힘)
 
   // 방문 일정 화면에 필요한 목록을 axios로 조회 : axios.get("통신할주소", { 옵션 }) → response.data
   async function loadData() {
@@ -69,9 +73,21 @@ export default function Schedule() {
     }
   }
   useEffect(() => { loadData(); }, []);
-  const { centers, scheduleDays, weekTable } = model;
-  const rows = weekTable.filter(inCenter(center));
-  const conflictCount = rows.reduce((n, r) => n + r.cells.reduce((m, cell) => m + (conflictSet(cell).size > 0 ? 1 : 0), 0), 0);
+  const { centers, scheduleDays, weekTable, caregivers } = model;
+  const keyword = q.trim();
+  // 검색어가 있으면 이름이 맞는 요양보호사의 타임테이블만 보여 준다
+  const centerRows = weekTable.filter(inCenter(center));
+  const rows = centerRows.filter((r) => r.cg.includes(keyword));
+  const suggestions = keyword ? rows.slice(0, 8) : [];
+  const openDetail = (no) => { setDetailNo(no); setSuggestOpen(false); };
+
+  // 근무 기록의 요청 번호 → 수급자 이름 (상세 창의 근무 기록에 표시)
+  const recipientNameOf = (requestNo) => {
+    const request = raw?.requests.find((x) => x.requestNo === requestNo);
+    if (!request) return null;
+    return raw.recipients.find((x) => x.careRecipientNo === request.carerecipientNo)?.careRecipientName ?? null;
+  };
+  const conflictCount = centerRows.reduce((n, r) => n + r.cells.reduce((m, cell) => m + (conflictSet(cell).size > 0 ? 1 : 0), 0), 0);
   if (status !== "ok") return <LoadStatus status={status} onRetry={loadData} error={loadError} />;
   return (
     <div className="space-y-5">
@@ -84,6 +100,30 @@ export default function Schedule() {
             <button type="button" onClick={() => setWeekOffset((w) => w + 1)} aria-label="다음 주" className="px-3 py-2 hover:bg-slate-50">▶</button>
           </div>
           {weekOffset !== 0 && <button type="button" onClick={() => setWeekOffset(0)} className="rounded-lg border border-teal-200 bg-teal-50 px-3 py-2 text-xs font-bold text-teal-700 hover:bg-teal-100">이번 주로</button>}
+          {/* 요양보호사 검색 : 입력하면 타임테이블을 거르고, 후보를 고르면(또는 Enter) 상세 조회 */}
+          <div className="relative w-full sm:w-64">
+            <input value={q}
+              onChange={(e) => { setQ(e.target.value); setSuggestOpen(true); }}
+              onFocus={() => setSuggestOpen(true)}
+              onBlur={() => setTimeout(() => setSuggestOpen(false), 150)}
+              onKeyDown={(e) => { if (e.key === "Enter" && suggestions.length > 0) openDetail(suggestions[0].id); }}
+              placeholder="요양보호사명 검색 · 상세 조회"
+              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-100" />
+            {suggestOpen && keyword && (
+              <div className="absolute left-0 right-0 top-full z-20 mt-1 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-lg">
+                {suggestions.map((r) => (
+                  <button key={r.id} type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => openDetail(r.id)}
+                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs hover:bg-teal-50">
+                    <span className="grid h-6 w-6 place-items-center rounded-full bg-teal-100 text-[10px] font-bold text-teal-700">{r.cg[0]}</span>
+                    <b className="text-slate-700">{r.cg}</b>
+                    <span className="text-slate-400">{centers.find((c) => c.id === r.center)?.short}</span>
+                    <span className="ml-auto text-[10px] font-semibold text-teal-600">상세 ›</span>
+                  </button>
+                ))}
+                {suggestions.length === 0 && <p className="px-3 py-3 text-xs text-slate-400">'{keyword}' 에 해당하는 요양보호사가 없습니다.</p>}
+              </div>
+            )}
+          </div>
           <div className="ml-auto flex items-center gap-3 text-[11px] text-slate-500">
             <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-amber-400" />수락 대기</span>
             <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-emerald-500" />확정</span>
@@ -105,7 +145,7 @@ export default function Schedule() {
             <div key={row.id} className="grid grid-cols-[132px_repeat(6,1fr)] border-b border-slate-100 last:border-0">
               <div className="flex items-center gap-2 border-r border-slate-100 px-3 py-4">
                 <div className="grid h-8 w-8 place-items-center rounded-full bg-teal-100 text-xs font-bold text-teal-700">{row.cg[0]}</div>
-                <div><b className="block text-xs text-slate-700">{row.cg}</b>{center === "all" && <span className="text-[10px] text-slate-400">{centers.find((c) => c.id === row.center)?.short}</span>}</div>
+                <div><button type="button" onClick={() => openDetail(row.id)} className="block text-left text-xs font-bold text-slate-700 hover:text-teal-700 hover:underline">{row.cg}</button>{center === "all" && <span className="text-[10px] text-slate-400">{centers.find((c) => c.id === row.center)?.short}</span>}</div>
               </div>
               {row.cells.map((visits, i) => {
                 const bad = conflictSet(visits);
@@ -127,12 +167,13 @@ export default function Schedule() {
               })}
             </div>
           ))}
-          {rows.length === 0 && <div className="px-5 py-10 text-center text-sm text-slate-400">선택한 센터에 등록된 요양보호사 일정이 없습니다.</div>}
+          {rows.length === 0 && <div className="px-5 py-10 text-center text-sm text-slate-400">{keyword ? `'${keyword}' 에 해당하는 요양보호사가 없습니다.` : "선택한 센터에 등록된 요양보호사 일정이 없습니다."}</div>}
         </div>
       </Panel>
       {conflictCount > 0
         ? <Panel className="border-red-200 bg-red-50 p-4 text-sm text-red-800"><b>진단 경고 · 시간 충돌 {conflictCount}건</b> — 수동 배정 변경 또는 일정 수정으로 동일 요양보호사에게 시간이 겹치는 방문이 발생했습니다. 담당자를 변경하거나 자동편성으로 재조정하세요.</Panel>
         : <Panel className="flex items-center gap-2 border-emerald-200 bg-emerald-50/70 p-3 text-xs text-emerald-800"><span className="text-emerald-500">✓</span> 현재 시간 충돌이 없습니다. 수동으로 배정을 변경하거나 일정을 수정해 충돌이 생기면 진단 경고가 표시됩니다.</Panel>}
+      {detailNo && <CaregiverDetailModal careworkerNo={detailNo} stats={caregivers.find((c) => c.id === detailNo)} withRecords recipientNameOf={recipientNameOf} onClose={() => setDetailNo(null)} />}
     </div>
   );
 }

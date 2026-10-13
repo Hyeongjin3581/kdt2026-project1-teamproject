@@ -51,10 +51,10 @@ export default function RecipientEditModal({ recipient, onClose, onChanged }) {
                 withCredentials: true,
             });
             if (response.data) onChanged();
-            else setMessage("삭제에 실패했습니다.");
+            else setMessage("방문 요청 기록이 있는 수급자는 삭제할 수 없습니다.");
         } catch (error) {
             console.error(error);
-            setMessage("삭제할 수 없습니다. 연결된 방문 요청이 있으면 먼저 정리해야 합니다.");
+            setMessage("서버 통신 오류가 발생했습니다.");
         }
     };
 

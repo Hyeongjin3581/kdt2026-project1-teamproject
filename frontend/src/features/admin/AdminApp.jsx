@@ -4,10 +4,25 @@ import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { Client } from "@stomp/stompjs";
 import AppMark from "../../components/common/AppMark";
-import CenterSelect from "../../components/common/CenterSelect";
 import { TODAY } from "../../constants";
 import { CenterCtx } from "../../context/CenterContext";
-import { buildCenters } from "../../utils/adminAdapters";
+
+// 통합 관리자 체제 : 센터를 고르지 않고 모든 센터를 '총괄 센터' 하나로 본다
+const CENTER_ALL = "all";
+const CENTER_TITLE = "총괄 센터";
+
+// 초록 불이 들어온 '총괄 센터' 표시 (dark : 사이드바용 어두운 배경)
+function CenterLamp({ dark = false }) {
+  return (
+    <div className={`flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-bold ${dark ? "bg-white/10 text-white" : "border border-emerald-200 bg-emerald-50 text-emerald-700"}`}>
+      <span className="relative flex h-2.5 w-2.5 shrink-0">
+        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" />
+        <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.9)]" />
+      </span>
+      {CENTER_TITLE}
+    </div>
+  );
+}
 
 const adminNav = [
   { id: "dashboard", label: "대시보드", short: "대시보드", icon: "▦" },
@@ -88,13 +103,12 @@ export default function AdminApp({ logout }) {
   const centerName = (id) => centers.find((c) => c.id === id)?.name ?? "전체 센터";
   const content = <Outlet context={{ refreshes }} />;
   return (
-    <CenterCtx.Provider value={center}>
+    <CenterCtx.Provider value={CENTER_ALL}>
     <div className="min-h-screen bg-[#f4f8f7]">
       <aside className="fixed inset-y-0 z-20 hidden w-64 flex-col bg-[#07231d] p-4 text-slate-300 lg:flex">
         <div className="flex items-center gap-3 px-2 py-3"><AppMark /><div><b className="font-display text-lg text-white">온케어 스케줄</b><p className="font-mono text-[9px] tracking-widest text-teal-300">HOME CARE OPS</p></div></div>
         <div className="mt-6 px-1">
-          <p className="mb-1.5 px-1 font-mono text-[10px] tracking-[.16em] text-slate-500">센터 선택</p>
-          <CenterSelect centers={centers} center={center} setCenter={setCenter} dark />
+          <CenterLamp dark />
         </div>
         <div className="mt-6 px-2 font-mono text-[10px] tracking-[.16em] text-slate-500">WORKSPACE</div>
         <nav className="mt-3 space-y-1">
@@ -106,7 +120,7 @@ export default function AdminApp({ logout }) {
           ))}
         </nav>
         <div className="mt-auto rounded-lg border border-white/10 bg-white/5 p-3">
-          <p className="text-xs font-semibold text-white">{centerName(center)}</p>
+          <p className="text-xs font-semibold text-white">{CENTER_TITLE}</p>
           <p className="mt-1 text-[11px] text-slate-400">관리자</p>
           <button onClick={logout} className="mt-3 text-xs text-teal-300 transition hover:text-white">로그아웃 →</button>
         </div>
@@ -114,9 +128,9 @@ export default function AdminApp({ logout }) {
       <div className="lg:pl-64">
         <header className="sticky top-0 z-10 flex h-16 items-center justify-between gap-3 border-b border-slate-200 bg-white/90 px-5 backdrop-blur lg:px-8">
           <div className="flex items-center gap-2 lg:hidden"><AppMark size="h-8 w-8 text-sm" /><b className="font-display text-slate-900">온케어</b></div>
-          <p className="hidden text-xs text-slate-500 lg:block">{TODAY} · <b className="text-slate-700">{centerName(center)}</b></p>
+          <p className="hidden text-xs text-slate-500 lg:block">{TODAY} · <b className="text-slate-700">{CENTER_TITLE}</b></p>
           <div className="flex items-center gap-3">
-            <div className="w-40 lg:hidden"><CenterSelect centers={centers} center={center} setCenter={setCenter} /></div>
+            <div className="lg:hidden"><CenterLamp /></div>
             <div className="grid h-8 w-8 place-items-center rounded-full bg-teal-100 text-xs font-bold text-teal-700">관</div>
           </div>
         </header>
