@@ -1,7 +1,9 @@
 package oncare_backend.config;
 
 import lombok.RequiredArgsConstructor;
+import oncare_backend.model.dto.UserDto;
 import oncare_backend.service.ChatMessageService;
+import oncare_backend.service.UserService;
 import org.jspecify.annotations.Nullable;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
@@ -14,6 +16,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class ChatSubInterceptor implements ChannelInterceptor {
     private final ChatMessageService chatMessageService;
+    private final UserService userService;
 
     // 메시지 브로커로 들어가기 직전에 호출 -> preSend
     // Message<?> -> 지나가는 메시지 한 통 , MessageChannel -> 메시지 지나가는 통로 , 여기선 안쓰임
@@ -29,22 +32,32 @@ public class ChatSubInterceptor implements ChannelInterceptor {
 
         // getDestination() -> 목적지 주소 반환
         String destination = accessor.getDestination();
+        if (destination == null || accessor.getSessionAttributes() == null){
+            return null;
+        }
+        Integer no = (Integer) accessor.getSessionAttributes().get("userNo");
+
+        // 분기1. 관리자 알림 채널 => 관리자가 아니면 알림 X
+        if (destination.startsWith("/sub/admin/")){
+            UserDto me = userService.findById(no);
+            if ( me == null || me.getUserCategoryNo() != 4){
+                return null;
+            }
+            return message;
+        }
+
+        // 분기2. 기존 채팅방 그대로
         String prefix = "/sub/chat/room/";
         // 채팅방 주소가 아니면 거부
-        if (destination == null || !destination.startsWith(prefix)){
+        if (destination.startsWith(prefix)){
+            // prefix만큼 길이 잘라서 roomId값만 추출
+            String roomId = destination.substring(prefix.length());
+            if (chatMessageService.canEnter(roomId,no)){
+                return message;
+            }
             return null;
         }
 
-        // prefix만큼 길이 잘라서 roomId값만 추출
-        String roomId = destination.substring(prefix.length());
-        // ChatHandshakeInterceptor에서 저장한 attributes에서 userNo값 추출
-        Integer userNo = (Integer)accessor.getSessionAttributes().get("userNo");
-
-        // 추출한 값을 canEnter에 넘겻 유효성 검사
-        if (!chatMessageService.canEnter(roomId, userNo)){
-            return null;
-        }
-
-        return message;
+        return null;
     }
 }
