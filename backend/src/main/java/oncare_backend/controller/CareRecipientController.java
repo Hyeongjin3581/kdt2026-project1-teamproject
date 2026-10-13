@@ -2,15 +2,9 @@ package oncare_backend.controller;
 
 import java.util.List;
 
+import oncare_backend.service.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import oncare_backend.model.dto.CareRecipientDto;
 import oncare_backend.service.CareRecipientService;
@@ -21,11 +15,21 @@ public class CareRecipientController {
 
 	@Autowired
 	private CareRecipientService careRecipientService;
+    @Autowired
+    private JwtUtil jwtUtil;
 
 	// 1. 수급자 등록
 	@PostMapping("")
-	public boolean CareRecipientSave(@RequestBody CareRecipientDto careRecipientDto) {
-		return careRecipientService.CareRecipientSave(careRecipientDto);
+	public boolean CareRecipientSave(@CookieValue(value = "accessToken", required = false)String token,
+                                     @RequestBody CareRecipientDto careRecipientDto) {
+        if (token == null){
+            return false;
+        }
+        Integer userNo = jwtUtil.getUserNoFromAccessToken(token);
+        if (userNo == null){
+            return false;
+        }
+        return careRecipientService.CareRecipientSave(careRecipientDto);
 	}
 
 	// 2. 수급자 전체 조회

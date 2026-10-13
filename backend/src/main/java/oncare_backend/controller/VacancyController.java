@@ -21,7 +21,7 @@ public class VacancyController {
 
 	// 1. 결원 목록 조회(관리자)
 	@GetMapping("")
-	public List<VacancyDto> findAll(@RequestParam(name = "centerNo", required = false) Integer centerNo) {
+	public List<VacancyDto> findAll(@RequestParam(name = "centerNo") Integer centerNo) {
 		return vacancyService.findAll(centerNo);
 	}
 
