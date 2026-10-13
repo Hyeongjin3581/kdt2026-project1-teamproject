@@ -103,7 +103,8 @@ export default function Inquiries() {
                                 <tr key={i.inquiryNo} className="border-t border-slate-100 align-top hover:bg-slate-50/70">
                                     <td className="px-5 py-4 font-mono text-slate-500">{i.inquiryNo}</td>
                                     <td className="px-5 py-4">
-                                        <b className="text-slate-800">{i.guardian?.guardianName ?? "-"}</b>{i.guardian && <span className="ml-1 text-xs text-slate-400">({i.guardian.guardianRelationship})</span>}
+                                        {/* 보호자 목록에는 탈퇴한 보호자가 없으므로 찾지 못하면 탈퇴로 표시 */}
+                                        <b className={i.guardian ? "text-slate-800" : "text-slate-400"}>{i.guardian?.guardianName ?? "탈퇴한 보호자"}</b>{i.guardian && <span className="ml-1 text-xs text-slate-400">({i.guardian.guardianRelationship})</span>}
                                         {i.careRecipientName && <span className="mt-0.5 block text-[11px] text-slate-400">{i.careRecipientName} 어르신</span>}
                                     </td>
                                     <td className="px-5 py-4"><Badge tone="info">{i.category}</Badge></td>

@@ -15,7 +15,7 @@ const range = (a, b) => `${hhmm(a)}~${hhmm(b)}`;
 const minutes = (t) => { const [h, m] = toHhmm(t).split(":").map(Number); return h * 60 + m; };
 const hoursBetween = (a, b) => (a && b ? (minutes(b) - minutes(a)) / 60 : 0);
 const fmtHours = (h) => `${Math.round(h * 10) / 10}h`;
-const areaOf = (addr) => (addr ?? "").replace(/^경기도\s*/, "");
+const areaOf = (addr) => (addr ?? "").replace(/^(서울특별시|경기도)\s*/, "");
 const dongOf = (addr) => (addr ?? "").trim().split(/\s+/).pop() ?? "";
 const shortCenter = (name) => name.replace(" 온케어 방문요양센터", "센터").replace("온케어 ", "");
 
@@ -102,13 +102,21 @@ export function buildAdminModel(raw, opts = {}) {
     };
   });
 
+  const weekEnd = addDays(WEEK_START, 6);
+  const DAY_ORDER = ["월요일", "화요일", "수요일", "목요일", "금요일", "토요일", "일요일"];
   const recipientsBase = raw.recipients.map((r) => {
     const g = raw.guardians.find((x) => x.guardianNo === r.guardianNo);
+    const guardianLeft = r.guardianNo != null && !g; // 보호자 목록에는 탈퇴한 보호자가 없다
     const reqs = raw.requests.filter((q) => q.carerecipientNo === r.careRecipientNo).sort((a, b) => (b.visitDate ?? "").localeCompare(a.visitDate ?? ""));
     const live = reqs.filter((q) => q.requestState !== "취소");
-    const cw = live.map((q) => reportByReq.get(q.requestNo)).find((rp) => rp && !rp.cancelled)?.cw;
+    // 현재 담당 : 이번 주까지의 방문 중 가장 최근에 수락(확정)·완료한 요양보호사 (다음 주 수락 대기 중인 사람은 제외)
+    const accepted = (rp) => rp && (rp.workStatus === "확정" || rp.workStatus === "완료");
+    const cw = live.filter((q) => q.visitDate && q.visitDate <= weekEnd).map((q) => reportByReq.get(q.requestNo)).find(accepted)?.cw
+      ?? live.map((q) => reportByReq.get(q.requestNo)).find((rp) => rp && !rp.cancelled)?.cw;
     const anyCw = reqs.map((q) => reportByReq.get(q.requestNo)).find((rp) => rp?.cw)?.cw;
-    const schedule = [...new Set(live.filter((q) => q.visitDate).map((q) => `${DAY_KR[parseDate(q.visitDate).getDay()]}요일|${range(q.visitStartTime, q.visitEndTime)}`))].map((s) => s.split("|"));
+    const schedule = [...new Set(live.filter((q) => q.visitDate).map((q) => `${DAY_KR[parseDate(q.visitDate).getDay()]}요일|${range(q.visitStartTime, q.visitEndTime)}`))]
+      .map((s) => s.split("|"))
+      .sort((a, b) => DAY_ORDER.indexOf(a[0]) - DAY_ORDER.indexOf(b[0]) || a[1].localeCompare(b[1]));
     const pending = reqs[0]?.requestState === "신청";
     return {
       id: r.careRecipientNo,
@@ -118,10 +126,10 @@ export function buildAdminModel(raw, opts = {}) {
       gender: (r.careRecipientGender ?? "-")[0],
       grade: `${r.careRecipientAge}세`,
       area: areaOf(r.careRecipientAddress),
-      guardian: g ? `${g.guardianName} (${g.guardianRelationship})` : "-",
+      guardian: g ? `${g.guardianName} (${g.guardianRelationship})` : guardianLeft ? "탈퇴한 보호자" : "-",
       cg: cw?.careworkerName ?? "미배정",
-      tone: cw ? "ok" : "warning",
-      status: cw ? "돌봄 중" : pending ? "배정 대기" : "담당 조정 필요",
+      tone: guardianLeft ? "neutral" : cw ? "ok" : "warning",
+      status: guardianLeft ? "보호자 탈퇴" : cw ? "돌봄 중" : pending ? "배정 대기" : "담당 조정 필요",
       center: (cw ?? anyCw)?.centerNo ?? null,
       schedule,
       history: reqs.filter((q) => q.requestState === "완료").map((q) => [mdLabel(q.visitDate), reportByReq.get(q.requestNo)?.cw?.careworkerName ?? "-", q.requestContent ?? ""]),

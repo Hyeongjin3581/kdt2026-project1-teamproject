@@ -25,7 +25,7 @@ const toEvent = (v) => ({
   center: v.centerNo,
   iso: v.visitDate,
   recipient: v.careRecipientName ?? "-",
-  area: (v.careRecipientAddress ?? "").replace(/^경기도\s*/, ""),
+  area: (v.careRecipientAddress ?? "").replace(/^(서울특별시|경기도)\s*/, ""),
   dateLabel: dateLabel(v.visitDate),
   time: `${toHhmm(v.visitStartTime)}~${toHhmm(v.visitEndTime)}`,
   gender: v.preferredGender ?? "무관",

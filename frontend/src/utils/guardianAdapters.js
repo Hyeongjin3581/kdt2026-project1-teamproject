@@ -40,7 +40,7 @@ export const toRecipient = (r) => ({
     guardianNo: r.guardianNo,
     name: r.careRecipientName,
     age: String(r.careRecipientAge ?? ""),
-    address: (r.careRecipientAddress ?? "").replace(/^경기도\s*/, ""),
+    address: (r.careRecipientAddress ?? "").replace(/^(서울특별시|경기도)\s*/, ""),
     gender: r.careRecipientGender === "남자" ? "male" : r.careRecipientGender === "여자" ? "female" : "unknown",
     significant: r.careRecipientContent ?? "",
 });
