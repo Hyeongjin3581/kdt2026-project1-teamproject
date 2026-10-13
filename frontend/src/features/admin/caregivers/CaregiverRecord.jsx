@@ -27,7 +27,7 @@ export default function CaregiverRecord({ c, onClose, onChanged }) {
     try {
       const response = await axios.delete("/careworkerreport", { params: { careworkersReportNo: reportNo }, withCredentials: true });
       if (response.data) onChanged();
-      else alert("삭제에 실패했습니다.");
+      else alert("리뷰가 등록된 근무 기록은 삭제할 수 없습니다.");
     } catch (error) {
       console.error(error);
       alert("서버 통신 오류가 발생했습니다.");

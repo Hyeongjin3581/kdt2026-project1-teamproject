@@ -10,7 +10,7 @@ export default function AccountModal({ guardian, recipients = [], onClose, onLog
   const fieldCls = "mt-1.5 w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-800 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100";
 
   const [user, setUser] = useState(null);
-  const [form, setForm] = useState({ email: "", phone: "", password: "", passwordConfirm: "" });
+  const [form, setForm] = useState({ name: guardian?.guardianName ?? "", email: "", phone: "", password: "", passwordConfirm: "" });
   const [saved, setSaved] = useState(false);
   const [message, setMessage] = useState("");
   const [editingRecipient, setEditingRecipient] = useState(null);
@@ -33,19 +33,23 @@ export default function AccountModal({ guardian, recipients = [], onClose, onLog
     loadUser();
   }, [guardian?.userNo]);
 
-  // 개인정보 수정 : PUT /user (비밀번호는 입력했을 때만 변경)
+  // 개인정보 수정 : 이름은 PUT /guardian, 연락처·이메일·비밀번호는 PUT /user (비밀번호는 입력했을 때만 변경)
   const saveInfo = async () => {
     setMessage("");
     if (!user) return;
+    if (!form.name.trim()) { setMessage("이름을 입력해주세요."); return; }
     if (form.password && form.password.length < 8) { setMessage("비밀번호는 8자 이상이어야 합니다."); return; }
     if (form.password !== form.passwordConfirm) { setMessage("비밀번호 확인이 일치하지 않습니다."); return; }
     try {
-      const response = await axios.put(
-        "/user",
-        { userNo: user.userNo, userId: user.userId, email: form.email, phoneNumber: form.phone, userPassword: form.password || null },
-        { withCredentials: true }
-      );
-      if (response.data) { setSaved(true); update("password", ""); update("passwordConfirm", ""); }
+      const [guardianRes, userRes] = await Promise.all([
+        axios.put("/guardian", { guardianNo: guardian.guardianNo, guardianName: form.name.trim() }, { withCredentials: true }),
+        axios.put(
+          "/user",
+          { userNo: user.userNo, userId: user.userId, email: form.email, phoneNumber: form.phone, userPassword: form.password || null },
+          { withCredentials: true }
+        ),
+      ]);
+      if (guardianRes.data && userRes.data) { setSaved(true); update("password", ""); update("passwordConfirm", ""); onChanged(); }
       else setMessage("저장에 실패했습니다.");
     } catch (error) {
       console.error(error);
@@ -53,17 +57,17 @@ export default function AccountModal({ guardian, recipients = [], onClose, onLog
     }
   };
 
-  // 계정 탈퇴 : DELETE /user?no=회원번호 (쿼리 파라미터로 전달)
+  // 계정 탈퇴 : PUT /user/state (body { userNo }) → 회원 상태를 delete 로 변경 (데이터는 보존)
   const withdraw = async () => {
     setMessage("");
     if (confirmText !== "탈퇴합니다") { setMessage("확인 문구를 정확히 입력해주세요."); return; }
     try {
-      const response = await axios.delete("/user", { params: { no: guardian.userNo }, withCredentials: true });
+      const response = await axios.put("/user/state", { userNo: guardian.userNo }, { withCredentials: true });
       if (response.data) onLogout();
       else setMessage("탈퇴 처리에 실패했습니다.");
     } catch (error) {
       console.error(error);
-      setMessage("탈퇴할 수 없습니다. 연결된 보호자·수급자 정보가 남아 있으면 센터에 문의해주세요.");
+      setMessage("서버 통신 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
     }
   };
 
@@ -96,9 +100,10 @@ export default function AccountModal({ guardian, recipients = [], onClose, onLog
             ) : (
               <div className="space-y-3">
                 <div className="grid grid-cols-2 gap-3">
-                  <label className="block text-xs font-semibold text-slate-600">아이디<input className={`${fieldCls} bg-slate-50`} value={user?.userId ?? ""} disabled /></label>
-                  <label className="block text-xs font-semibold text-slate-600">연락처<input className={fieldCls} value={form.phone} onChange={(e) => update("phone", e.target.value)} /></label>
+                  <label className="block text-xs font-semibold text-slate-600">이름<input className={fieldCls} value={form.name} onChange={(e) => update("name", e.target.value)} /></label>
+                  <label className="block text-xs font-semibold text-slate-600">연락처<input className={fieldCls} value={form.phone} onChange={(e) => update("phone", e.target.value)} placeholder="010-0000-0000" /></label>
                 </div>
+                <label className="block text-xs font-semibold text-slate-600">아이디<input className={`${fieldCls} bg-slate-50 text-slate-500`} value={user?.userId ?? ""} readOnly /></label>
                 <label className="block text-xs font-semibold text-slate-600">이메일<input type="email" className={fieldCls} value={form.email} onChange={(e) => update("email", e.target.value)} /></label>
                 <label className="block text-xs font-semibold text-slate-600">비밀번호 변경 (새 비밀번호)<input type="password" className={fieldCls} value={form.password} onChange={(e) => update("password", e.target.value)} placeholder="변경할 경우에만 입력" /></label>
                 <label className="block text-xs font-semibold text-slate-600">비밀번호 확인<input type="password" className={fieldCls} value={form.passwordConfirm} onChange={(e) => update("passwordConfirm", e.target.value)} placeholder="비밀번호를 한 번 더 입력" /></label>
@@ -111,22 +116,23 @@ export default function AccountModal({ guardian, recipients = [], onClose, onLog
           )}
           {tab === "recipient" && (
             <div className="space-y-3">
-              <p className="text-xs text-slate-500">등록된 어르신의 정보를 수정하거나 삭제할 수 있습니다.</p>
-              {recipients.length === 0 && <p className="rounded-lg border border-dashed border-slate-200 px-4 py-6 text-center text-xs text-slate-400">등록된 어르신이 없습니다.</p>}
-              {recipients.map((r) => (
-                <div key={r.id} className="flex items-center justify-between rounded-lg border border-slate-200 px-4 py-3">
-                  <div>
-                    <p className="text-sm font-bold text-slate-800">{r.name} 어르신</p>
-                    <p className="text-xs text-slate-400">{r.address} · {r.age}세 · {r.gender === "female" ? "여성" : "남성"}</p>
+              <p className="text-xs text-slate-500">연결된 어르신 정보를 확인하고 수정·삭제할 수 있습니다. 새 어르신은 홈 화면의 '＋ 수급자 추가'에서 등록합니다.</p>
+              {recipients.map((recipient) => (
+                <div key={recipient.id} className="flex items-center gap-3 rounded-lg border border-slate-200 px-4 py-3">
+                  <div className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-teal-100 text-sm font-bold text-teal-700">{recipient.name[0]}</div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-bold text-slate-800">{recipient.name} 어르신</p>
+                    <p className="truncate text-xs text-slate-400">{recipient.address} · {recipient.age}세 · {recipient.gender === "female" ? "여성" : recipient.gender === "male" ? "남성" : "성별 미확인"}</p>
                   </div>
-                  <button onClick={() => setEditingRecipient(r.raw)} className="rounded-lg border border-teal-200 px-3 py-1.5 text-xs font-bold text-teal-700 transition hover:bg-teal-50">수정 · 삭제</button>
+                  <button onClick={() => setEditingRecipient(recipient.raw)} className="shrink-0 rounded-lg border border-teal-200 px-3 py-1.5 text-xs font-bold text-teal-700 transition hover:bg-teal-50">수정·삭제</button>
                 </div>
               ))}
+              {recipients.length === 0 && <p className="rounded-lg border border-dashed border-slate-200 px-4 py-6 text-center text-xs text-slate-400">연결된 어르신이 없습니다.</p>}
             </div>
           )}
           {tab === "withdraw" && (
             <div className="space-y-4">
-              <p className="rounded-lg bg-red-50 px-4 py-3 text-xs text-red-600">탈퇴하면 계정이 삭제되며 되돌릴 수 없습니다.</p>
+              <p className="rounded-lg bg-red-50 px-4 py-3 text-xs text-red-600">탈퇴하면 계정이 비활성화되어 다시 로그인할 수 없습니다. 수급자·방문 기록은 보존됩니다.</p>
               <label className="block text-xs font-semibold text-slate-600">확인 문구 입력<span className="ml-1 font-normal text-slate-400">("탈퇴합니다" 라고 입력)</span>
                 <input className={fieldCls} value={confirmText} onChange={(e) => setConfirmText(e.target.value)} placeholder="탈퇴합니다" />
               </label>

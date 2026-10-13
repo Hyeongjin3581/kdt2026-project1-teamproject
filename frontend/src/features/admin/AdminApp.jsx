@@ -1,12 +1,29 @@
 //
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
+import { Client } from "@stomp/stompjs";
 import AppMark from "../../components/common/AppMark";
-import CenterSelect from "../../components/common/CenterSelect";
 import { TODAY } from "../../constants";
 import { CenterCtx } from "../../context/CenterContext";
 import { buildCenters } from "../../utils/adminAdapters";
+
+// 통합 관리자 체제 : 센터를 고르지 않고 모든 센터를 '총괄 센터' 하나로 본다
+const CENTER_ALL = "all";
+const CENTER_TITLE = "총괄 센터";
+
+// 초록 불이 들어온 '총괄 센터' 표시 (dark : 사이드바용 어두운 배경)
+function CenterLamp({ dark = false }) {
+  return (
+    <div className={`flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-bold ${dark ? "bg-white/10 text-white" : "border border-emerald-200 bg-emerald-50 text-emerald-700"}`}>
+      <span className="relative flex h-2.5 w-2.5 shrink-0">
+        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" />
+        <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.9)]" />
+      </span>
+      {CENTER_TITLE}
+    </div>
+  );
+}
 
 const adminNav = [
   { id: "dashboard", label: "대시보드", short: "대시보드", icon: "▦" },
@@ -20,6 +37,9 @@ const adminNav = [
   { id: "centers", label: "센터 관리", short: "센터", icon: "⌂" },
 ];
 
+// 서버가 보내는 알림 종류(NotifyType) → 배지를 올릴 사이드바 메뉴(adminNav 의 id)
+const typeToMenu = { NEW_REQUEST: "requests", NEW_INQUIRY: "inquiries", VACANCY: "vacancy" };
+
 export default function AdminApp({ logout }) {
   const navigate = useNavigate();
   const { pathname } = useLocation();
@@ -28,6 +48,46 @@ export default function AdminApp({ logout }) {
   const setPage = (id) => navigate(id === "dashboard" ? "/admin" : `/admin/${id}`);
   const [center, setCenter] = useState("all");
   const [centers, setCenters] = useState(buildCenters([]));
+  const [badges, setBadges] = useState({ requests: 0, inquiries: 0, vacancy: 0 }); // 메뉴별 새 알림 개수
+  const [refreshes, setRefreshes] = useState({ requests: 0, inquiries: 0, vacancy: 0 }); // 메뉴별 목록 새로 불러오기 횟수 (하위 화면이 보고 다시 조회)
+  const [toast, setToast] = useState("");    // 화면 구석에 잠깐 띄우는 알림 문구
+  const pageRef = useRef(page);              // 지금 보고 있는 메뉴 (구독 안에서 쓰려고)
+  const toastTimer = useRef(null);           // 토스트를 지우는 타이머
+
+  // 관리자 알림 구독 : 채팅과 같은 웹소켓 입구(/ws-chat)를 재사용한다. 서버는 시스템 관리자만 구독을 허용한다.
+  useEffect(function () {
+    const client = new Client({
+      brokerURL: "ws://localhost:8080/ws-chat",
+      onConnect: function () {
+        client.subscribe("/sub/admin/notify", function (frame) {
+          handleNotify(JSON.parse(frame.body));
+        });
+      },
+    });
+    client.activate();
+    return function () {
+      clearTimeout(toastTimer.current);
+      client.deactivate();                   // AdminApp이 사라지면 연결 종료
+    };
+  }, []);
+
+  // 알림을 받았을 때 : 토스트를 띄우고, 해당 메뉴 목록을 다시 불러오게 신호를 보내고, 보고 있지 않은 메뉴의 배지를 +1
+  function handleNotify(notify) {
+    setToast(notify.message);
+    clearTimeout(toastTimer.current);
+    toastTimer.current = setTimeout(function () { setToast(""); }, 4000);
+
+    const menu = typeToMenu[notify.type];
+    if (menu) setRefreshes((prev) => ({ ...prev, [menu]: prev[menu] + 1 }));   // 지금 그 메뉴를 보고 있어도 목록은 갱신한다
+    if (!menu || pageRef.current === menu) return;
+    setBadges((prev) => ({ ...prev, [menu]: prev[menu] + 1 }));
+  }
+
+  // 메뉴가 바뀔 때 : 최신 메뉴를 기억해 두고, 그 메뉴의 배지는 0으로 되돌린다
+  useEffect(function () {
+    pageRef.current = page;
+    setBadges((prev) => (prev[page] ? { ...prev, [page]: 0 } : prev));
+  }, [page]);
 
   // 센터 선택 드롭다운과 센터명 표시를 위해 센터 목록을 axios로 조회
   useEffect(() => {
@@ -42,26 +102,26 @@ export default function AdminApp({ logout }) {
     loadCenters();
   }, [pathname]);
   const centerName = (id) => centers.find((c) => c.id === id)?.name ?? "전체 센터";
-  const content = <Outlet />;
+  const content = <Outlet context={{ refreshes }} />;
   return (
-    <CenterCtx.Provider value={center}>
+    <CenterCtx.Provider value={CENTER_ALL}>
     <div className="min-h-screen bg-[#f4f8f7]">
       <aside className="fixed inset-y-0 z-20 hidden w-64 flex-col bg-[#07231d] p-4 text-slate-300 lg:flex">
         <div className="flex items-center gap-3 px-2 py-3"><AppMark /><div><b className="font-display text-lg text-white">온케어 스케줄</b><p className="font-mono text-[9px] tracking-widest text-teal-300">HOME CARE OPS</p></div></div>
         <div className="mt-6 px-1">
-          <p className="mb-1.5 px-1 font-mono text-[10px] tracking-[.16em] text-slate-500">센터 선택</p>
-          <CenterSelect centers={centers} center={center} setCenter={setCenter} dark />
+          <CenterLamp dark />
         </div>
         <div className="mt-6 px-2 font-mono text-[10px] tracking-[.16em] text-slate-500">WORKSPACE</div>
         <nav className="mt-3 space-y-1">
           {adminNav.map((n) => (
             <button key={n.id} onClick={() => setPage(n.id)} className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm transition ${page === n.id ? "bg-teal-600 text-white shadow-lg shadow-teal-950/30" : "hover:bg-white/5 hover:text-white"}`}>
               <span className="w-4 text-center text-base">{n.icon}</span>{n.label}
+              {badges[n.id] > 0 && <span className="ml-auto rounded-full bg-rose-500 px-1.5 py-0.5 text-[10px] font-bold text-white">{badges[n.id]}</span>}
             </button>
           ))}
         </nav>
         <div className="mt-auto rounded-lg border border-white/10 bg-white/5 p-3">
-          <p className="text-xs font-semibold text-white">{centerName(center)}</p>
+          <p className="text-xs font-semibold text-white">{CENTER_TITLE}</p>
           <p className="mt-1 text-[11px] text-slate-400">관리자</p>
           <button onClick={logout} className="mt-3 text-xs text-teal-300 transition hover:text-white">로그아웃 →</button>
         </div>
@@ -69,21 +129,22 @@ export default function AdminApp({ logout }) {
       <div className="lg:pl-64">
         <header className="sticky top-0 z-10 flex h-16 items-center justify-between gap-3 border-b border-slate-200 bg-white/90 px-5 backdrop-blur lg:px-8">
           <div className="flex items-center gap-2 lg:hidden"><AppMark size="h-8 w-8 text-sm" /><b className="font-display text-slate-900">온케어</b></div>
-          <p className="hidden text-xs text-slate-500 lg:block">{TODAY} · <b className="text-slate-700">{centerName(center)}</b></p>
+          <p className="hidden text-xs text-slate-500 lg:block">{TODAY} · <b className="text-slate-700">{CENTER_TITLE}</b></p>
           <div className="flex items-center gap-3">
-            <div className="w-40 lg:hidden"><CenterSelect centers={centers} center={center} setCenter={setCenter} /></div>
+            <div className="lg:hidden"><CenterLamp /></div>
             <div className="grid h-8 w-8 place-items-center rounded-full bg-teal-100 text-xs font-bold text-teal-700">관</div>
           </div>
         </header>
         <main className="mx-auto max-w-[1500px] p-5 lg:p-8">{content}</main>
         <nav className="fixed inset-x-0 bottom-0 z-20 flex justify-around border-t border-slate-200 bg-white/95 px-1 py-1.5 backdrop-blur lg:hidden">
           {adminNav.map((n) => (
-            <button key={n.id} onClick={() => setPage(n.id)} className={`grid flex-1 place-items-center gap-0.5 rounded-lg px-0.5 py-1 text-[10px] font-semibold ${page === n.id ? "text-teal-600" : "text-slate-400"}`}><span className="text-base leading-none">{n.icon}</span><span className="w-full truncate text-center">{n.short}</span></button>
+            <button key={n.id} onClick={() => setPage(n.id)} className={`relative grid flex-1 place-items-center gap-0.5 rounded-lg px-0.5 py-1 text-[10px] font-semibold ${page === n.id ? "text-teal-600" : "text-slate-400"}`}><span className="text-base leading-none">{n.icon}</span><span className="w-full truncate text-center">{n.short}</span>{badges[n.id] > 0 && <span className="absolute right-2 top-0 rounded-full bg-rose-500 px-1.5 text-[9px] font-bold text-white">{badges[n.id]}</span>}</button>
           ))}
         </nav>
         <div className="h-14 lg:hidden" />
       </div>
     </div>
+    {toast && <div role="status" className="fixed right-5 top-20 z-50 rounded-lg bg-slate-900 px-4 py-3 text-sm font-semibold text-white shadow-lg">{toast}</div>}
     </CenterCtx.Provider>
   );
 }

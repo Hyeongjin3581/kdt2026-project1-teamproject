@@ -8,6 +8,7 @@ import Badge from "../../../components/common/Badge";
 import { useCenter, inCenter } from "../../../context/CenterContext";
 import LoadStatus from "../../../components/common/LoadStatus";
 import { buildAdminModel, emptyModel, emptyRaw } from "../../../utils/adminAdapters";
+import useNotifyRefresh from "../useNotifyRefresh";
 
 // 요청 상태별 탭 : 신청(미배정) → 배정중(요양보호사 수락 대기) → 배정완료(수락)
 const tabs = [
@@ -24,8 +25,9 @@ export default function Requests() {
   const [tab, setTab] = useState("all");
 
   // 요청 관리 화면에 필요한 목록을 axios로 조회 : axios.get("통신할주소", { 옵션 }) → response.data
-  async function loadData() {
-    setStatus("loading");
+  // silent : 새 알림으로 목록만 다시 받을 때는 로딩 화면 없이 데이터만 바꾼다 (보던 화면과 열어 둔 창을 유지)
+  async function loadData({ silent = false } = {}) {
+    if (!silent) setStatus("loading");
     try {
       const [centersRes, careworkersRes, guardiansRes, recipientsRes] = await Promise.all([
         axios.get("http://localhost:8080/center", { withCredentials: true }),
@@ -51,12 +53,13 @@ export default function Requests() {
       setStatus("ok");
     } catch (error) {
       console.error("요청 관리 조회 실패:", error);
-      setStatus("error");
+      if (!silent) setStatus("error");      // 조용한 갱신이 실패하면 보던 목록은 그대로 둔다
     }
   }
   useEffect(() => { loadData(); }, []);
+  useNotifyRefresh("requests", () => loadData({ silent: true }));   // 새 서비스 신청 알림이 오면 목록을 다시 불러온다
 
-  // 자동배정(후보 추천) : GET /careworkerreport/candidates?requestNo=번호 → 상위 3명 [{ careworkerNo, careworkerName, distanceKm, workCount, distanceScore, workScore, totalScore }]
+  // 자동배정(후보 추천) : GET /careworkerreport/candidates?requestNo=번호 → 상위 3명 [{ careworkerNo, careworkerName, distanceKm, workCount, continuityCount, totalScore }]
   // 직접 선택 목록 : GET /careworkerreport/available?requestNo=번호 → 필수 조건(근무중·성별·근무가능 시간·일정 겹침 없음)을 통과한 요양보호사 전체 [{ careworkerNo, careworkerName, ... }]
   // 이 API 가 아직 없는 서버면 전체 요양보호사 목록에서 고르게 한다.
   const [assignTarget, setAssignTarget] = useState(null);
@@ -203,16 +206,16 @@ export default function Requests() {
                         <span className="mt-0.5 block text-[11px] text-slate-500">
                           {typeof c.distanceKm === "number" ? `거리 ${c.distanceKm.toFixed(1)}km` : ""}
                           {c.workCount !== undefined ? ` · 최근 30일 ${c.workCount}회` : ""}
+                          {c.continuityCount !== undefined ? ` · 연속요양 ${c.continuityCount}회` : ""}
                         </span>
                       </span>
-                      {c.totalScore !== undefined && <span className="text-right"><span className="block font-mono text-sm font-bold text-teal-600">{Number(c.totalScore).toFixed(1)}점</span><span className="block text-[10px] text-slate-400">거리 {Number(c.distanceScore ?? 0).toFixed(0)} + 근무 {Number(c.workScore ?? 0).toFixed(0)}</span></span>}
+                      {c.totalScore !== undefined && <span className="font-mono text-sm font-bold text-teal-600">{Number(c.totalScore).toFixed(1)}점</span>}
                     </button>
                   ))}
                 </div>
               )}
               {!candidates.loading && available && available.length === 0 && <p className="rounded-lg bg-amber-50 px-3 py-2 text-xs leading-5 text-amber-700">이 방문 시간에 배정할 수 있는 요양보호사가 없습니다. 근무중인지, 선호 성별이 맞는지, 근무 가능 시간이 등록돼 있는지, 같은 시간에 다른 일정이 없는지를 확인해주세요.</p>}
               {!candidates.loading && available && available.length > 0 && candidates.list.length === 0 && <p className="rounded-lg bg-slate-50 px-3 py-2 text-xs leading-5 text-slate-500">추천 점수를 계산할 수 있는 후보는 없지만(주소 좌표 없음 등), 조건을 통과한 요양보호사를 아래에서 직접 선택할 수 있습니다.</p>}
-              {!candidates.loading && !available && <p className="rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-500">조건 필터 기능(서버)이 아직 준비되지 않아 전체 요양보호사 중에서 직접 선택합니다.</p>}
               {!candidates.loading && pickOptions.length > 0 && (manual || candidates.list.length === 0) && (
                 <label className="block text-xs font-semibold text-slate-600">요양보호사 직접 선택 <span className="font-normal text-slate-400">{available ? `(조건을 통과한 ${pickOptions.length}명)` : ""}</span>
                   <select value={pickedCw} onChange={(e) => setPickedCw(e.target.value)} className="mt-1.5 w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-800 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100">

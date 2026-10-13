@@ -40,7 +40,7 @@ export const toRecipient = (r) => ({
     guardianNo: r.guardianNo,
     name: r.careRecipientName,
     age: String(r.careRecipientAge ?? ""),
-    address: (r.careRecipientAddress ?? "").replace(/^경기도\s*/, ""),
+    address: (r.careRecipientAddress ?? "").replace(/^(서울특별시|경기도)\s*/, ""),
     gender: r.careRecipientGender === "남자" ? "male" : r.careRecipientGender === "여자" ? "female" : "unknown",
     significant: r.careRecipientContent ?? "",
 });
@@ -77,6 +77,7 @@ export function buildVisits({ requests, reports, careworkers }) {
                 cancelled,
                 done,
                 reportNo: report?.careworkersReportNo,       // 채팅방 번호로 쓸 근무기록 번호
+                workStatus: report?.workStatus,             // 후기 작성은 실제 근무가 완료된 경우만 가능
                 chatOpen: report?.workStatus === "확정",       // 확정일 때만 채팅 가능
             };
         })

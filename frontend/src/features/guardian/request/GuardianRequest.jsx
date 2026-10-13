@@ -6,7 +6,7 @@ import Panel from "../../../components/common/Panel";
 import Badge from "../../../components/common/Badge";
 import LoadStatus from "../../../components/common/LoadStatus";
 import { TODAY } from "../../../constants";
-import { buildHistory, buildVisits } from "../../../utils/guardianAdapters";
+import { buildHistory, buildVisits, todayIso } from "../../../utils/guardianAdapters";
 import { upcomingDates } from "../../../utils/upcomingDates";
 
 export default function GuardianRequest({ guardian, recipients, activeRecipientId, onSelectRecipient }) {
@@ -56,13 +56,15 @@ export default function GuardianRequest({ guardian, recipients, activeRecipientI
       ));
       setCategories(categoriesRes.data);
       setRequestType((current) => current || categoriesRes.data[0]?.inquiryCategoryName || "");
-      setVisits(buildVisits({ requests: requestsRes.data, reports: reportLists.flatMap((res) => res.data), careworkers: careworkersRes.data }).filter((v) => !v.cancelled));
+      // 요청할 수 있는 방문 : 방문 일정 화면과 같이 취소·완료를 뺀 방문 (지난 방문은 '방문 기록'에서 확인)
+      setVisits(buildVisits({ requests: requestsRes.data, reports: reportLists.flatMap((res) => res.data), careworkers: careworkersRes.data }).filter((v) => !v.cancelled && !v.done));
       setHistory(buildHistory({
         // 이 보호자의 문의 중 선택한 어르신 것만 (방문 연결이 없는 예전 문의는 어느 어르신인지 몰라 그대로 보여 준다)
         inquiries: inquiriesRes.data.filter((i) => i.guardianNo === guardian?.guardianNo
           && (i.careRecipientNo == null || i.careRecipientNo === selectedRecipient?.id)),
         categories: categoriesRes.data,
-        requests: requestsRes.data,
+        // 서비스 신청 내역은 오늘 이후 방문만 (매주 반복되는 지난 방문까지 넣으면 문의가 묻힌다)
+        requests: requestsRes.data.filter((q) => q.visitDate && q.visitDate >= todayIso),
       }));
       setStatus("ok");
     } catch (error) {
@@ -116,7 +118,7 @@ export default function GuardianRequest({ guardian, recipients, activeRecipientI
         ? await axios.delete("http://localhost:8080/guardianinquiry", { params: { inquiryNo: raw.inquiryNo }, withCredentials: true })
         : await axios.delete("/request", { params: { requestNo: raw.requestNo }, withCredentials: true });
       if (response.data) { setEditing(false); setSelectedRequestId(null); loadData(); }
-      else alert("처리에 실패했습니다.");
+      else alert(selectedRequest.source === "inquiry" ? "센터에서 응답한 문의는 삭제할 수 없습니다." : "이미 배정된 방문은 삭제할 수 없습니다.");
     } catch (error) {
       console.error(error);
       alert("서버 통신 오류가 발생했습니다.");

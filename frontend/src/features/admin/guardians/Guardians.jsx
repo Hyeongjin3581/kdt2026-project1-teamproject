@@ -6,10 +6,12 @@ import Badge from "../../../components/common/Badge";
 import { useCenter, inCenter } from "../../../context/CenterContext";
 import LoadStatus from "../../../components/common/LoadStatus";
 import { buildAdminModel, emptyModel, emptyRaw } from "../../../utils/adminAdapters";
+import CaregiverDetailModal from "../caregivers/CaregiverDetailModal";
 
 export default function Guardians() {
   const [q, setQ] = useState("");
   const [open, setOpen] = useState(null);
+  const [caregiverNo, setCaregiverNo] = useState(null); // 상세 조회할 요양보호사 번호 (null 이면 닫힘)
   const center = useCenter();
   const [model, setModel] = useState(emptyModel);
   const [status, setStatus] = useState("loading");
@@ -88,7 +90,12 @@ export default function Guardians() {
                               <div className="flex items-center gap-2"><div className="grid h-8 w-8 place-items-center rounded-full bg-teal-100 text-xs font-bold text-teal-700">{r.name[0]}</div><b className="text-sm text-slate-800">{r.name} <span className="font-normal text-slate-400">수급자</span></b></div>
                               <div className="mt-3 space-y-1 text-xs">
                                 <div className="flex justify-between"><span className="text-slate-400">거주 지역</span><span className="text-slate-600">{r.area}</span></div>
-                                <div className="flex justify-between"><span className="text-slate-400">담당 요양보호사</span><b className="text-slate-700">{r.cg}</b></div>
+                                <div className="flex justify-between"><span className="text-slate-400">담당 요양보호사</span>
+                                  {/* 담당자가 있으면 이름을 눌러 요양보호사 상세 조회 */}
+                                  {r.cgNo
+                                    ? <button onClick={() => setCaregiverNo(r.cgNo)} className="font-bold text-teal-700 hover:underline">{r.cg} ›</button>
+                                    : <b className="text-slate-700">{r.cg}</b>}
+                                </div>
                               </div>
                             </div>
                           ))}
@@ -103,6 +110,7 @@ export default function Guardians() {
           </table>
         </div>
       </Panel>
+      {caregiverNo && <CaregiverDetailModal careworkerNo={caregiverNo} stats={model.caregivers.find((c) => c.id === caregiverNo)} onClose={() => setCaregiverNo(null)} />}
     </div>
   );
 }
