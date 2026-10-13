@@ -13,6 +13,8 @@ import lombok.RequiredArgsConstructor;
 import oncare_backend.model.dto.CareWorkerRecommendationDto;
 import oncare_backend.model.entity.CareRecipientEntity;
 import oncare_backend.model.entity.CareworkerEntity;
+import oncare_backend.model.entity.CareworkerReportEntity;
+import oncare_backend.model.entity.RequestEntity;
 import oncare_backend.model.repository.CareRecipientRepository;
 import oncare_backend.model.repository.CareWorkerReportRepository;
 import org.springframework.http.HttpStatus;
@@ -29,16 +31,20 @@ public class CareWorkerRecommendationService {
     private final CareWorkerReportRepository careWorkerReportRepository;
     private final HaversineService haversineService;
 
-    // 점수는 거리점수 70정 + 근무점수 30점을 반환하여 최대 100점으로 산출함.
-    private static final double MAX_DISTANCE_SCORE = 70.0;
+    // 점수는 거리점수 50점 + 근무점수 30점 + 연속 요양 점수 20점을 더해 최대 100점으로 산출함.
+    private static final double MAX_DISTANCE_SCORE = 50.0;
     private static final double MAX_WORK_SCORE = 30.0;
+    private static final double MAX_CONTINUITY_SCORE = 20.0;        // 같은 수급자 연속 요양 점수 최대 20점
     // 점수 계산은 거리산출값이 소수점으로 반환되므로 double을 사용.
 
-    // 거리 10km부터 거리점수 0점  --> 실은 5km도 먼데.... 일단은 테스트이므로 10km로 해봄
-    private static final double DISTANCE_LIMIT_KM = 10.0;
+    // 거리 25km부터 거리점수 0점
+    private static final double DISTANCE_LIMIT_KM = 25.0;
 
     // 최근 30일 완료 근무 20회부터 근무점수 0점   --> 초과 근무는 몸에 해로워요.
     private static final double WORK_COUNT_LIMIT = 20.0;
+
+    // 같은 수급자를 요양한 횟수 1회당 5점 ( 1회 0점 , 2회 5점 , 3회 10점 , 4회 15점 , 5회 이상 20점 )
+    private static final double CONTINUITY_SCORE_PER_COUNT = 5.0;
 
 
     // [1] 석암 타이쵸우의 필수조건을 통과한 후보를 받아 점수를 계산하고 상위 3명을 반환함.
@@ -81,6 +87,9 @@ public class CareWorkerRecommendationService {
         }
         Map<Integer, Long> workCountMap = getWorkCountMap(workerNos);
 
+        // [3-1] 각 보호사가 이 수급자를 요양한 횟수를 조회
+        Map<Integer, Long> continuityCountMap = getContinuityCountMap(careRecipientNo, workerNos);
+
         // [4] 보호사마다 거리와 점수를 계산
         List<CareWorkerRecommendationDto> recommendations = new ArrayList<>();
         for (CareworkerEntity worker : targets) {
@@ -92,6 +101,10 @@ public class CareWorkerRecommendationService {
             double distanceScore = calculateDistanceScore(distanceKm);
             double workScore = calculateWorkScore(workCount);
 
+            // [4-1] 같은 수급자 연속 요양 점수 ( 기록이 없으면 0회 )
+            long continuityCount = continuityCountMap.getOrDefault(worker.getCareworkerNo(), 0L);
+            double continuityScore = calculateContinuityScore(continuityCount);
+
             recommendations.add(new CareWorkerRecommendationDto(
                     worker.getCareworkerNo(),
                     worker.getCareworkerName(),
@@ -99,7 +112,9 @@ public class CareWorkerRecommendationService {
                     workCount,
                     distanceScore,
                     workScore,
-                    distanceScore + workScore
+                    continuityCount,
+                    continuityScore,
+                    distanceScore + workScore + continuityScore
             ));
         }
 
@@ -125,6 +140,8 @@ public class CareWorkerRecommendationService {
                     item.getWorkCount(),
                     round2(item.getDistanceScore()),
                     round2(item.getWorkScore()),
+                    item.getContinuityCount(),
+                    round2(item.getContinuityScore()),
                     round2(item.getTotalScore())
             ));
         }
@@ -156,7 +173,37 @@ public class CareWorkerRecommendationService {
         return workCountMap;
     }
 
-    // [4] 설정한 거리(10km) 이상이면 0
+    // [3-1] 같은 수급자 요양 횟수 조회
+    // 요양보호사 번호로 근무기록 전체를 조회해서 , 이 수급자의 완료 근무만 셈
+    // 같은 요청의 완료 기록이 중복되어도 1회로 셈 ( 30일 근무 횟수와 같은 기준 )
+    private Map<Integer, Long> getContinuityCountMap(Integer careRecipientNo, List<Integer> careworkerNo) {
+
+        Map<Integer, Long> continuityCountMap = new HashMap<>();
+
+        for (Integer careworkerNo2 : careworkerNo) {
+            List<CareworkerReportEntity> report = careWorkerReportRepository.findByCareworkerEntity_CareworkerNo(careworkerNo2);
+
+            // 이미 센 요청 번호 ( 중복 확인용 )
+            List<Integer> countedRequestNo = new ArrayList<>();
+
+            for (CareworkerReportEntity careworkerReportEntity : report) {
+                if (!"완료".equals(careworkerReportEntity.getWorkStatus())) continue;          // 완료 근무만
+
+                RequestEntity requestEntity = careworkerReportEntity.getRequestEntity();
+                if (requestEntity == null || requestEntity.getCarerecipientEntity() == null) continue;
+                if (!careRecipientNo.equals(requestEntity.getCarerecipientEntity().getCareRecipientNo())) continue;  // 다른 수급자
+                if (countedRequestNo.contains(requestEntity.getRequestNo())) continue;           // 이미 센 요청
+
+                countedRequestNo.add(requestEntity.getRequestNo());
+            }
+
+            continuityCountMap.put(careworkerNo2, (long) countedRequestNo.size());
+        }
+
+        return continuityCountMap;
+    }
+
+    // [4] 설정한 거리(25km) 이상이면 0
     private double calculateDistanceScore(double distanceKm) {
         double remainingRatio =
                 Math.max(0.0, 1.0 - distanceKm / DISTANCE_LIMIT_KM);
@@ -168,6 +215,18 @@ public class CareWorkerRecommendationService {
         double remainingRatio =
                 Math.max(0.0, 1.0 - workCount / WORK_COUNT_LIMIT);
         return MAX_WORK_SCORE * remainingRatio;
+    }
+
+    // [4-1] 같은 수급자 연속 요양 점수 ( 1회 이하 0점 , 2회부터 1회당 5점 , 최대 20점 )
+    private double calculateContinuityScore(long continuityCount) {
+        if (continuityCount <= 1) {
+            return 0.0;
+        }
+        double continuityScore = (continuityCount - 1) * CONTINUITY_SCORE_PER_COUNT;
+        if (continuityScore > MAX_CONTINUITY_SCORE) {
+            continuityScore = MAX_CONTINUITY_SCORE;
+        }
+        return continuityScore;
     }
 
     // [5] 총점비교
