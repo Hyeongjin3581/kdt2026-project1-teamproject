@@ -58,10 +58,14 @@ public class AutoAssignService implements ActiveUserCheck {
 
         // 근무중인 상태 요양 보호사 필터링
         List<CareworkerEntity> workingList = all.stream().filter(careworkerEntity ->
-            careworkerEntity.getCareworkerState().equals("근무중")).toList();
+            "근무중".equals(careworkerEntity.getCareworkerState())).toList();
+
+        // 가입 승인 전(승인대기)인 요양보호사 제외 ( 로그인을 못 해서 배정을 수락할 수 없음 )
+        List<CareworkerEntity> approvedList = workingList.stream().filter(careworkerEntity ->
+            "승인완료".equals(careworkerEntity.getSignState())).toList();
 
         // 탈퇴(회원 상태 delete)한 요양보호사 제외
-        List<CareworkerEntity> activeList = workingList.stream().filter(careworkerEntity -> isActiveUser(careworkerEntity.getUserEntity())).toList();
+        List<CareworkerEntity> activeList = approvedList.stream().filter(careworkerEntity -> isActiveUser(careworkerEntity.getUserEntity())).toList();
 
         // 선호 성별
         String preferredGender = requestEntity.getPreferredGender();
@@ -82,6 +86,7 @@ public class AutoAssignService implements ActiveUserCheck {
     // 요양보호사 1명이 (임시)요청 시간에 근무 가능한지 : 문의 응답 팝업의 '기존 근무자' 판단, 응답 저장 시 서버 재검증에 사용
     public boolean isAvailable(CareworkerEntity cw, RequestEntity request, Integer excludeRequestNo) {
         return "근무중".equals(cw.getCareworkerState())
+            && "승인완료".equals(cw.getSignState())
             && isActiveUser(cw.getUserEntity())
             && genderOk(cw, request.getPreferredGender())
             && canWork(cw, request)

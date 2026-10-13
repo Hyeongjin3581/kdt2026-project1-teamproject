@@ -11,6 +11,8 @@ import oncare_backend.model.dto.CareworkerDto;
 import oncare_backend.model.entity.CareworkerEntity;
 import oncare_backend.model.entity.CenterEntity;
 import oncare_backend.model.entity.UserEntity;
+import oncare_backend.model.repository.CareWorkerReportRepository;
+import oncare_backend.model.repository.CaregiverAvailabilityRepository;
 import oncare_backend.model.repository.CareworkersRepository;
 import oncare_backend.model.repository.CenterRepository;
 import oncare_backend.model.repository.UserRepository;
@@ -28,6 +30,12 @@ public class CareworkersService implements ActiveUserCheck {
 
     @Autowired
     private GeoCodingService geoCodingService;
+
+    @Autowired
+    private CareWorkerReportRepository careWorkerReportRepository;
+
+    @Autowired
+    private CaregiverAvailabilityRepository caregiverAvailabilityRepository;
 
     // 1. 요양보호사 등록
     public boolean createCareworker(CareworkerDto careworkerDto) {
@@ -142,6 +150,10 @@ public class CareworkersService implements ActiveUserCheck {
 
     // 4. 요양보호사 수정
     public boolean updateCareworker(CareworkerDto careworkerDto) {
+        if (careworkerDto.getCareworkerNo() == null) return false;
+        // 주소가 비어 있으면 위도·경도를 구할 수 없으므로 수정 실패
+        if (careworkerDto.getCareworkerAddress() == null || careworkerDto.getCareworkerAddress().isBlank()) return false;
+
         CareworkerEntity careworkerEntity = careworkerRepository.findById(careworkerDto.getCareworkerNo()).orElse(null);
 
         if ( careworkerEntity == null ) return false;
@@ -180,6 +192,10 @@ public class CareworkersService implements ActiveUserCheck {
         CareworkerEntity careworkerEntity = careworkerRepository.findById(careworkerNo).orElse(null);
 
         if ( careworkerEntity == null ) return false;
+
+        // 근무기록이나 근무가능시간이 있는 요양보호사는 삭제하지 않음 ( 외래키 오류 500 방지 , 탈퇴는 회원 상태 변경으로 처리 )
+        if (!careWorkerReportRepository.findByCareworkerEntity_CareworkerNo(careworkerNo).isEmpty()) return false;
+        if (!caregiverAvailabilityRepository.findByCareworkerEntity_CareworkerNo(careworkerNo).isEmpty()) return false;
 
         careworkerRepository.deleteById(careworkerNo);
 

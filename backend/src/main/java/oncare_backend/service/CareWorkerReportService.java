@@ -126,6 +126,9 @@ public class CareWorkerReportService implements ActiveUserCheck {
     // 요양보호사 : 배정 수락
     public boolean acceptAssignment(AssignmentActionDto assignmentActionDto) {
         // 근무기록에서 넘버로 조회해서 요양보호사가 수락하면 근무기록의 상태는 확정, 요청의 상태는 배정완료
+        if (assignmentActionDto.getCareworkersReportNo() == null){
+            return false;
+        }
         CareworkerReportEntity reportEntity = careWorkerReportRepository.findById(assignmentActionDto.getCareworkersReportNo()).orElse(null);
         if (reportEntity == null){
             return false;
@@ -142,6 +145,9 @@ public class CareWorkerReportService implements ActiveUserCheck {
     // 요양보호사 : 배정 거절
     public boolean rejectAssignment(AssignmentActionDto assignmentActionDto) {
         // 근무기록에서 넘버로 조회해서 요양보호사가 거절하면 근무기록은 취소, 요청은 신청으로 복귀
+        if (assignmentActionDto.getCareworkersReportNo() == null){
+            return false;
+        }
         CareworkerReportEntity reportEntity = careWorkerReportRepository.findById(assignmentActionDto.getCareworkersReportNo()).orElse(null);
         if (reportEntity == null){
             return false;
@@ -158,9 +164,17 @@ public class CareWorkerReportService implements ActiveUserCheck {
     // 상위 3명중 1명 선택하면 상태가 배정인 근무기록 만들기
     public boolean assignCareworker(AssignCareworkerDto assignCareworkerDto) {
         // 받은 요청, 요양보호사가 없으면 false
+        if (assignCareworkerDto.getCareworkerNo() == null || assignCareworkerDto.getRequestNo() == null){
+            return false;
+        }
         CareworkerEntity findCareworker = careWorkerRepository.findById(assignCareworkerDto.getCareworkerNo()).orElse(null);
         RequestEntity findRequest = requestRepository.findById(assignCareworkerDto.getRequestNo()).orElse(null);
         if (findCareworker == null || findRequest == null){
+            return false;
+        }
+
+        // 가입 승인 전(승인대기)인 요양보호사는 로그인을 못 해서 수락할 수 없으므로 배정 불가
+        if (!"승인완료".equals(findCareworker.getSignState())){
             return false;
         }
 
@@ -212,6 +226,9 @@ public class CareWorkerReportService implements ActiveUserCheck {
 
     // 요양보호사가 확정된 요청을 취소
     public boolean cancel(AssignmentActionDto actionDto) {
+        if (actionDto.getCareworkersReportNo() == null){
+            return false;
+        }
         CareworkerReportEntity reportEntity = careWorkerReportRepository.findById(actionDto.getCareworkersReportNo()).orElse(null);
         if (reportEntity == null){
             return false;
@@ -227,6 +244,9 @@ public class CareWorkerReportService implements ActiveUserCheck {
 
     // 요양보호사 확정된 요청을 완료
     public boolean complete(AssignmentActionDto actionDto) {
+        if (actionDto.getCareworkersReportNo() == null){
+            return false;
+        }
         CareworkerReportEntity reportEntity = careWorkerReportRepository.findById(actionDto.getCareworkersReportNo()).orElse(null);
         if (reportEntity == null){
             return false;

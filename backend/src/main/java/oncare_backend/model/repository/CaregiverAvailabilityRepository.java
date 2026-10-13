@@ -12,4 +12,7 @@ import java.util.List;
 @Repository 
 public interface CaregiverAvailabilityRepository extends JpaRepository<CaregiverAvailabilityEntity, Integer>{
     List<CaregiverAvailabilityEntity> findByCareworkerEntityAndAvailableDate(CareworkerEntity careworkerEntity, LocalDate availableDate);
+
+    // 요양보호사 번호로 근무가능시간 조회 ( 요양보호사 삭제 전 확인용 )
+    List<CaregiverAvailabilityEntity> findByCareworkerEntity_CareworkerNo(Integer careworkerNo);
 }

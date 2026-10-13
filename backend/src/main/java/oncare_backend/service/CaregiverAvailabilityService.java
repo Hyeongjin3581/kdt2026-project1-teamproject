@@ -69,6 +69,8 @@ public class CaregiverAvailabilityService {
 
     // 4. 근무가능시간 수정
     public boolean updateCaregiverAvailability(CaregiverAvailabilityDto caregiverAvailabilityDto) {
+        if (caregiverAvailabilityDto.getAvailabilityNo() == null) return false;
+
         CaregiverAvailabilityEntity caregiverAvailabilityEntity = caregiverAvailabilityRepository.findById(caregiverAvailabilityDto.getAvailabilityNo()).orElse(null);
 
         if ( caregiverAvailabilityEntity == null ) return false;

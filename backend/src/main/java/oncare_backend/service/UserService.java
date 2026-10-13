@@ -183,6 +183,7 @@ public class UserService {
 
     // 회원수정
     public boolean update(UserDto userDto) {
+        if (userDto == null || userDto.getUserNo() == null) return false;
         UserEntity setEntity = userDto.dtoToEntity();
         UserEntity userEntity = userRepository.findById(userDto.getUserNo()).orElse(null);
         if (userEntity == null){
@@ -198,9 +199,19 @@ public class UserService {
             if (userCategoryEntity == null) return false;
         }
 
-        userEntity.setUserId(setEntity.getUserId());
-        userEntity.setEmail(setEntity.getEmail());
-        userEntity.setPhoneNumber(setEntity.getPhoneNumber());
+        // 전달된 값만 수정 ( 빈 값으로 덮어쓰면 아이디·이메일이 null 이 되어 로그인할 수 없음 )
+        if (setEntity.getUserId() != null && !setEntity.getUserId().isBlank()) {
+            // 다른 회원이 쓰는 아이디로는 바꿀 수 없음 ( unique 오류 500 방지 )
+            UserEntity userEntity2 = userRepository.findByUserId(setEntity.getUserId());
+            if (userEntity2 != null && !userEntity2.getUserNo().equals(userEntity.getUserNo())) return false;
+            userEntity.setUserId(setEntity.getUserId());
+        }
+        if (setEntity.getEmail() != null && !setEntity.getEmail().isBlank()) {
+            userEntity.setEmail(setEntity.getEmail());
+        }
+        if (setEntity.getPhoneNumber() != null && !setEntity.getPhoneNumber().isBlank()) {
+            userEntity.setPhoneNumber(setEntity.getPhoneNumber());
+        }
         if (userCategoryEntity != null) {
             userEntity.setUserCategoryEntity(userCategoryEntity);
         }
