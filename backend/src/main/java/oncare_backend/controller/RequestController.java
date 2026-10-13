@@ -2,6 +2,8 @@ package oncare_backend.controller;
 
 import java.util.List;
 
+import oncare_backend.model.dto.NotifyType;
+import oncare_backend.service.NotifyService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -20,12 +22,17 @@ import oncare_backend.service.RequestService;
 public class RequestController {
 
     @Autowired private RequestService requestService;
+    @Autowired private NotifyService notifyService;
     
     // [1] 서비스요청 추가
     @PostMapping ("")
     public boolean saveRequest(@RequestBody RequestDto requestDto, 
                                 @RequestParam(name="careRecipientNo")Integer carerecipientNo){
-        return requestService.saveRequest(requestDto, carerecipientNo);
+        boolean result = requestService.saveRequest(requestDto, carerecipientNo);
+        if (result){
+            notifyService.toAdmin(NotifyType.NEW_REQUEST, "새 서비스 신청이 들어왔습니다.");
+        }
+        return result;
     }
     
     // [2] 수급자 별 서비스요청 출력
