@@ -73,7 +73,7 @@ export default function GuardianApp({ user, logout }) {
       <Route path="home" element={<GuardianHome go={setPage} guardianName={guardian?.guardianName ?? ""} onRecipientChanged={loadRecipients} recipients={recipients} activeRecipientId={activeRecipient?.id} onSelectRecipient={setActiveRecipientId} />} />
       <Route path="apply" element={<GuardianApply recipient={activeRecipient} recipients={recipients} onSelectRecipient={setActiveRecipientId} onDone={() => setPage("home")} onRegisterRecipient={() => setPage("recipient")} />} />
       <Route path="schedule" element={<GuardianSchedule recipient={activeRecipient} />} />
-      <Route path="records" element={<GuardianRecords recipient={activeRecipient} />} />
+      <Route path="records" element={<GuardianRecords key={activeRecipient?.id ?? "none"} recipient={activeRecipient} recipients={recipients} onSelectRecipient={setActiveRecipientId} />} />
       <Route path="recipient" element={<GuardianRecipient guardianNo={guardian?.guardianNo} onComplete={async () => { const list = await loadRecipients(); setActiveRecipientId(list.at(-1)?.id ?? null); setPage("home"); }} onCancel={() => setPage("home")} />} />
       <Route path="request" element={<GuardianRequest guardian={guardian} recipients={recipients} activeRecipientId={activeRecipient?.id} onSelectRecipient={setActiveRecipientId} />} />
       <Route path="*" element={<Navigate to="home" replace />} />
