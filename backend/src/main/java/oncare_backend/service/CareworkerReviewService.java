@@ -34,8 +34,7 @@ public class CareworkerReviewService {
             return false;
         // 2. 로그인한 사용자로 보호자 찾기
         GuardianEntity guardianEntity =guardianRepository
-        .findByUserEntity_UserNo(loginUserNo)
-        .orElse(null);
+        .findByUserEntity_UserNo(loginUserNo);
         if (guardianEntity == null) return false;
 
         // 3. 근무기록 찾기
@@ -112,8 +111,7 @@ public class CareworkerReviewService {
 
     // 3. 로그인 사용자가 보호자인지 확인
     GuardianEntity guardianEntity = guardianRepository
-            .findByUserEntity_UserNo(loginUserNo)
-            .orElse(null);
+            .findByUserEntity_UserNo(loginUserNo);
 
     if (guardianEntity != null) {
         if (guardianEntity.getGuardianNo().equals(
@@ -161,7 +159,7 @@ public class CareworkerReviewService {
         public List<CareworkerReviewDto> getReviewsByGuardianLoginUser(
             Integer loginUserNo
         ){
-            GuardianEntity guardianEntity = guardianRepository.findByUserEntity_UserNo(loginUserNo).orElse(null);
+            GuardianEntity guardianEntity = guardianRepository.findByUserEntity_UserNo(loginUserNo);
          if (guardianEntity == null) return List.of();
 
          Integer guardianNo = guardianEntity.getGuardianNo();
@@ -175,8 +173,7 @@ public class CareworkerReviewService {
 
     // 2. 로그인한 보호자 찾기
         GuardianEntity guardianEntity = guardianRepository
-        .findByUserEntity_UserNo(loginUserNo)
-        .orElse(null);
+        .findByUserEntity_UserNo(loginUserNo);
         if (guardianEntity == null) return false;
 
     // 3. 수정할 후기 찾기
@@ -221,7 +218,7 @@ public class CareworkerReviewService {
         // 1. reviewNo 확인
             if (reviewDto.getReviewNo() == null) return false;
         // 2. 로그인한 보호자 찾기
-            GuardianEntity guardianEntity = guardianRepository.findByUserEntity_UserNo(loginUserNo).orElse(null);
+            GuardianEntity guardianEntity = guardianRepository.findByUserEntity_UserNo(loginUserNo);
             if (guardianEntity == null) return false;
 
         // 3. 후기 찾기
