@@ -14,4 +14,7 @@ public interface CareworkersRepository extends JpaRepository<CareworkerEntity, I
     List<CareworkerEntity> findBySignState(String signState);
 
     Optional<CareworkerEntity> findByUserEntity_UserNo(Integer userNo);
+
+    // 센터 번호로 소속 요양보호사 조회 ( 센터 삭제 전 확인용 )
+    List<CareworkerEntity> findByCenterEntity_CenterNo(Integer centerNo);
 }

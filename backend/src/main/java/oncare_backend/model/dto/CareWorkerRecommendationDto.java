@@ -15,6 +15,8 @@ public class CareWorkerRecommendationDto {
     private final long workCount;
     private final double distanceScore;
     private final double workScore;
+    private final long continuityCount;         // 이 수급자를 요양한 횟수 ( 완료 근무 )
+    private final double continuityScore;       // 같은 수급자 연속 요양 점수 ( 최대 20점 )
     private final double totalScore;
 }
 

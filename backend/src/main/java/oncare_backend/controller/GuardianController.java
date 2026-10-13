@@ -28,7 +28,7 @@ public class GuardianController {
 		return guardianService.GuardianFindAll();
 	}
 
-	// 2. 보호자 수정 
+	// 2. 보호자 수정 --> Access 토큰 확인 후 userCategory가 1번일때만 수정 가능하게 해야함. (유효성검사)
 	@PutMapping("")
 	public boolean update(@RequestBody GuardianDto guardianDto){
 		return guardianService.update(guardianDto);

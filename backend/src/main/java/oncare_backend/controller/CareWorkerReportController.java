@@ -87,13 +87,13 @@ public class CareWorkerReportController {
 
     // 요청 번호를 받아 필수 조건을 통과한 요양보호사 중 상위 3명을 반환
     @GetMapping("/candidates")
-    public List<CareWorkerRecommendationDto> candidates(@RequestParam("requestNo") Integer requestNo) {
+    public List<CareWorkerRecommendationDto> top3Careworkers(@RequestParam("requestNo") Integer requestNo) {
         return autoAssignService.top3Careworkers(requestNo);
     }
 
     // 요청 번호 받아 필수 조건을 통과한 요양보호사 List 반환
     @GetMapping("/available")
-    public List<CareworkerDto> availableCareworker(@RequestParam Integer requestNo){
+    public List<CareworkerDto> filterCareworkers(@RequestParam Integer requestNo){
         return autoAssignService.filterCareworkers(requestNo);
     }
     // 요양보호사별 확정된 요청 전체조회

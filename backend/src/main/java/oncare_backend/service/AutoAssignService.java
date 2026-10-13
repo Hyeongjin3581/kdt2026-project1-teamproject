@@ -21,7 +21,7 @@ import java.util.List;
 @Service
 @Transactional
 @RequiredArgsConstructor
-public class AutoAssignService {
+public class AutoAssignService implements ActiveUserCheck {
     private final RequestRepository requestRepository;
     private final CareworkersRepository careworkersRepository;
     private final CaregiverAvailabilityRepository caregiverAvailabilityRepository;
@@ -60,11 +60,14 @@ public class AutoAssignService {
         List<CareworkerEntity> workingList = all.stream().filter(careworkerEntity ->
             careworkerEntity.getCareworkerState().equals("근무중")).toList();
 
+        // 탈퇴(회원 상태 delete)한 요양보호사 제외
+        List<CareworkerEntity> activeList = workingList.stream().filter(careworkerEntity -> isActiveUser(careworkerEntity.getUserEntity())).toList();
+
         // 선호 성별
         String preferredGender = requestEntity.getPreferredGender();
 
         // 선호 성별이 "무관"(또는 비어 있음)이거나 선호 성별과 같은 요양보호사 성별을 필터링
-        List<CareworkerEntity> genderMatched = workingList.stream().filter(careworkerEntity -> genderOk(careworkerEntity, preferredGender)).toList();
+        List<CareworkerEntity> genderMatched = activeList.stream().filter(careworkerEntity -> genderOk(careworkerEntity, preferredGender)).toList();
 
         // 근무 가능 시간 테이블에서 근무가능요일 + 근무가능시간 + 근무상태 비교해서 true인 값만 필터링
         List<CareworkerEntity> availabilityList = genderMatched.stream()
@@ -79,6 +82,7 @@ public class AutoAssignService {
     // 요양보호사 1명이 (임시)요청 시간에 근무 가능한지 : 문의 응답 팝업의 '기존 근무자' 판단, 응답 저장 시 서버 재검증에 사용
     public boolean isAvailable(CareworkerEntity cw, RequestEntity request, Integer excludeRequestNo) {
         return "근무중".equals(cw.getCareworkerState())
+            && isActiveUser(cw.getUserEntity())
             && genderOk(cw, request.getPreferredGender())
             && canWork(cw, request)
             && !isBusy(cw, request, excludeRequestNo);

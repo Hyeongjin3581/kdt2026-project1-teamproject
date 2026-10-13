@@ -21,7 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
-public class VacancyService {
+public class VacancyService implements ActiveUserCheck {
 
     private final VacancyRepository vacancyRepository;
     private final RequestRepository requestRepository;
@@ -53,6 +53,9 @@ public class VacancyService {
 
             // 이미 지난 방문은 대체자를 지정할 수 없으므로 제외
             if (requestEntity.getVisitDate() == null || requestEntity.getVisitDate().isBefore(today)) continue;
+
+            // 탈퇴한 보호자의 방문은 대체자를 찾을 필요가 없으므로 제외
+            if (!isActiveGuardian(requestEntity)) continue;
 
             // 이 요청의 근무기록 전체
             List<CareworkerReportEntity> report = vacancyRepository.findByRequestEntity_RequestNo(requestEntity.getRequestNo());

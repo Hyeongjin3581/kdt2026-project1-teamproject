@@ -11,16 +11,18 @@ import oncare_backend.model.dto.RequestDto;
 import oncare_backend.model.entity.CareRecipientEntity;
 import oncare_backend.model.entity.RequestEntity;
 import oncare_backend.model.repository.CareRecipientRepository;
+import oncare_backend.model.repository.CareWorkerReportRepository;
 import oncare_backend.model.repository.GuardianInquiryRepository;
 import oncare_backend.model.repository.RequestRepository;
 
 @Service 
 @Transactional 
-public class RequestService {
+public class RequestService implements ActiveUserCheck {
 
     @Autowired private RequestRepository requestRepository;
     @Autowired private CareRecipientRepository careRecipientRepository;
     @Autowired private GuardianInquiryRepository guardianInquiryRepository;
+    @Autowired private CareWorkerReportRepository careWorkerReportRepository;
 
     // [1] 서비스요청 추가
     // 수급자 식별을 위한 수급자 번호와, 요청 레코드를 담은 DTO를 새로 등록
@@ -54,6 +56,9 @@ public class RequestService {
 
         List<RequestDto> list = new ArrayList<>();
         for( RequestEntity entity : entities ){
+            // 탈퇴한 보호자의 오늘 이후 방문은 제외 ( 지난 방문은 기록으로 보존 )
+            if (isWithdrawnVisit(entity)) continue;
+
             RequestDto dto = RequestDto.entityToDto(entity);
 
             list.add(dto);
@@ -116,6 +121,8 @@ public class RequestService {
         RequestEntity entity = requestRepository.findById(requestNo).orElse(null);
 
         if (entity == null) return false;
+        // 근무기록(배정 , 확정 , 완료 등)이 있는 요청은 삭제하지 않음 ( 외래키 오류 500 방지 )
+        if (!careWorkerReportRepository.findByRequestEntity_RequestNo(requestNo).isEmpty()) return false;
         // 이 방문을 가리키는 문의는 연결만 끊는다 (문의는 남기고, FK 때문에 요청 삭제가 막히지 않도록)
         guardianInquiryRepository.findByRequestEntity_RequestNo(requestNo)
                 .forEach(inquiry -> inquiry.setRequestEntity(null));

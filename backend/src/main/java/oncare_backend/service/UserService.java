@@ -35,6 +35,7 @@ public class UserService {
     // 회원가입
     public boolean save(UserDto userDto) {
         if (userDto.getUserCategoryNo() == null || userDto.getUserCategoryNo() == 2) return false;
+        if (userRepository.findByUserId(userDto.getUserId()) != null) return false;   // 이미 있는 아이디 (탈퇴 회원 포함)
 
         boolean isGuardian = userDto.getUserCategoryNo() == 1;
         // 보호자는 Gmail 인증을 마쳐야만 가입 가능 (프론트 우회 방지)
@@ -92,6 +93,9 @@ public class UserService {
         if (signupDto.getHourWage() == null) return false;
         if (signupDto.getCareworkerAge() == null) return false;
         if (signupDto.getCenterNo() == null) return false;
+
+        // 이미 있는 아이디 (탈퇴 회원 포함)
+        if (userRepository.findByUserId(signupDto.getUserId()) != null) return false;
 
         // 요양보호사 사용자 유형과 신청자가 선택한 센터 확인
         UserCategoryEntity userCategoryEntity = userCategoryRepository.findById(2).orElse(null);
@@ -154,13 +158,26 @@ public class UserService {
         return UserDto.entityToDto(userEntity);
     }
 
-    // 회원삭제
-    public boolean delete(Integer no) {
-        UserEntity userEntity = userRepository.findById(no).orElse(null);
+    // 회원탈퇴
+    // 행을 지우지 않고 상태만 delete 로 바꿈 ( 보호자 , 수급자 , 근무기록 등 연결된 데이터는 보존 )
+    public boolean delete(UserDto userDto) {
+        if (userDto == null || userDto.getUserNo() == null) {
+            return false;
+        }
+        UserEntity userEntity = userRepository.findById(userDto.getUserNo()).orElse(null);
         if (userEntity == null){
             return false;
         }
-        userRepository.deleteById(no);
+        if ("delete".equals(userEntity.getUserState())) {
+            return false;                                   // 이미 탈퇴한 회원
+        }
+        userEntity.setUserState("delete");
+
+        // 보호자 회원이면 보호자 상태도 함께 탈퇴로 변경 ( 보호자 목록에서 제외 )
+        GuardianEntity guardianEntity = guardianRepository.findByUserEntity_UserNo(userEntity.getUserNo());
+        if (guardianEntity != null) {
+            guardianEntity.setGuardianState("delete");
+        }
         return true;
     }
 
@@ -170,6 +187,9 @@ public class UserService {
         UserEntity userEntity = userRepository.findById(userDto.getUserNo()).orElse(null);
         if (userEntity == null){
             return false;
+        }
+        if ("delete".equals(userEntity.getUserState())) {
+            return false;                                   // 탈퇴한 회원은 수정 불가
         }
 
         UserCategoryEntity userCategoryEntity = null;
@@ -198,6 +218,9 @@ public class UserService {
         // 1. 입력받은 아이디 존재여부 확인
         UserEntity userEntity = userRepository.findByUserId(userDto.getUserId());
         if (userEntity == null) { return null; }
+
+        // 탈퇴한 회원은 로그인 불가
+        if ("delete".equals(userEntity.getUserState())) { return null; }
 
         // 2. 아이디 존재 시 평문 - 암호문 비교
         boolean isPasswordCorrect = passwordEncoder.matches(userDto.getUserPassword(),userEntity.getUserPassword());
