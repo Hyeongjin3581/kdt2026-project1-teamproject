@@ -7,6 +7,7 @@ import { useCenter, inCenter } from "../../../context/CenterContext";
 import LoadStatus from "../../../components/common/LoadStatus";
 import { buildCenters } from "../../../utils/adminAdapters";
 import { toHhmm } from "../../../utils/timeFormat";
+import useNotifyRefresh from "../useNotifyRefresh";
 
 // 결원 관리 : 요양보호사가 배정을 거절하거나 확정 후 취소한 방문을 결원으로 보고,
 // 해당 요양보호사를 제외한 대체 후보를 다시 추천받아 대체자를 지정한다.
@@ -80,6 +81,7 @@ export default function Vacancy() {
     }
   }
   useEffect(() => { loadData(); }, []);
+  useNotifyRefresh("vacancy", () => loadData(true));   // 결원 알림이 오면 화면을 유지한 채 목록을 다시 불러온다
 
   // 선택한 센터의 결원 중 보고 있는 달의 결원
   const events = vacancies.filter(inCenter(center));

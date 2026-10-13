@@ -7,6 +7,7 @@ import Badge from "../../../components/common/Badge";
 import LoadStatus from "../../../components/common/LoadStatus";
 import InquiryAnswerModal from "./InquiryAnswerModal";
 import { inquiryStatus } from "../../../utils/inquiryStatus";
+import useNotifyRefresh from "../useNotifyRefresh";
 
 export default function Inquiries() {
     const [inquiries, setInquiries] = useState([]);
@@ -39,6 +40,7 @@ export default function Inquiries() {
         }
     }
     useEffect(() => { loadData(); }, []);
+    useNotifyRefresh("inquiries", () => loadData({ silent: true }));   // 새 문의 알림이 오면 로딩 화면 없이 목록을 다시 불러온다
 
     // 문의 삭제 : DELETE /guardianinquiry?inquiryNo=번호
     const removeInquiry = async (inquiry) => {

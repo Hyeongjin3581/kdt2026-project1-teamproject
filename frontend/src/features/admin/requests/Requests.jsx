@@ -8,6 +8,7 @@ import Badge from "../../../components/common/Badge";
 import { useCenter, inCenter } from "../../../context/CenterContext";
 import LoadStatus from "../../../components/common/LoadStatus";
 import { buildAdminModel, emptyModel, emptyRaw } from "../../../utils/adminAdapters";
+import useNotifyRefresh from "../useNotifyRefresh";
 
 // 요청 상태별 탭 : 신청(미배정) → 배정중(요양보호사 수락 대기) → 배정완료(수락)
 const tabs = [
@@ -24,8 +25,9 @@ export default function Requests() {
   const [tab, setTab] = useState("all");
 
   // 요청 관리 화면에 필요한 목록을 axios로 조회 : axios.get("통신할주소", { 옵션 }) → response.data
-  async function loadData() {
-    setStatus("loading");
+  // silent : 새 알림으로 목록만 다시 받을 때는 로딩 화면 없이 데이터만 바꾼다 (보던 화면과 열어 둔 창을 유지)
+  async function loadData({ silent = false } = {}) {
+    if (!silent) setStatus("loading");
     try {
       const [centersRes, careworkersRes, guardiansRes, recipientsRes] = await Promise.all([
         axios.get("http://localhost:8080/center", { withCredentials: true }),
@@ -51,10 +53,11 @@ export default function Requests() {
       setStatus("ok");
     } catch (error) {
       console.error("요청 관리 조회 실패:", error);
-      setStatus("error");
+      if (!silent) setStatus("error");      // 조용한 갱신이 실패하면 보던 목록은 그대로 둔다
     }
   }
   useEffect(() => { loadData(); }, []);
+  useNotifyRefresh("requests", () => loadData({ silent: true }));   // 새 서비스 신청 알림이 오면 목록을 다시 불러온다
 
   // 자동배정(후보 추천) : GET /careworkerreport/candidates?requestNo=번호 → 상위 3명 [{ careworkerNo, careworkerName, distanceKm, workCount, distanceScore, workScore, totalScore }]
   // 직접 선택 목록 : GET /careworkerreport/available?requestNo=번호 → 필수 조건(근무중·성별·근무가능 시간·일정 겹침 없음)을 통과한 요양보호사 전체 [{ careworkerNo, careworkerName, ... }]
