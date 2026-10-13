@@ -6,6 +6,7 @@ import { Client } from "@stomp/stompjs";
 import AppMark from "../../components/common/AppMark";
 import { TODAY } from "../../constants";
 import { CenterCtx } from "../../context/CenterContext";
+import { buildCenters } from "../../utils/adminAdapters";
 
 // 통합 관리자 체제 : 센터를 고르지 않고 모든 센터를 '총괄 센터' 하나로 본다
 const CENTER_ALL = "all";
