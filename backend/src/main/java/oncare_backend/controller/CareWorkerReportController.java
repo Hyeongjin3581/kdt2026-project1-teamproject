@@ -5,6 +5,7 @@ import java.util.List;
 import oncare_backend.model.dto.*;
 import oncare_backend.model.repository.RequestRepository;
 import oncare_backend.service.AutoAssignService;
+import oncare_backend.service.NotifyService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -23,7 +24,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 @RequestMapping ("/careworkerreport")
 public class CareWorkerReportController {
     @Autowired private CareWorkerReportService careWorkerReportService;
-    @Autowired private  AutoAssignService autoAssignService;
+    @Autowired private AutoAssignService autoAssignService;
+    @Autowired private NotifyService notifyService;
 
     // [1] 근무기록 추가
     @PostMapping("")
@@ -64,7 +66,11 @@ public class CareWorkerReportController {
     // 요양보호사 : 배정 거절
     @PutMapping("/reject")
     public boolean rejectAssignment(@RequestBody AssignmentActionDto assignmentActionDto){
-        return careWorkerReportService.rejectAssignment(assignmentActionDto);
+        boolean result = careWorkerReportService.rejectAssignment(assignmentActionDto);
+        if (result){
+            notifyService.toAdmin(NotifyType.VACANCY,"요양보호사가 배정을 거절했습니다.");
+        }
+        return result;
     }
 
     // 관리자가 상위 3명 중 한 명을 눌러 "배정하기"를 했을 때
@@ -99,7 +105,11 @@ public class CareWorkerReportController {
     // 요양보호사가 확정된 요청을 거절
     @PutMapping("/cancel")
     public boolean cancel(@RequestBody AssignmentActionDto assignmentActionDto){
-        return careWorkerReportService.cancel(assignmentActionDto);
+        boolean result = careWorkerReportService.cancel(assignmentActionDto);
+        if (result){
+            notifyService.toAdmin(NotifyType.VACANCY, "확정된 방문이 취소되었습니다.");
+        }
+        return result;
     }
 
     // 요양보호사 확정된 요청을 완료
