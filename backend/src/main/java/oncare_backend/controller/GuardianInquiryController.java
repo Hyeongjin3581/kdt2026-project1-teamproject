@@ -2,6 +2,8 @@ package oncare_backend.controller;
 
 import java.util.List;
 
+import oncare_backend.model.dto.NotifyType;
+import oncare_backend.service.NotifyService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -24,12 +26,18 @@ public class GuardianInquiryController {
 
 	@Autowired
 	private GuardianInquiryService guardianInquiryService;
+    @Autowired
+    private NotifyService notifyService;
 
 	// 1. 보호자 문의 생성
 	@PostMapping("")
 	public boolean GuardianInquiryCreate(@RequestBody GuardianInquiryDto guardianInquiryDto) {
-		return guardianInquiryService.GuardianInquiryCreate(guardianInquiryDto);
-	}
+        boolean result = guardianInquiryService.GuardianInquiryCreate(guardianInquiryDto);
+        if (result){
+            notifyService.toAdmin(NotifyType.NEW_INQUIRY, "새 문의가 등록되었습니다.");
+        }
+        return result;
+    }
 
 	// 2. 보호자 문의 수정
 	@PutMapping("")

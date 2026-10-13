@@ -2,6 +2,7 @@ package oncare_backend.controller;
 
 import java.util.List;
 
+import oncare_backend.service.NotifyService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -20,8 +21,6 @@ public class GuardianController {
 
 	@Autowired
 	private GuardianService guardianService;
-
-	
 
 	// 1. 보호자 전체 조회(관리자)
 	@GetMapping("")
