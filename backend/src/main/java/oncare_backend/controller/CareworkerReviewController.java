@@ -39,7 +39,8 @@ public class CareworkerReviewController {
 
     // 2. 요양보호사 본인 후기 조회
     @GetMapping("/careworker/my")
-    public List<CareworkerReviewDto> getMyCareworkerReviews(@CookieValue(value = "accessToken", required = false) String accessToken){
+    public List<CareworkerReviewDto> getMyCareworkerReviews(
+        @CookieValue(value = "accessToken", required = false) String accessToken){
         if (accessToken == null) return List.of();
 
         Integer loginUserNo = jwtUtil.getUserNoFromAccessToken(accessToken);
