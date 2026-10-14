@@ -57,21 +57,6 @@ public class CareRecipientController {
         return guardianRepository.findByUserEntity_UserNo(userDto.getUserNo());
     }
 
-    // 1. 수급자 등록
-    @PostMapping("")
-    public boolean CareRecipientSave(@RequestBody CareRecipientDto careRecipientDto,
-                                     @CookieValue(value = "accessToken", required = false) String accessToken) {
-        GuardianEntity guardian = getLoginGuardian(accessToken);
-        if (guardian == null || careRecipientDto == null) return false;
-
-        if (careRecipientDto.getCareRecipientName() == null ||
-            careRecipientDto.getCareRecipientAge() == null ||
-            careRecipientDto.getCareRecipientAddress() == null ||
-            careRecipientDto.getCareRecipientGender() == null) return false;
-
-        careRecipientDto.setGuardianNo(guardian.getGuardianNo());
-        return careRecipientService.CareRecipientSave(careRecipientDto);
-    }
 	// 1. 수급자 등록 --> 보호자(1)만
 	@PostMapping("")
 	public boolean CareRecipientSave(@CookieValue(value = "accessToken", required = false)String token,
