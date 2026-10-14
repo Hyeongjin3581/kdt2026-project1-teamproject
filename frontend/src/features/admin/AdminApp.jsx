@@ -34,13 +34,14 @@ const adminNav = [
   { id: "requests", label: "요청 관리", short: "요청", icon: "✦" },
   { id: "vacancy", label: "결원 관리", short: "결원", icon: "↺" },
   { id: "inquiries", label: "문의 관리", short: "문의", icon: "✉" },
+  { id: "reviews", label: "서비스 후기", short: "후기", icon: "☆" },
   { id: "centers", label: "센터 관리", short: "센터", icon: "⌂" },
 ];
 
 // 서버가 보내는 알림 종류(NotifyType) → 배지를 올릴 사이드바 메뉴(adminNav 의 id)
 const typeToMenu = { NEW_REQUEST: "requests", NEW_INQUIRY: "inquiries", VACANCY: "vacancy" };
 
-export default function AdminApp({ logout }) {
+export default function AdminApp({ user, logout }) {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   // /admin → dashboard, /admin/recipients → recipients ...
@@ -48,6 +49,7 @@ export default function AdminApp({ logout }) {
   const setPage = (id) => navigate(id === "dashboard" ? "/admin" : `/admin/${id}`);
   const [center, setCenter] = useState("all");
   const [centers, setCenters] = useState(buildCenters([]));
+  const navItems = adminNav.filter((item) => item.id !== "reviews" || user?.userCategoryNo === 4);
   const [badges, setBadges] = useState({ requests: 0, inquiries: 0, vacancy: 0 }); // 메뉴별 새 알림 개수
   const [refreshes, setRefreshes] = useState({ requests: 0, inquiries: 0, vacancy: 0 }); // 메뉴별 목록 새로 불러오기 횟수 (하위 화면이 보고 다시 조회)
   const [toast, setToast] = useState("");    // 화면 구석에 잠깐 띄우는 알림 문구
@@ -113,7 +115,7 @@ export default function AdminApp({ logout }) {
         </div>
         <div className="mt-6 px-2 font-mono text-[10px] tracking-[.16em] text-slate-500">WORKSPACE</div>
         <nav className="mt-3 space-y-1">
-          {adminNav.map((n) => (
+          {navItems.map((n) => (
             <button key={n.id} onClick={() => setPage(n.id)} className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm transition ${page === n.id ? "bg-teal-600 text-white shadow-lg shadow-teal-950/30" : "hover:bg-white/5 hover:text-white"}`}>
               <span className="w-4 text-center text-base">{n.icon}</span>{n.label}
               {badges[n.id] > 0 && <span className="ml-auto rounded-full bg-rose-500 px-1.5 py-0.5 text-[10px] font-bold text-white">{badges[n.id]}</span>}
@@ -136,9 +138,9 @@ export default function AdminApp({ logout }) {
           </div>
         </header>
         <main className="mx-auto max-w-[1500px] p-5 lg:p-8">{content}</main>
-        <nav className="fixed inset-x-0 bottom-0 z-20 flex justify-around border-t border-slate-200 bg-white/95 px-1 py-1.5 backdrop-blur lg:hidden">
-          {adminNav.map((n) => (
-            <button key={n.id} onClick={() => setPage(n.id)} className={`relative grid flex-1 place-items-center gap-0.5 rounded-lg px-0.5 py-1 text-[10px] font-semibold ${page === n.id ? "text-teal-600" : "text-slate-400"}`}><span className="text-base leading-none">{n.icon}</span><span className="w-full truncate text-center">{n.short}</span>{badges[n.id] > 0 && <span className="absolute right-2 top-0 rounded-full bg-rose-500 px-1.5 text-[9px] font-bold text-white">{badges[n.id]}</span>}</button>
+        <nav className="fixed inset-x-0 bottom-0 z-20 flex overflow-x-auto border-t border-slate-200 bg-white/95 px-1 py-1.5 backdrop-blur lg:hidden" aria-label="관리자 메뉴">
+          {navItems.map((n) => (
+            <button key={n.id} onClick={() => setPage(n.id)} className={`relative grid min-w-12 flex-1 shrink-0 place-items-center gap-0.5 rounded-lg px-0.5 py-1 text-[10px] font-semibold ${page === n.id ? "text-teal-600" : "text-slate-400"}`}><span className="text-base leading-none">{n.icon}</span><span className="w-full truncate text-center">{n.short}</span>{badges[n.id] > 0 && <span className="absolute right-2 top-0 rounded-full bg-rose-500 px-1.5 text-[9px] font-bold text-white">{badges[n.id]}</span>}</button>
           ))}
         </nav>
         <div className="h-14 lg:hidden" />

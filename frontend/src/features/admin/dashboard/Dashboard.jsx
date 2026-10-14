@@ -9,8 +9,16 @@ import { WEEK_LIMIT } from "../../../constants";
 import { useCenter, inCenter } from "../../../context/CenterContext";
 import LoadStatus from "../../../components/common/LoadStatus";
 import { buildAdminModel, emptyModel, emptyRaw } from "../../../utils/adminAdapters";
+import AiReviewStats from "./AiReviewStats";
 
-export default function Dashboard() {
+export default function Dashboard({ user }) {
+  return <div className="space-y-5">
+    {user?.userCategoryNo === 4 && <AiReviewStats compact />}
+    <DashboardOperations />
+  </div>;
+}
+
+function DashboardOperations() {
   const navigate = useNavigate();
   const go = (id) => navigate(`/admin/${id}`);
   const [model, setModel] = useState(emptyModel);
