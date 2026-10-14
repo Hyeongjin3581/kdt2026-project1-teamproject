@@ -36,7 +36,7 @@ public class AutoAssignService implements ActiveUserCheck {
             return List.of();
         }
         // 필수 조건 필터 메소드에서 근무 상태, 선호 성별, 근무 가능 날짜·시간, 일정 중복 여부를 확인한 요양보호사 후보 목록을 가져옴
-        List<CareworkerEntity> careworkerEntity = filterCareworker(requestEntity);
+        List<CareworkerEntity> careworkerEntity = filterCareworkerForGroup(requestEntity);
         if (careworkerEntity.isEmpty()) {
             return List.of();
         }
@@ -50,6 +50,45 @@ public class AutoAssignService implements ActiveUserCheck {
         return filterCareworker(requestEntity, null);
     }
 
+    // 묶음 필터 : 같은 requestGroup의 "신청"상태 날짜에 모든 요양보호사를 남김
+    public List<CareworkerEntity> filterCareworkerForGroup(RequestEntity requestEntity){
+        List<CareworkerEntity> today = filterCareworker(requestEntity); // 그날 갈수 있는사람
+        if (requestEntity.getRequestGroup() == null){   // 묶음이 없는 신청은 그대로 반환
+            return today;
+        }
+
+        // 같은 묶음 번호를 가진 신청(날짜)을 전부 가져온다
+        List<RequestEntity> group = requestRepository.findByRequestGroup(requestEntity.getRequestGroup());
+        List<CareworkerEntity> result = today; // result : 살아남은 후보 명단. 처음엔 그날 갈 수 있는 사람으로 시작해서 날짜마다 줄어든다
+
+        for (RequestEntity request : group) {                // 묶음의 날짜를 하나씩 확인
+            if (!"신청".equals(request.getRequestState())){   // 이미 배정중,배정완료인 날짜는 다른 사람이 맡았으니 비교하지 않고 건너뜀
+                continue;
+            }
+            List<CareworkerEntity> ok = filterCareworker(request); // ok : 이 날짜에 갈 수 있는 요양보호사들
+            List<CareworkerEntity> next = new ArrayList<>(); // next : 이 날짜까지 통과한 사람을 새로 담을 빈 목록
+            for (CareworkerEntity careworkerEntity : result) {  // 후보 명단(result)에서 한 명씩 꺼내서
+                boolean found = false; // found : 이 후보가 ok 명단에 있는지 표시 (처음엔 못 찾음)
+                for (CareworkerEntity entity : ok) {
+                    // 요양보호사 번호가 같으면 이 날짜에도 갈 수 있는 사람 (Integer 라서 equals 로 비교)
+                    if (entity.getCareworkerNo().equals(careworkerEntity.getCareworkerNo())){
+                        found = true;
+                        break;
+                        }
+                    }
+                if (found){
+                    next.add(careworkerEntity);
+                }
+            }
+            result = next;
+        }
+
+        if (result.isEmpty()){ // 모두 가능한 시간 없으면 그날만이라도
+            return today;
+        }
+        return result;
+    }
+
     // 필수 조건 필터 메소드
     // excludeRequestNo : 일정 겹침 검사에서 제외할 요청 번호
     //   → 문의 응답(방문 시간 변경)에서는 '같은 방문'의 기존 근무기록을 겹침으로 보지 않는다
@@ -58,10 +97,14 @@ public class AutoAssignService implements ActiveUserCheck {
 
         // 근무중인 상태 요양 보호사 필터링
         List<CareworkerEntity> workingList = all.stream().filter(careworkerEntity ->
-            careworkerEntity.getCareworkerState().equals("근무중")).toList();
+            "근무중".equals(careworkerEntity.getCareworkerState())).toList();
+
+        // 가입 승인 전(승인대기)인 요양보호사 제외 ( 로그인을 못 해서 배정을 수락할 수 없음 )
+        List<CareworkerEntity> approvedList = workingList.stream().filter(careworkerEntity ->
+            "승인완료".equals(careworkerEntity.getSignState())).toList();
 
         // 탈퇴(회원 상태 delete)한 요양보호사 제외
-        List<CareworkerEntity> activeList = workingList.stream().filter(careworkerEntity -> isActiveUser(careworkerEntity.getUserEntity())).toList();
+        List<CareworkerEntity> activeList = approvedList.stream().filter(careworkerEntity -> isActiveUser(careworkerEntity.getUserEntity())).toList();
 
         // 선호 성별
         String preferredGender = requestEntity.getPreferredGender();
@@ -82,6 +125,7 @@ public class AutoAssignService implements ActiveUserCheck {
     // 요양보호사 1명이 (임시)요청 시간에 근무 가능한지 : 문의 응답 팝업의 '기존 근무자' 판단, 응답 저장 시 서버 재검증에 사용
     public boolean isAvailable(CareworkerEntity cw, RequestEntity request, Integer excludeRequestNo) {
         return "근무중".equals(cw.getCareworkerState())
+            && "승인완료".equals(cw.getSignState())
             && isActiveUser(cw.getUserEntity())
             && genderOk(cw, request.getPreferredGender())
             && canWork(cw, request)
@@ -136,7 +180,7 @@ public class AutoAssignService implements ActiveUserCheck {
         if (requestEntity == null) {
             return new ArrayList<>();
         }
-        List<CareworkerEntity> careworkerEntities = filterCareworker(requestEntity);
+        List<CareworkerEntity> careworkerEntities = filterCareworkerForGroup(requestEntity);
         if (careworkerEntities == null){
             return new ArrayList<>();
         }

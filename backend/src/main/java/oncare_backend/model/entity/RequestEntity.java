@@ -36,6 +36,8 @@ public class RequestEntity {
     @Column private Integer visitStartTime;
     @Column private Integer visitEndTime;
     @Column private String requestContent;
+    @Column
+    private String requestGroup;
 
     // 수급자번호 연결
     @JoinColumn (name="carerecipient_no")

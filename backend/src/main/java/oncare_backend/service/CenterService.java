@@ -55,6 +55,9 @@ public class CenterService {
     }
 
     public boolean update(CenterDto centerDto) {
+        if (centerDto.getCenterNo() == null){
+            return false;
+        }
         CenterEntity centerEntity = centerRepository.findById(centerDto.getCenterNo()).orElse(null);
         if (centerEntity == null){
             return false;

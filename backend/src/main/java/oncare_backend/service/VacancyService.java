@@ -189,13 +189,12 @@ public class VacancyService implements ActiveUserCheck {
             excludedNo.add(careworkerReportEntity.getCareworkerEntity().getCareworkerNo());
         }
 
-        // 기존 필수조건 필터 ( 근무상태 , 선호성별 , 근무가능시간 , 일정중복 ) 를 통과한 요양보호사 중에서
-        // 거절/취소한 요양보호사 , 가입 승인 전인 요양보호사는 제외
+        // 기존 필수조건 필터 ( 근무상태 , 가입승인 , 선호성별 , 근무가능시간 , 일정중복 ) 를 통과한 요양보호사 중에서
+        // 거절/취소한 요양보호사는 제외
         // 기존 필터는 취소 기록을 일정중복에서 건너뛰므로 제외하지 않으면 거절한 사람이 다시 추천됨.
         List<CareworkerEntity> candidate = new ArrayList<>();
         for (CareworkerEntity careworkerEntity : autoAssignService.filterCareworker(requestEntity)) {
             if (excludedNo.contains(careworkerEntity.getCareworkerNo())) continue;           // 거절/취소한 요양보호사
-            if (!"승인완료".equals(careworkerEntity.getSignState())) continue;                 // 승인 대기
             candidate.add(careworkerEntity);
         }
         if (candidate.isEmpty()) {

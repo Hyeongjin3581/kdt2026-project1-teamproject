@@ -3,6 +3,7 @@ package oncare_backend.controller;
 import lombok.RequiredArgsConstructor;
 import oncare_backend.model.dto.CareworkerSignupDto;
 import oncare_backend.model.dto.UserDto;
+import oncare_backend.service.AuthChecker;
 import oncare_backend.service.EmailVerificationService;
 import oncare_backend.service.JwtUtil;
 import oncare_backend.service.RedisTokenService;
@@ -26,6 +27,7 @@ import java.util.Map;
 public class UserController {
     private final UserService userService;
     private final JwtUtil jwtUtil;
+    private final AuthChecker authChecker;
     private final EmailVerificationService emailVerificationService;
 
     // 회원가입
@@ -178,26 +180,45 @@ public class UserController {
     }
     
     // 유저전체조회
+    // 회원가입(아이디 중복 확인)과 요양보호사 로그인(승인 대기 확인)이 로그인 전에 사용하므로 토큰 검사를 하지 않는다
     @GetMapping
     public List<UserDto> findAll(){
         return userService.findAll();
     }
 
-    // 유저개별조회
+    // 유저개별조회 --> 보호자·요양보호사의 내 정보 화면이 사용하므로 로그인만 확인
     @GetMapping(params = "no")
-    public UserDto findById(@RequestParam Integer no){
+    public UserDto findById(@CookieValue(value = "accessToken", required = false)String token,
+                            @RequestParam Integer no){
+        Integer userNo = jwtUtil.getUserNoFromAccessToken(token);
+        if (userNo == null){
+            return null;
+        }
         return userService.findById(no);
     }
 
-    // 유저탈퇴
+    // 유저탈퇴 --> 관리자(4)의 요양보호사 탈퇴 + 보호자(1) 본인 탈퇴
     @PutMapping("/state")
-    public boolean delete(@RequestBody UserDto userDto){
+    public boolean delete(@CookieValue(value = "accessToken", required = false)String token,
+                          @RequestBody UserDto userDto){
+        Integer no = jwtUtil.getUserNoFromAccessToken(token);
+        if (no == null){
+            return false;
+        }
+        if (!authChecker.hasRole(token,4) && !authChecker.hasRole(token,1)){
+            return false;
+        }
         return userService.delete(userDto);
     }
 
-    // 유저수정
+    // 유저수정 --> 보호자·요양보호사의 내 정보 수정이 사용하므로 로그인만 확인
     @PutMapping("")
-    public boolean update(@RequestBody UserDto userDto){
+    public boolean update(@CookieValue(value = "accessToken", required = false)String token,
+                          @RequestBody UserDto userDto){
+        Integer no = jwtUtil.getUserNoFromAccessToken(token);
+        if (no == null){
+            return false;
+        }
         return userService.update(userDto);
     }
 

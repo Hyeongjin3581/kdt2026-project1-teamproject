@@ -30,6 +30,8 @@ public class CareRecipientService {
 
 	// 1. 수급자 등록
 	public boolean CareRecipientSave(CareRecipientDto careRecipientDto) {
+		if (!hasRequiredValue(careRecipientDto)) { return false; }
+
 		GuardianEntity guardianEntity = null;
 		if (careRecipientDto.getGuardianNo() != null) {
 			Optional<GuardianEntity> guardianOptional = guardianRepository.findById(careRecipientDto.getGuardianNo());
@@ -69,6 +71,15 @@ public class CareRecipientService {
 		return null;
 	}
 
+	// 필수 입력값(이름 , 나이 , 주소 , 성별) 확인 ( 비어 있으면 nullable = false 컬럼 저장 오류 500 , 주소는 지오코딩 오류 )
+	private boolean hasRequiredValue(CareRecipientDto careRecipientDto) {
+		if (careRecipientDto.getCareRecipientName() == null || careRecipientDto.getCareRecipientName().isBlank()) return false;
+		if (careRecipientDto.getCareRecipientAge() == null) return false;
+		if (careRecipientDto.getCareRecipientAddress() == null || careRecipientDto.getCareRecipientAddress().isBlank()) return false;
+		if (careRecipientDto.getCareRecipientGender() == null || careRecipientDto.getCareRecipientGender().isBlank()) return false;
+		return true;
+	}
+
 	private CareRecipientDto toDto(CareRecipientEntity entity) {
 		GuardianEntity guardianEntity = entity.getGuardianEntity();
 		return CareRecipientDto.builder()
@@ -87,6 +98,9 @@ public class CareRecipientService {
 	// 4. 수급자 정보 수정
 	@Transactional
 	public boolean CareRecipientModify(CareRecipientDto careRecipientDto) {
+		if (careRecipientDto.getCareRecipientNo() == null) { return false; }
+		if (!hasRequiredValue(careRecipientDto)) { return false; }
+
 		Optional<CareRecipientEntity> optional = careRecipientRepository
 				.findById(careRecipientDto.getCareRecipientNo());
 		if (optional.isPresent()) {

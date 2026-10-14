@@ -7,12 +7,12 @@ import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
 import oncare_backend.model.dto.CareWorkerRecommendationDto;
 import oncare_backend.model.dto.GuardianInquiryAnswerDto;
 import oncare_backend.model.dto.GuardianInquiryDto;
 import oncare_backend.model.dto.InquiryScheduleOptionDto;
+import oncare_backend.model.entity.CareRecipientEntity;
 import oncare_backend.model.entity.CareworkerEntity;
 import oncare_backend.model.entity.CareworkerReportEntity;
 import oncare_backend.model.entity.GuardianEntity;
@@ -158,12 +158,13 @@ public class GuardianInquiryService {
 		List<CareworkerEntity> passed = autoAssignService.filterCareworker(wish, request.getRequestNo()).stream()
 				.filter(cw -> currentCw == null || !cw.getCareworkerNo().equals(currentCw.getCareworkerNo()))
 				.toList();
-		List<CareWorkerRecommendationDto> top3;
-		try {
+		// 수급자 좌표가 없으면 추천 없이 기존 근무자만 보여 준다
+		// 추천 메소드가 던지는 422 예외를 여기서 catch 하면 트랜잭션이 롤백 표시되어 500 이 나므로 , 호출 전에 좌표를 먼저 확인
+		List<CareWorkerRecommendationDto> top3 = List.of();
+		CareRecipientEntity careRecipientEntity = request.getCarerecipientEntity();
+		if (careRecipientEntity.getLatitude() != 0.0 || careRecipientEntity.getLongitude() != 0.0) {
 			top3 = careWorkerRecommendationService
-					.recommendCandidates(request.getCarerecipientEntity().getCareRecipientNo(), passed);
-		} catch (ResponseStatusException e) {
-			top3 = List.of(); // 수급자 좌표가 없으면(422) 추천 없이 기존 근무자만 보여 준다
+					.recommendCandidates(careRecipientEntity.getCareRecipientNo(), passed);
 		}
 
 		return InquiryScheduleOptionDto.builder()

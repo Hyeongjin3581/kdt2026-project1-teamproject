@@ -20,6 +20,7 @@ public class RequestDto {
     private Integer visitStartTime;
     private Integer visitEndTime;
     private String requestContent;
+    private String requestGroup;
 
     private Integer carerecipientNo;
 
@@ -30,6 +31,7 @@ public class RequestDto {
                             .visitDate(this.visitDate)
                             .visitStartTime(this.visitStartTime)
                             .visitEndTime(this.visitEndTime)
+                            .requestGroup(this.requestGroup)
                             .requestContent(this.requestContent)
                             .build();
     }
@@ -43,6 +45,7 @@ public class RequestDto {
                         .visitDate(entity.getVisitDate())
                         .visitStartTime(entity.getVisitStartTime())
                         .visitEndTime(entity.getVisitEndTime())
+                        .requestGroup(entity.getRequestGroup())
                         .requestContent(entity.getRequestContent())
                         .build();
     }
