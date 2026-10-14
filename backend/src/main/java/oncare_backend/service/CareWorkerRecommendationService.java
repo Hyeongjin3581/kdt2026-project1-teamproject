@@ -129,20 +129,20 @@ public class CareWorkerRecommendationService {
             }
         }
 
-        // [6] 상위 3명만 소수 둘째 자리까지 반올림
+        // [6] 상위 3명만 소수 첫째 자리까지 반올림
         List<CareWorkerRecommendationDto> topRecommendations = new ArrayList<>();
         for (int i = 0; i < recommendations.size() && i < 3; i++) {
             CareWorkerRecommendationDto item = recommendations.get(i);
             topRecommendations.add(new CareWorkerRecommendationDto(
                     item.getCareworkerNo(),
                     item.getCareworkerName(),
-                    round2(item.getDistanceKm()),
+                    sosujeom1(item.getDistanceKm()),
                     item.getWorkCount(),
-                    round2(item.getDistanceScore()),
-                    round2(item.getWorkScore()),
+                    sosujeom1(item.getDistanceScore()),
+                    sosujeom1(item.getWorkScore()),
                     item.getContinuityCount(),
-                    round2(item.getContinuityScore()),
-                    round2(item.getTotalScore())
+                    sosujeom1(item.getContinuityScore()),
+                    sosujeom1(item.getTotalScore())
             ));
         }
 
@@ -245,9 +245,9 @@ public class CareWorkerRecommendationService {
         return first.getCareworkerNo() < second.getCareworkerNo();
     }
 
-    // [6] 소수 둘째 자리까지 반올림 / 일단 소수점 반올림 후 , 추후에 필요없으면 리액트에서 소수점 제거.
-    private double round2(double number) {
-        return Math.round(number * 100.0) / 100.0;
+    // [6] 소수 첫째 자리까지 반올림 ( 프론트 화면 표시 형식과 맞춤 )
+    private double sosujeom1(double number) {
+        return Math.round(number * 10.0) / 10.0;
     }
 
 }   // end
