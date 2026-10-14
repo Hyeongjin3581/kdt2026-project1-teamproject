@@ -28,6 +28,7 @@ public class CareWorkerReportService implements ActiveUserCheck {
     @Autowired private CareWorkerRepository careWorkerRepository;
     @Autowired private RequestRepository requestRepository;
     @Autowired private CareworkerReviewRepository careworkerReviewRepository;
+    @Autowired private AutoAssignService autoAssignService;
 
 
     // [1] 근무기록 생성
@@ -182,19 +183,19 @@ public class CareWorkerReportService implements ActiveUserCheck {
             return false;
         }
 
-        // 찾은 요청,요양보호사를 토대로 상태가 배정인 근무기록 만들기
-        CareworkerReportEntity reportEntity = new CareworkerReportEntity();
-        reportEntity.setCareworkerEntity(findCareworker);
-        reportEntity.setRequestEntity(findRequest);
-        reportEntity.setWorkStatus("배정");
-        reportEntity.setWorkDate(findRequest.getVisitDate());
-        reportEntity.setWorkStartTime(findRequest.getVisitStartTime());
-        reportEntity.setWorkEndTime(findRequest.getVisitEndTime());
+        // 관리자가 고른 날짜 배정
+        createAssignReport(findCareworker, findRequest);
 
-        careWorkerReportRepository.save(reportEntity);
-
-        // 요청의 상태는 배정중으로 변경
-        findRequest.setRequestState("배정중");
+        // 같은 묶음(한 번에 신청한 날짜)의 나머지 날짜도 같은 요양보호사로 배정
+        if (findRequest.getRequestGroup() != null) {
+            List<RequestEntity> group = requestRepository.findByRequestGroup(findRequest.getRequestGroup());
+            for (RequestEntity other : group) {
+                if (other.getRequestNo().equals(findRequest.getRequestNo())) continue;    // 방금 배정한 날짜
+                if (!"신청".equals(other.getRequestState())) continue;                   // 이미 담당자가 있는 날짜
+                if (!autoAssignService.isAvailable(findCareworker, other, null)) continue; // 이 날 못 가면 건너뜀
+                createAssignReport(findCareworker, other);
+            }
+        }
 
         return true;
     }
@@ -258,5 +259,18 @@ public class CareWorkerReportService implements ActiveUserCheck {
         reportEntity.setWorkStatus("완료");
         reportEntity.getRequestEntity().setRequestState("완료");
         return true;
+    }
+
+    private void createAssignReport(CareworkerEntity careworker, RequestEntity request){
+        CareworkerReportEntity reportEntity = new CareworkerReportEntity();
+        reportEntity.setCareworkerEntity(careworker);
+        reportEntity.setRequestEntity(request);
+        reportEntity.setWorkStatus("배정");
+        reportEntity.setWorkDate(request.getVisitDate());
+        reportEntity.setWorkStartTime(request.getVisitStartTime());
+        reportEntity.setWorkEndTime(request.getVisitEndTime());
+        careWorkerReportRepository.save(reportEntity);
+
+        request.setRequestState("배정중");
     }
 }

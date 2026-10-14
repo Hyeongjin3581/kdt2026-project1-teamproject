@@ -13,4 +13,7 @@ public interface RequestRepository extends JpaRepository<RequestEntity, Integer>
     List<RequestEntity> findByCarerecipientEntity_CareRecipientNo(Integer careRecipientNo);
     
     List<RequestEntity> findByCarerecipientEntity_GuardianEntity_GuardianNo(Integer guardianNo);
+
+    // RequestRepository : 같은 묶음의 신청 전부 찾기
+    List<RequestEntity> findByRequestGroup(String requestGroup);
 }
