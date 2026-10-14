@@ -41,7 +41,7 @@ export default function Signup({ onLogin }) {
     setVerificationMessage("");
   };
 
-  // Gmail 인증번호 발송 (POST /user/email/send)
+  // 이메일 인증번호 발송 (POST /user/email/send)
   const sendVerificationEmail = async () => {
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       setVerificationMessage("올바른 이메일 주소를 입력해주세요.");
@@ -62,7 +62,7 @@ export default function Signup({ onLogin }) {
     }
   };
 
-  // Gmail 인증번호 확인 (POST /user/email/verify)
+  // 이메일 인증번호 확인 (POST /user/email/verify)
   const verifyEmail = async () => {
     try {
       const response = await axios.post("http://localhost:8080/user/email/verify", {email, code: verificationCode }, {withCredentials: true});
@@ -80,7 +80,7 @@ export default function Signup({ onLogin }) {
   const submitSignup = async () => {
     setSubmitError("");
     if (role === "guardian" && !emailVerified) {
-      setVerificationMessage("가입 전 Gmail 인증을 완료해주세요.");
+      setVerificationMessage("가입 전 이메일 인증을 완료해주세요.");
       return;
     }
     if (role === "guardian" && !name.trim()) {
