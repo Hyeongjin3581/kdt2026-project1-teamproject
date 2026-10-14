@@ -35,11 +35,12 @@ export default function GuardianApply({ recipient, recipients, onSelectRecipient
     const invalid = orderedDates.find((d) => { const t = dateTimes[d.iso] ?? { start: "09:00", end: "12:00" }; return toServerTime(t.start) >= toServerTime(t.end); });
     if (invalid) { setMessage(`${invalid.label}(${invalid.day}) 종료 시간은 시작 시간보다 늦어야 합니다.`); return; }
     try {
+        const requestGroup = `g-${Date.now()}`;
       const results = await Promise.all(orderedDates.map((d) => {
         const t = dateTimes[d.iso] ?? { start: "09:00", end: "12:00" };
         return axios.post(
           "http://localhost:8080/request",
-          { preferredGender, requestState: "신청", visitDate: d.iso, visitStartTime: toServerTime(t.start), visitEndTime: toServerTime(t.end), requestContent: content.trim() || "방문요양 서비스 신청" },
+          { preferredGender, requestState: "신청", visitDate: d.iso, visitStartTime: toServerTime(t.start), visitEndTime: toServerTime(t.end), requestContent: content.trim() || "방문요양 서비스 신청", requestGroup },
           { params: { careRecipientNo: recipient.id }, withCredentials: true }
         );
       }));
