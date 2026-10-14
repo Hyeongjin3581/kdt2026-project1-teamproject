@@ -54,7 +54,7 @@ public class CareRecipientController {
         if (userDto == null) return null;
         if (!Integer.valueOf(1).equals(userDto.getUserCategoryNo())) return null;
 
-        return guardianRepository.findByUserEntity_UserNo(userDto.getUserNo()).orElse(null);
+        return guardianRepository.findByUserEntity_UserNo(userDto.getUserNo());
     }
 
     // 1. 수급자 등록
@@ -103,7 +103,7 @@ public class CareRecipientController {
 
         // 보호자: 본인 수급자만 조회
         if (categoryNo == 1) {
-            GuardianEntity guardian = guardianRepository.findByUserEntity_UserNo(userDto.getUserNo()).orElse(null);
+            GuardianEntity guardian = guardianRepository.findByUserEntity_UserNo(userDto.getUserNo());
             if (guardian == null) return new ArrayList<>();
 
             List<CareRecipientDto> result = new ArrayList<>();
