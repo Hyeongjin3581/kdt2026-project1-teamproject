@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import HourSelect from "../../../components/common/HourSelect";
 import { toHhmm, toServerTime } from "../../../utils/timeFormat";
 import axios from "axios";
@@ -8,6 +8,9 @@ import LoadStatus from "../../../components/common/LoadStatus";
 import { TODAY } from "../../../constants";
 import { buildHistory, buildVisits } from "../../../utils/guardianAdapters";
 import { upcomingDates } from "../../../utils/upcomingDates";
+import AiFaq from "./AiFaq";
+import AiInquiryAssistant from "./AiInquiryAssistant";
+import { aiErrorMessage } from "../../../utils/aiError";
 
 export default function GuardianRequest({ guardian, recipients, activeRecipientId, onSelectRecipient }) {
   const [reqSent, setReqSent] = useState(false);
@@ -16,6 +19,10 @@ export default function GuardianRequest({ guardian, recipients, activeRecipientI
   const [requestContent, setRequestContent] = useState("");
   const [history, setHistory] = useState([]);
   const [visits, setVisits] = useState([]);
+  const [requests, setRequests] = useState([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [historyError, setHistoryError] = useState("");
+  const historyRequest = useRef(null);
   const [status, setStatus] = useState("loading");
   const [loadError, setLoadError] = useState(null); // 병합 중 빠진 선언 복구 (2026. 10. 06)
   const dates = upcomingDates(7); // 오늘부터 7일
@@ -40,8 +47,8 @@ export default function GuardianRequest({ guardian, recipients, activeRecipientI
   const selectedVisit = visits.find((visit) => visit.id === selectedVisitId);
 
   // 문의 카테고리 + 보호자 문의 + 수급자의 방문 요청/근무기록/요양보호사를 axios로 조회
-  async function loadData() {
-    setStatus("loading");
+  async function loadData({ silent = false } = {}) {
+    if (!silent) setStatus("loading");
     try {
       const [categoriesRes, inquiriesRes, careworkersRes] = await Promise.all([
         axios.get("http://localhost:8080/inquirycategory", { withCredentials: true }),
@@ -55,6 +62,7 @@ export default function GuardianRequest({ guardian, recipients, activeRecipientI
         axios.get("/careworkerreport/center", { params: { centerNo: no }, withCredentials: true }).catch(() => ({ data: [] }))
       ));
       setCategories(categoriesRes.data);
+      setRequests(requestsRes.data);
       setRequestType((current) => current || categoriesRes.data[0]?.inquiryCategoryName || "");
       setVisits(buildVisits({ requests: requestsRes.data, reports: reportLists.flatMap((res) => res.data), careworkers: careworkersRes.data }).filter((v) => !v.cancelled));
       setHistory(buildHistory({
@@ -67,11 +75,43 @@ export default function GuardianRequest({ guardian, recipients, activeRecipientI
       setStatus("ok");
     } catch (error) {
       console.error("요청·문의 조회 실패:", error);
+      if (silent) { setHistoryError("문의 내역을 갱신하지 못했습니다. 다시 조회해주세요."); return; }
       setLoadError(error);
       setStatus("error");
     }
   }
   useEffect(() => { loadData(); }, [selectedRecipient?.id, guardian?.guardianNo]);
+  useEffect(() => {
+    setHistoryError("");
+    setHistoryLoading(false);
+    return () => historyRequest.current?.abort();
+  }, [selectedRecipient?.id, guardian?.guardianNo]);
+
+  // AI 등록 후에는 문의 내역만 갱신한다. 도우미와 방문 일정은 그대로 유지한다.
+  async function refreshHistory() {
+    historyRequest.current?.abort();
+    const controller = new AbortController();
+    historyRequest.current = controller;
+    setHistoryLoading(true);
+    setHistoryError("");
+    try {
+      const response = await axios.get("http://localhost:8080/guardianinquiry", { withCredentials: true, signal: controller.signal });
+      if (!Array.isArray(response.data)) { setHistoryError("문의 목록 응답 형식이 올바르지 않습니다."); return; }
+      if (!controller.signal.aborted) setHistory(buildHistory({
+        inquiries: response.data.filter((item) => item.guardianNo === guardian?.guardianNo
+          && (item.careRecipientNo == null || item.careRecipientNo === selectedRecipient?.id)),
+        categories, requests,
+      }));
+    } catch (error) {
+      if (!axios.isCancel(error) && !controller.signal.aborted) setHistoryError(`문의 내역을 갱신하지 못했습니다. 입력 내용과 AI 답변은 유지됩니다. ${aiErrorMessage(error)}`);
+    } finally {
+      if (!controller.signal.aborted) setHistoryLoading(false);
+    }
+  }
+  const showScheduleForm = () => {
+    document.getElementById("guardian-request-form")?.scrollIntoView({ behavior: "smooth", block: "center" });
+    document.getElementById("guardian-request-form")?.focus({ preventScroll: true });
+  };
 
   // 선택한 내역(문의/서비스 신청) 수정·삭제 : 문의는 관리자 응답 전까지만, 서비스 신청은 "신청" 상태일 때만 가능
   const [editing, setEditing] = useState(false);
@@ -167,7 +207,7 @@ export default function GuardianRequest({ guardian, recipients, activeRecipientI
       alert("서버 통신 오류가 발생했습니다.");
     }
   };
-  if (status !== "ok") return <LoadStatus status={status} onRetry={loadData} error={loadError} />;
+  if (status !== "ok") return <div className="space-y-5"><AiInquiryAssistant categories={categories} categoriesLoading={status === "loading"} onSaved={refreshHistory} /><LoadStatus status={status} onRetry={loadData} error={loadError} /></div>;
 
   return (
     <div className="space-y-5">
@@ -176,6 +216,8 @@ export default function GuardianRequest({ guardian, recipients, activeRecipientI
         <h1 className="font-display text-2xl font-extrabold tracking-tight text-slate-900">요청 · 문의</h1>
         <p className="mt-1 text-sm text-slate-500">방문 시간 변경이나 문의사항을 센터에 전달합니다.</p>
       </div>
+      <AiInquiryAssistant categories={categories} requestNo={selectedVisit?.id} onSaved={refreshHistory} onScheduleGuide={showScheduleForm} />
+      <details className="rounded-lg border border-slate-200 bg-white p-4"><summary className="cursor-pointer text-sm font-semibold text-teal-700">센터의 공통 FAQ 보기</summary><div className="mt-3"><AiFaq /></div></details>
       <div className="grid gap-5 lg:grid-cols-[1.2fr_.8fr]">
         <Panel className="p-5">
           {selectedRequest ? <>
@@ -212,7 +254,7 @@ export default function GuardianRequest({ guardian, recipients, activeRecipientI
               <button type="button" onClick={() => { setEditing(false); setSelectedRequestId(null); }} className="rounded-lg border border-slate-200 px-4 py-2 text-xs font-bold text-slate-600 transition hover:bg-slate-50">새 요청 작성</button>
             </div>
           </> : <>
-          <h2 className="font-display font-bold text-slate-900">요청 보내기</h2>
+          <h2 id="guardian-request-form" tabIndex={-1} className="scroll-mt-20 font-display font-bold text-slate-900">요청 보내기</h2>
           <p className="mt-1 text-xs text-slate-400">{selectedRecipient ? `${selectedRecipient.name} 어르신` : "수급자"}의 방문 일정에 대한 요청을 센터에 전달합니다.</p>
           {selectedVisit && <div className="mt-4 flex items-center justify-between rounded-lg border border-teal-100 bg-teal-50 px-3 py-2.5"><div><p className="text-[10px] font-bold tracking-wide text-teal-600">선택한 방문 일정</p><p className="mt-0.5 text-xs font-bold text-teal-800">{selectedVisit.date} · {selectedVisit.time}</p></div><button type="button" onClick={() => setSelectedVisitId(null)} className="text-xs font-semibold text-teal-700 hover:underline">변경</button></div>}
           {!selectedVisit ? (
@@ -265,7 +307,9 @@ export default function GuardianRequest({ guardian, recipients, activeRecipientI
         </Panel>
         <Panel className="overflow-hidden">
           <div className="border-b border-slate-100 px-5 py-4">
-            <h2 className="font-display font-bold text-slate-900">요청 내역</h2>
+            <div className="flex flex-wrap items-center justify-between gap-2"><h2 className="font-display font-bold text-slate-900">요청 내역</h2>
+              <button type="button" onClick={refreshHistory} disabled={historyLoading} className="rounded-lg border border-teal-200 px-3 py-2.5 text-xs font-bold text-teal-700 disabled:opacity-50">{historyLoading ? "내역 조회 중..." : "문의 내역 새로고침"}</button></div>
+            {historyError && <p role="alert" className="mt-2 text-xs text-red-600">{historyError}</p>}
             <p className="mt-1 text-xs text-slate-400">수급자를 선택해 해당 요청·문의·신청 내역을 확인하세요.</p>
             <div className="mt-3 grid gap-2">
               {recipients.map((recipient) => {

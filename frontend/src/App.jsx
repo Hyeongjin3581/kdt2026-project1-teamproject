@@ -14,6 +14,7 @@ import Requests from "./features/admin/requests/Requests";
 import Vacancy from "./features/admin/vacancy/Vacancy";
 import Centers from "./features/admin/centers/Centers";
 import Inquiries from "./features/admin/inquiries/Inquiries";
+import ServiceReviews from "./features/admin/reviews/ServiceReviews";
 import GuardianApp from "./features/guardian/GuardianApp";
 import CaregiverApp from "./features/caregiver/CaregiverApp";
 
@@ -71,8 +72,8 @@ function OncareApp() {
       <Route path="/login" element={role ? <Navigate to={`/${role}`} replace /> : <Login login={setUser} />} />   {/* 관리자·보호자·요양보호사 공용 : 로그인한 UserDto 를 넘겨받는다 */}
       <Route path="/signup" element={role ? <Navigate to={`/${role}`} replace /> : <Signup />} />
       {/* 관리자: AdminApp이 공통 레이아웃(사이드바·헤더)이고 하위 화면은 Outlet에 렌더링 */}
-      <Route path="/admin" element={role === "admin" ? <AdminApp logout={logout} /> : <Navigate to="/login" replace />}>
-        <Route index element={<Dashboard />} />
+      <Route path="/admin" element={role === "admin" ? <AdminApp user={user} logout={logout} /> : <Navigate to="/login" replace />}>
+        <Route index element={<Dashboard user={user} />} />
         <Route path="recipients" element={<Recipients />} />
         <Route path="guardians" element={<Guardians />} />
         <Route path="caregivers" element={<Caregivers />} />
@@ -81,7 +82,8 @@ function OncareApp() {
         <Route path="auto" element={<Navigate to="/admin/requests" replace />} />
         <Route path="vacancy" element={<Vacancy />} />
         <Route path="centers" element={<Centers />} />
-        <Route path="inquiries" element={<Inquiries />} />
+        <Route path="inquiries" element={<Inquiries user={user} />} />
+        <Route path="reviews" element={user?.userCategoryNo === 4 ? <ServiceReviews /> : <Navigate to="/admin" replace />} />
       </Route>
       {/* 보호자: 화면 간에 공유하는 상태(수급자 목록)가 있어 GuardianApp 안에서 하위 Routes를 정의 */}
       <Route path="/guardian/*" element={role === "guardian" ? <GuardianApp user={user} logout={logout} /> : <Navigate to="/login" replace />} />

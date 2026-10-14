@@ -5,8 +5,9 @@ import { TODAY } from "../../constants";
 import { useCenter } from "../../context/CenterContext";
 import { buildCenters } from "../../utils/adminAdapters";
 
-export default function SectionTitle({ title, subtitle, action }) {
+export default function SectionTitle({ title, subtitle, action, allCenters = false }) {
   const center = useCenter();
+  const displayCenter = allCenters ? "all" : center;
   const [centers, setCenters] = useState(buildCenters([]));
 
   // 선택한 센터 이름을 보여주기 위해 센터 목록을 axios로 조회
@@ -28,8 +29,8 @@ export default function SectionTitle({ title, subtitle, action }) {
         <p className="mb-1 font-mono text-[10px] font-bold tracking-[.16em] text-teal-600">SCHEDULING · {TODAY.replace(/[()]/g, "").trim()}</p>
         <h1 className="font-display text-2xl font-extrabold tracking-tight text-slate-900">{title}</h1>
         <div className="mt-1.5 flex flex-wrap items-center gap-2">
-          <span className={`inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-xs font-bold ring-1 ${center === "all" ? "bg-slate-100 text-slate-600 ring-slate-200" : "bg-teal-50 text-teal-700 ring-teal-200"}`}>
-            <span className={`h-1.5 w-1.5 rounded-full ${center === "all" ? "bg-slate-400" : "bg-teal-500"}`} />{centerName(center)}
+          <span className={`inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-xs font-bold ring-1 ${displayCenter === "all" ? "bg-slate-100 text-slate-600 ring-slate-200" : "bg-teal-50 text-teal-700 ring-teal-200"}`}>
+            <span className={`h-1.5 w-1.5 rounded-full ${displayCenter === "all" ? "bg-slate-400" : "bg-teal-500"}`} />{centerName(displayCenter)}
           </span>
           <p className="text-sm text-slate-500">{subtitle}</p>
         </div>

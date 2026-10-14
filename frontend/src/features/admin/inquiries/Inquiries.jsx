@@ -7,8 +7,9 @@ import Badge from "../../../components/common/Badge";
 import LoadStatus from "../../../components/common/LoadStatus";
 import InquiryAnswerModal from "./InquiryAnswerModal";
 import { inquiryStatus } from "../../../utils/inquiryStatus";
+import AiFaqManagement from "./AiFaqManagement";
 
-export default function Inquiries() {
+export default function Inquiries({ user }) {
     const [inquiries, setInquiries] = useState([]);
     const [guardians, setGuardians] = useState([]);
     const [categories, setCategories] = useState([]);
@@ -87,10 +88,14 @@ export default function Inquiries() {
         .filter((i) => `${i.guardian?.guardianName ?? ""}${i.careRecipientName ?? ""}${i.category}${i.status}${i.inquiryContent ?? ""}`.includes(q))
         .sort((a, b) => b.inquiryNo - a.inquiryNo);
 
-    if (status !== "ok") return <LoadStatus status={status} onRetry={loadData} error={loadError} />;
+    if (status !== "ok") return <div className="space-y-5">
+        {user?.userCategoryNo === 4 && <AiFaqManagement inquiries={[]} />}
+        <LoadStatus status={status} onRetry={loadData} error={loadError} />
+    </div>;
     return (
         <div className="space-y-5">
             <SectionTitle title="문의 관리" subtitle="보호자가 센터에 보낸 요청·문의 목록입니다." action={<button onClick={() => { setQ(""); loadData(); }} className="rounded-lg border border-teal-200 bg-white px-4 py-2.5 text-sm font-bold text-teal-700 transition hover:bg-teal-50">↻ 새로고침</button>} />
+            {user?.userCategoryNo === 4 && <AiFaqManagement inquiries={inquiries} />}
             <Panel className="overflow-hidden">
                 <div className="flex flex-wrap gap-3 border-b border-slate-100 p-4">
                     <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="보호자·수급자명, 문의 유형, 상태, 내용 검색" className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-100 sm:w-80" />
@@ -119,7 +124,9 @@ export default function Inquiries() {
                                         {pendingSiblingsOf(i).length > 0 && <span className="mt-1 block font-sans text-[10px] font-semibold text-teal-600">함께 보낸 문의 대기 {pendingSiblingsOf(i).length}건</span>}
                                     </td>
                                     <td className="px-5 py-4 text-slate-600">{i.inquiryContent}</td>
-                                    <td className="px-5 py-4"><Badge tone={inquiryStatus(i).tone}>{i.status}</Badge></td>
+                                    <td className="px-5 py-4"><Badge tone={inquiryStatus(i).tone}>{i.status}</Badge>
+                                        {i.answerContent?.startsWith("[AI 안내]") && <span className="mt-2 block text-xs font-semibold text-teal-700">✨ AI 안내</span>}
+                                    </td>
                                     <td className="whitespace-nowrap px-5 py-4 text-right">
                                         <button onClick={() => setAnswering(i)} className={`mr-3 rounded-lg px-3 py-1.5 text-xs font-bold transition ${i.answerContent ? "border border-teal-200 text-teal-700 hover:bg-teal-50" : "bg-teal-600 text-white hover:bg-teal-700"}`}>{i.answerContent ? "응답 수정" : "응답하기"}</button>
                                         <button onClick={() => removeInquiry(i)} className="text-xs font-bold text-red-500 hover:underline">삭제</button>
