@@ -2,11 +2,10 @@ package oncare_backend.controller;
 
 import java.util.List;
 
+import oncare_backend.service.AuthChecker;
+import oncare_backend.service.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import oncare_backend.model.dto.CareWorkerRecommendationDto;
 import oncare_backend.model.dto.VacancyDto;
@@ -18,18 +17,38 @@ public class VacancyController {
 
 	@Autowired
 	private VacancyService vacancyService;
+    @Autowired
+    private AuthChecker authChecker;
+    @Autowired
+    private JwtUtil jwtUtil;
 
 	// 1. 결원 목록 조회(관리자)
 	@GetMapping("")
-	public List<VacancyDto> findAll(@RequestParam(name = "centerNo", required = false) Integer centerNo) {
-		return vacancyService.findAll(centerNo);
+	public List<VacancyDto> findAll(@CookieValue(value = "accessToken", required = false)String token,
+                                    @RequestParam(name = "centerNo", required = false) Integer centerNo) {
+        Integer no = jwtUtil.getUserNoFromAccessToken(token);
+        if (no == null){
+            return List.of();
+        }
+        if (!authChecker.hasRole(token,4)){
+            return List.of();
+        }
+        return vacancyService.findAll(centerNo);
 	}
 
 	// 2. 대체 후보 재추천(관리자)
 	// 거절/취소한 요양보호사 제외 상위 3명 추천 
 	@GetMapping("/detail")
-	public List<CareWorkerRecommendationDto> vacancyDetail(@RequestParam(name = "requestNo") Integer requestNo) {
-		return vacancyService.vacancyDetail(requestNo);
+	public List<CareWorkerRecommendationDto> vacancyDetail(@CookieValue(value = "accessToken", required = false)String token,
+                                                           @RequestParam(name = "requestNo", required = false) Integer requestNo) {
+        Integer no = jwtUtil.getUserNoFromAccessToken(token);
+        if (no == null){
+            return List.of();
+        }
+        if (!authChecker.hasRole(token,4)){
+            return List.of();
+        }
+        return vacancyService.vacancyDetail(requestNo);
 	}
 }
 

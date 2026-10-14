@@ -4,9 +4,12 @@ import java.util.List;
 
 import oncare_backend.model.dto.*;
 import oncare_backend.model.repository.RequestRepository;
+import oncare_backend.service.AuthChecker;
 import oncare_backend.service.AutoAssignService;
+import oncare_backend.service.JwtUtil;
 import oncare_backend.service.NotifyService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.RestController;
 
 import oncare_backend.service.CareWorkerReportService;
@@ -20,52 +23,104 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 
-@RestController 
+@RestController
 @RequestMapping ("/careworkerreport")
 public class CareWorkerReportController {
     @Autowired private CareWorkerReportService careWorkerReportService;
     @Autowired private AutoAssignService autoAssignService;
     @Autowired private NotifyService notifyService;
+    @Autowired private JwtUtil jwtUtil;
+    @Autowired private AuthChecker authChecker;
 
-    // [1] 근무기록 추가
+    // [1] 근무기록 추가 --> 관리자(4) : 요청 관리에서 직접 배정
     @PostMapping("")
-    public boolean saveReport(@RequestBody CareworkerReportDto careworkerReportDto) {
+    public boolean saveReport(@CookieValue(value = "accessToken", required = false)String token,
+                              @RequestBody CareworkerReportDto careworkerReportDto) {
+        Integer no = jwtUtil.getUserNoFromAccessToken(token);
+        if (no == null){
+            return false;
+        }
+        if (!authChecker.hasRole(token,4)){
+            return false;
+        }
         return careWorkerReportService.saveReport(careworkerReportDto);
     }
-    
-    // [2] 센터 별 근무기록 불러오기
+
+    // [2] 센터 별 근무기록 불러오기 --> 관리자, 보호자 화면이 사용하므로 로그인만 확인
     @GetMapping ("/center")
-    public List<CareworkerReportDto> findAllByCenter(@RequestParam(name = "centerNo") Integer centerNo){
+    public List<CareworkerReportDto> findAllByCenter(@CookieValue(value = "accessToken", required = false)String token,
+                                                     @RequestParam(name = "centerNo") Integer centerNo){
+        Integer no = jwtUtil.getUserNoFromAccessToken(token);
+        if (no == null){
+            return List.of();
+        }
         return careWorkerReportService.findAllByCenter(centerNo);
     }
 
-    // [3] 요양보호사 별 근무기록 불러오기
+    // [3] 요양보호사 별 근무기록 불러오기 --> 요양보호사, 관리자(상세 창)가 사용하므로 로그인만 확인
     @GetMapping("/careworker")
-    public List<CareworkerReportDto> findAllByCareworker(@RequestParam(name = "careworkerNo") Integer careworkerNo) {
+    public List<CareworkerReportDto> findAllByCareworker(@CookieValue(value = "accessToken", required = false)String token,
+                                                         @RequestParam(name = "careworkerNo") Integer careworkerNo) {
+        Integer no = jwtUtil.getUserNoFromAccessToken(token);
+        if (no == null){
+            return List.of();
+        }
         return careWorkerReportService.findAllByCareworker(careworkerNo);
     }
-    
-    // [4] 근무 기록 레코드 -> 근무기록상태 바꾸기
+
+    // [4] 근무 기록 레코드 -> 근무기록상태 바꾸기 --> 관리자(4)
     @PutMapping("")
-    public boolean updateReport( @RequestParam(name="careworkersReportNo")Integer careworkersReportNo,
-                                 @RequestParam(name="workStatus")String status ){
+    public boolean updateReport(@CookieValue(value = "accessToken", required = false)String token,
+                                @RequestParam(name="careworkersReportNo")Integer careworkersReportNo,
+                                @RequestParam(name="workStatus")String status ){
+        Integer no = jwtUtil.getUserNoFromAccessToken(token);
+        if (no == null){
+            return false;
+        }
+        if (!authChecker.hasRole(token,4)){
+            return false;
+        }
         return careWorkerReportService.updateReport(careworkersReportNo, status);
     }
-    // [5] 근무 기록 삭제
+    // [5] 근무 기록 삭제 --> 관리자(4)
     @DeleteMapping("")
-    public boolean deleteReport( @RequestParam(name="careworkersReportNo")Integer careworkersReportNo ){
+    public boolean deleteReport(@CookieValue(value = "accessToken", required = false)String token,
+                                @RequestParam(name="careworkersReportNo")Integer careworkersReportNo ){
+        Integer no = jwtUtil.getUserNoFromAccessToken(token);
+        if (no == null){
+            return false;
+        }
+        if (!authChecker.hasRole(token,4)){
+            return false;
+        }
         return careWorkerReportService.deleteReport(careworkersReportNo);
     }
 
-    // 요양보호사 : 배정 수락
+    // 요양보호사(2) : 배정 수락
     @PutMapping("/accept")
-    public boolean acceptAssignment(@RequestBody AssignmentActionDto assignmentActionDto){
+    public boolean acceptAssignment(@CookieValue(value = "accessToken", required = false)String token,
+                                    @RequestBody AssignmentActionDto assignmentActionDto){
+        Integer no = jwtUtil.getUserNoFromAccessToken(token);
+        if (no == null){
+            return false;
+        }
+        if (!authChecker.hasRole(token,2)){
+            return false;
+        }
         return careWorkerReportService.acceptAssignment(assignmentActionDto);
     }
 
-    // 요양보호사 : 배정 거절
+    // 요양보호사(2) : 배정 거절
     @PutMapping("/reject")
-    public boolean rejectAssignment(@RequestBody AssignmentActionDto assignmentActionDto){
+    public boolean rejectAssignment(@CookieValue(value = "accessToken", required = false)String token,
+                                    @RequestBody AssignmentActionDto assignmentActionDto){
+        Integer no = jwtUtil.getUserNoFromAccessToken(token);
+        if (no == null){
+            return false;
+        }
+        if (!authChecker.hasRole(token,2)){
+            return false;
+        }
         boolean result = careWorkerReportService.rejectAssignment(assignmentActionDto);
         if (result){
             notifyService.toAdmin(NotifyType.VACANCY,"요양보호사가 배정을 거절했습니다.");
@@ -73,38 +128,86 @@ public class CareWorkerReportController {
         return result;
     }
 
-    // 관리자가 상위 3명 중 한 명을 눌러 "배정하기"를 했을 때
+    // 관리자(4)가 상위 3명 중 한 명을 눌러 "배정하기"를 했을 때
     @PostMapping("/assign")
-    public boolean assignCareworker(@RequestBody AssignCareworkerDto assignCareworkerDto){
+    public boolean assignCareworker(@CookieValue(value = "accessToken", required = false)String token,
+                                    @RequestBody AssignCareworkerDto assignCareworkerDto){
+        Integer no = jwtUtil.getUserNoFromAccessToken(token);
+        if (no == null){
+            return false;
+        }
+        if (!authChecker.hasRole(token,4)){
+            return false;
+        }
         return careWorkerReportService.assignCareworker(assignCareworkerDto);
     }
 
-    // 요양보호사가 자기 페이지를 열었을 때 수락 대기 중인 배정을 보여 주는 조회
+    // 요양보호사(2)가 자기 페이지를 열었을 때 수락 대기 중인 배정을 보여 주는 조회
     @GetMapping("/findMyAssignments")
-    public List<CareworkerReportDto> findMyAssignments(@RequestParam Integer careworkerNo){
+    public List<CareworkerReportDto> findMyAssignments(@CookieValue(value = "accessToken", required = false)String token,
+                                                       @RequestParam Integer careworkerNo){
+        Integer no = jwtUtil.getUserNoFromAccessToken(token);
+        if (no == null){
+            return List.of();
+        }
+        if (!authChecker.hasRole(token,2)){
+            return List.of();
+        }
         return careWorkerReportService.findMyAssignments(careworkerNo);
     }
 
-    // 요청 번호를 받아 필수 조건을 통과한 요양보호사 중 상위 3명을 반환
+    // 관리자(4) : 요청 번호를 받아 필수 조건을 통과한 요양보호사 중 상위 3명을 반환
     @GetMapping("/candidates")
-    public List<CareWorkerRecommendationDto> top3Careworkers(@RequestParam("requestNo") Integer requestNo) {
+    public List<CareWorkerRecommendationDto> top3Careworkers(@CookieValue(value = "accessToken", required = false)String token,
+                                                             @RequestParam("requestNo") Integer requestNo) {
+        Integer no = jwtUtil.getUserNoFromAccessToken(token);
+        if (no == null){
+            return List.of();
+        }
+        if (!authChecker.hasRole(token,4)){
+            return List.of();
+        }
         return autoAssignService.top3Careworkers(requestNo);
     }
 
-    // 요청 번호 받아 필수 조건을 통과한 요양보호사 List 반환
+    // 관리자(4) : 요청 번호 받아 필수 조건을 통과한 요양보호사 List 반환
     @GetMapping("/available")
-    public List<CareworkerDto> filterCareworkers(@RequestParam Integer requestNo){
+    public List<CareworkerDto> filterCareworkers(@CookieValue(value = "accessToken", required = false)String token,
+                                                 @RequestParam Integer requestNo){
+        Integer no = jwtUtil.getUserNoFromAccessToken(token);
+        if (no == null){
+            return List.of();
+        }
+        if (!authChecker.hasRole(token,4)){
+            return List.of();
+        }
         return autoAssignService.filterCareworkers(requestNo);
     }
-    // 요양보호사별 확정된 요청 전체조회
+    // 요양보호사(2)별 확정된 요청 전체조회
     @GetMapping("/findMyConfirmed")
-    public List<CareworkerReportDto> findMyConfirmed(@RequestParam Integer careworkerNo){
+    public List<CareworkerReportDto> findMyConfirmed(@CookieValue(value = "accessToken", required = false)String token,
+                                                     @RequestParam Integer careworkerNo){
+        Integer no = jwtUtil.getUserNoFromAccessToken(token);
+        if (no == null){
+            return List.of();
+        }
+        if (!authChecker.hasRole(token,2)){
+            return List.of();
+        }
         return careWorkerReportService.findMyConfirmed(careworkerNo);
     }
 
-    // 요양보호사가 확정된 요청을 거절
+    // 요양보호사(2)가 확정된 요청을 거절
     @PutMapping("/cancel")
-    public boolean cancel(@RequestBody AssignmentActionDto assignmentActionDto){
+    public boolean cancel(@CookieValue(value = "accessToken", required = false)String token,
+                          @RequestBody AssignmentActionDto assignmentActionDto){
+        Integer no = jwtUtil.getUserNoFromAccessToken(token);
+        if (no == null){
+            return false;
+        }
+        if (!authChecker.hasRole(token,2)){
+            return false;
+        }
         boolean result = careWorkerReportService.cancel(assignmentActionDto);
         if (result){
             notifyService.toAdmin(NotifyType.VACANCY, "확정된 방문이 취소되었습니다.");
@@ -112,9 +215,17 @@ public class CareWorkerReportController {
         return result;
     }
 
-    // 요양보호사 확정된 요청을 완료
+    // 요양보호사(2) 확정된 요청을 완료
     @PutMapping("/complete")
-    public boolean complete(@RequestBody AssignmentActionDto assignmentActionDto){
+    public boolean complete(@CookieValue(value = "accessToken", required = false)String token,
+                            @RequestBody AssignmentActionDto assignmentActionDto){
+        Integer no = jwtUtil.getUserNoFromAccessToken(token);
+        if (no == null){
+            return false;
+        }
+        if (!authChecker.hasRole(token,2)){
+            return false;
+        }
         return careWorkerReportService.complete(assignmentActionDto);
     }
 }

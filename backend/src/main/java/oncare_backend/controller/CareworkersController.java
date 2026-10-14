@@ -2,6 +2,7 @@ package oncare_backend.controller;
 
 import java.util.List;
 
+import oncare_backend.service.AuthChecker;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -29,17 +30,29 @@ public class CareworkersController {
     @Autowired
     private JwtUtil jwtUtil;
 
+    @Autowired
+    private AuthChecker authChecker;
 
-    // 1. 요양보호사 등록
+
+    // 1. 요양보호사 등록 --> 관리자(4) (요양보호사는 회원가입으로 들어오므로 화면에서는 사용하지 않음)
     @PostMapping("")
     public boolean createCareworker(
+            @CookieValue(value = "accessToken", required = false) String token,
             @RequestBody CareworkerDto careworkerDto) {
+        Integer no = jwtUtil.getUserNoFromAccessToken(token);
+        if (no == null){
+            return false;
+        }
+        if (!authChecker.hasRole(token,4)){
+            return false;
+        }
 
         return careworkersService.createCareworker(careworkerDto);
     }
 
 
     // 2. 요양보호사 전체조회
+    // 요양보호사 로그인 화면이 로그인 전에 '가입 승인 대기' 여부를 확인할 때도 사용하므로 토큰 검사를 하지 않는다
     @GetMapping("")
     public List<CareworkerDto> getCareworkers() {
 
@@ -47,12 +60,17 @@ public class CareworkersController {
     }
 
 
-    // 3. 요양보호사 상세조회
+    // 3. 요양보호사 상세조회 --> 관리자, 요양보호사가 사용하므로 로그인만 확인
     // /api/careworkers/detail?careworkerNo=1
     @GetMapping("/detail")
     public CareworkerDto getCareworker(
+            @CookieValue(value = "accessToken", required = false) String token,
             @RequestParam(name = "careworkerNo")
             Integer careworkerNo) {
+        Integer no = jwtUtil.getUserNoFromAccessToken(token);
+        if (no == null){
+            return null;
+        }
 
         return careworkersService.getCareworker(careworkerNo);
     }
@@ -87,21 +105,37 @@ public class CareworkersController {
     }
 
 
-    // 4. 요양보호사 수정
+    // 4. 요양보호사 수정 --> 관리자(4)의 수정 창 + 요양보호사(2)의 내 정보 수정
     @PutMapping("")
     public boolean updateCareworker(
+            @CookieValue(value = "accessToken", required = false) String token,
             @RequestBody CareworkerDto careworkerDto) {
+        Integer no = jwtUtil.getUserNoFromAccessToken(token);
+        if (no == null){
+            return false;
+        }
+        if (!authChecker.hasRole(token,4) && !authChecker.hasRole(token,2)){
+            return false;
+        }
 
         return careworkersService.updateCareworker(careworkerDto);
     }
 
 
-    // 5. 요양보호사 삭제
+    // 5. 요양보호사 삭제 --> 관리자(4)
     // /api/careworkers?careworkerNo=1
     @DeleteMapping("")
     public boolean deleteCareworker(
+            @CookieValue(value = "accessToken", required = false) String token,
             @RequestParam(name = "careworkerNo")
             Integer careworkerNo) {
+        Integer no = jwtUtil.getUserNoFromAccessToken(token);
+        if (no == null){
+            return false;
+        }
+        if (!authChecker.hasRole(token,4)){
+            return false;
+        }
 
         return careworkersService.deleteCareworker(careworkerNo);
     }
