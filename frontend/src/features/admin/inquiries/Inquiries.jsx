@@ -6,7 +6,7 @@ import Panel from "../../../components/common/Panel";
 import Badge from "../../../components/common/Badge";
 import LoadStatus from "../../../components/common/LoadStatus";
 import InquiryAnswerModal from "./InquiryAnswerModal";
-import { inquiryStatus } from "../../../utils/inquiryStatus";
+import { inquiryStatus, assigneeStatus } from "../../../utils/inquiryStatus";
 import useNotifyRefresh from "../useNotifyRefresh";
 import Pagination from "../../../components/common/Pagination";
 import { usePagination } from "../../../utils/usePagination";
@@ -128,7 +128,11 @@ export default function Inquiries() {
                                         {pendingSiblingsOf(i).length > 0 && <span className="mt-1 block font-sans text-[10px] font-semibold text-teal-600">함께 보낸 문의 대기 {pendingSiblingsOf(i).length}건</span>}
                                     </td>
                                     <td className="min-w-[240px] px-5 py-4 text-slate-600">{i.inquiryContent}</td>
-                                    <td className="whitespace-nowrap px-5 py-4"><Badge tone={inquiryStatus(i).tone}>{i.status}</Badge></td>
+                                    <td className="whitespace-nowrap px-5 py-4">
+                                        <Badge tone={inquiryStatus(i).tone}>{i.status}</Badge>
+                                        {/* 일정을 옮긴 문의는 지금 담당자 상태를 아래에 함께 (담당 없음 / 수락 대기 / 담당 확정) */}
+                                        {i.scheduleAppliedDate && assigneeStatus(i) && <span className="mt-1 block"><Badge tone={assigneeStatus(i).tone}>{assigneeStatus(i).label}</Badge></span>}
+                                    </td>
                                     <td className="whitespace-nowrap px-5 py-4 text-right">
                                         <button onClick={() => setAnswering(i)} className={`mr-3 rounded-lg px-3 py-1.5 text-xs font-bold transition ${i.answerContent ? "border border-teal-200 text-teal-700 hover:bg-teal-50" : "bg-teal-600 text-white hover:bg-teal-700"}`}>{i.answerContent ? "응답 수정" : "응답하기"}</button>
                                         <button onClick={() => removeInquiry(i)} className="text-xs font-bold text-red-500 hover:underline">삭제</button>

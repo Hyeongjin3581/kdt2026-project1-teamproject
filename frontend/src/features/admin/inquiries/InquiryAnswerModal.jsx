@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import Badge from "../../../components/common/Badge";
 import { toHhmm } from "../../../utils/timeFormat";
-import { inquiryStatus } from "../../../utils/inquiryStatus";
+import { inquiryStatus, assigneeStatus } from "../../../utils/inquiryStatus";
 
 // 읽기 전용 한 줄 (라벨 + 내용)
 function Info({ label, children }) {
@@ -113,7 +113,7 @@ export default function InquiryAnswerModal({ inquiry, siblings = [], otherPendin
           <dl className="divide-y divide-slate-100 rounded-xl border border-slate-100 bg-slate-50/60 px-4">
             {isSchedule && <>
               <Info label="수급자">{inquiry.careRecipientName ? `${inquiry.careRecipientName} 어르신` : "-"}</Info>
-              <Info label="현재 방문 일정">{inquiry.visitDate ? <span className="flex flex-wrap items-center gap-2"><span className="font-mono">{inquiry.visitDate} {range(inquiry.visitStartTime, inquiry.visitEndTime)}</span><Badge tone="neutral">{inquiry.requestState}</Badge>{changedBy && <span className="text-[11px] font-semibold text-slate-500">#{changedBy.inquiryNo} 응답으로 변경됨 ({toSec(changedBy.scheduleAppliedDate).slice(5, 16).replace("T", " ")})</span>}</span> : "연결된 방문 일정이 없습니다."}</Info>
+              <Info label="현재 방문 일정">{inquiry.visitDate ? <span className="flex flex-wrap items-center gap-2"><span className="font-mono">{inquiry.visitDate} {range(inquiry.visitStartTime, inquiry.visitEndTime)}</span>{assigneeStatus(inquiry) && <Badge tone={assigneeStatus(inquiry).tone}>{assigneeStatus(inquiry).label}</Badge>}{changedBy && <span className="text-[11px] font-semibold text-slate-500">#{changedBy.inquiryNo} 응답으로 변경됨 ({toSec(changedBy.scheduleAppliedDate).slice(5, 16).replace("T", " ")})</span>}</span> : "연결된 방문 일정이 없습니다."}</Info>
               <Info label="희망 방문 일정"><b className="font-mono text-teal-700">{inquiry.wishDate ? wishLabel(inquiry) : "-"}</b></Info>
             </>}
             <Info label={isSchedule ? "보호자 코멘트" : "문의 내용"}><span className="whitespace-pre-wrap">{inquiry.inquiryContent || "-"}</span></Info>
