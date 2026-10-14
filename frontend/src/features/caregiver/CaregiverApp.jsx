@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { Navigate, Route, Routes, useLocation, useNavigate } from "react-router-dom";
-import AppMark from "../../components/common/AppMark";
 import Badge from "../../components/common/Badge";
 import Panel from "../../components/common/Panel";
 import LoadStatus from "../../components/common/LoadStatus";
+import PortalLayout from "../../components/common/PortalLayout";
 import CaregiverHome from "./home/CaregiverHome";
 import CaregiverAvailability from "./availability/CaregiverAvailability";
 import CaregiverSchedule from "./schedule/CaregiverSchedule";
@@ -12,11 +12,11 @@ import CaregiverRecords from "./records/CaregiverRecords";
 import CaregiverProfile from "./profile/CaregiverProfile";
 
 const caregiverNav = [
-  { id: "", label: "홈", icon: "▣" },
-  { id: "availability", label: "가용시간", icon: "＋" },
-  { id: "schedule", label: "방문 일정", icon: "▤" },
-  { id: "records", label: "업무 기록", icon: "☷" },
-  { id: "profile", label: "내 정보", icon: "◉" },
+  { id: "home", label: "홈" },
+  { id: "availability", label: "가용시간" },
+  { id: "schedule", label: "방문 일정" },
+  { id: "records", label: "업무 기록" },
+  { id: "profile", label: "내 정보" },
 ];
 
 // 요양보호사 포털 : 화면 간에 공유하는 내 정보(요양보호사)와 소속 센터를 여기서 조회하고,
@@ -24,8 +24,9 @@ const caregiverNav = [
 export default function CaregiverApp({ careworkerNo, user, logout }) {
   const navigate = useNavigate();
   const { pathname } = useLocation();
-  const page = pathname.split("/")[2] || "";
-  const go = (id) => navigate(id ? `/caregiver/${id}` : "/caregiver");
+  // /careworker/home → home, /careworker/schedule → schedule ...
+  const page = pathname.split("/")[2] || "home";
+  const go = (id) => navigate(`/careworker/${id}`);
   const [careworker, setCareworker] = useState(null);
   const [center, setCenter] = useState(null);
   const [status, setStatus] = useState("loading");
@@ -82,41 +83,30 @@ export default function CaregiverApp({ careworkerNo, user, logout }) {
 
   const content = status !== "ok" || !careworker ? <LoadStatus status={status} onRetry={loadCareworker} error={loadError} /> : (
     <Routes>
-      <Route index element={<CaregiverHome careworker={careworker} center={center} go={go} />} />
+      <Route index element={<Navigate to="home" replace />} />
+      <Route path="home" element={<CaregiverHome careworker={careworker} center={center} go={go} />} />
       <Route path="availability" element={<CaregiverAvailability careworkerNo={careworkerNo} />} />
       <Route path="schedule" element={<CaregiverSchedule careworkerNo={careworkerNo} onChanged={loadPendingCount} />} />
       <Route path="records" element={<CaregiverRecords careworkerNo={careworkerNo} />} />
       <Route path="profile" element={<CaregiverProfile careworker={careworker} center={center} user={user} onChanged={loadCareworker} />} />
-      <Route path="*" element={<Navigate to="/caregiver" replace />} />
+      <Route path="*" element={<Navigate to="home" replace />} />
     </Routes>
   );
 
   return (
-    <div className="min-h-screen bg-[#f4f8f7] text-slate-700">
-      <aside className="fixed inset-y-0 z-20 hidden w-60 flex-col bg-[#07231d] p-4 text-slate-300 lg:flex">
-        <div className="flex items-center gap-3 px-2 py-3"><AppMark /><div><b className="font-display text-lg text-white">온케어 스케줄</b><p className="font-mono text-[9px] tracking-widest text-teal-300">CAREGIVER PORTAL</p></div></div>
-        <div className="mt-6 px-2 font-mono text-[10px] tracking-[.16em] text-slate-500">MENU</div>
-        <nav className="mt-3 space-y-1" aria-label="요양보호사 메뉴">
-          {caregiverNav.map((item) => <button key={item.id} onClick={() => go(item.id)} aria-current={page === item.id ? "page" : undefined} className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm transition ${page === item.id ? "bg-teal-600 text-white shadow-lg shadow-teal-950/30" : "hover:bg-white/5 hover:text-white"}`}><span className="w-4 text-center text-base">{item.icon}</span>{item.label}{item.id === "schedule" && pendingCount > 0 && <span className="ml-auto inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1.5 text-[11px] font-bold text-white">✓ {pendingCount}</span>}</button>)}
-        </nav>
-        <div className="mt-auto rounded-lg border border-white/10 bg-white/5 p-3">
-          <p className="text-sm font-semibold text-white">{careworker?.careworkerName ?? "요양보호사"}</p>
-          <p className="mt-1 text-xs text-slate-400">{center?.centerName ?? "소속 센터 확인 중"}</p>
-          <button onClick={logout} className="mt-3 w-full rounded-lg border border-white/20 py-2 text-xs font-semibold text-slate-300 hover:bg-white/10">로그아웃</button>
-        </div>
-      </aside>
-      <div className="lg:pl-60">
-        <header className="sticky top-0 z-10 flex min-h-16 items-center justify-between gap-2 border-b border-slate-200 bg-white/90 px-5 py-3 backdrop-blur lg:px-8">
-          <div className="flex items-center gap-2"><span className="lg:hidden"><AppMark size="h-8 w-8 text-sm" /></span><b className="text-sm text-slate-700">요양보호사 포털</b></div>
-          <div className="flex items-center gap-2"><Badge tone={careworker?.careworkerState === "근무중" ? "ok" : "neutral"}>{careworker?.careworkerState ?? "상태 확인 중"}</Badge><button onClick={logout} className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold hover:bg-slate-50 lg:hidden">로그아웃</button></div>
-        </header>
-        <main className="mx-auto max-w-[1400px] p-5 pb-24 lg:p-8">
-          {content}
-        </main>
-        <nav className="fixed inset-x-0 bottom-0 z-20 flex justify-around border-t border-slate-200 bg-white/95 px-1 py-2 backdrop-blur lg:hidden" aria-label="모바일 요양보호사 메뉴">
-          {caregiverNav.map((item) => <button key={item.id} onClick={() => go(item.id)} aria-current={page === item.id ? "page" : undefined} className={`relative grid flex-1 place-items-center gap-1 rounded-lg py-1 text-[10px] font-semibold ${page === item.id ? "text-teal-600" : "text-slate-400"}`}><span className="text-base leading-none">{item.icon}</span>{item.label}{item.id === "schedule" && pendingCount > 0 && <span className="absolute right-3 top-0 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-500 px-1 text-[9px] font-bold text-white">✓{pendingCount}</span>}</button>)}
-        </nav>
-      </div>
-    </div>
+    <PortalLayout
+      portal="요양보호사"
+      eyebrow="CAREGIVER PORTAL"
+      nav={caregiverNav.map((item) => item.id === "schedule" ? { ...item, badge: pendingCount } : item)}   // 방문 일정 : 수락 대기 배정 건수 표시
+      page={page}
+      onNavigate={go}
+      userName={careworker?.careworkerName ?? "요양보호사"}
+      userSub={center?.centerName ?? "소속 센터 확인 중"}
+      greeting={careworker?.careworkerName ? `${careworker.careworkerName} 요양보호사님, 오늘도 함께해요` : "요양보호사님, 오늘도 함께해요"}
+      status={<Badge tone={careworker?.careworkerState === "근무중" ? "ok" : "neutral"}>{careworker?.careworkerState ?? "상태 확인 중"}</Badge>}
+      logout={logout}
+    >
+      {content}
+    </PortalLayout>
   );
 }
