@@ -19,4 +19,4 @@ public interface CareworkerReviewRepository
     List<CareworkerReviewEntity>
     findByGuardianEntity_GuardianNo(Integer guardianNo);
 
-}
+}   

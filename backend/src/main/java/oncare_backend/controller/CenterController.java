@@ -2,16 +2,26 @@ package oncare_backend.controller;
 
 import lombok.RequiredArgsConstructor;
 import oncare_backend.model.dto.CenterDto;
+import oncare_backend.service.AuthChecker;
 import oncare_backend.service.CenterService;
+import oncare_backend.service.JwtUtil;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("center")
+@RequestMapping("/center")
 public class CenterController {
     private final CenterService centerService;
+
+    @Autowired
+    private JwtUtil jwtUtil;
+    @Autowired
+    private AuthChecker authChecker;
+    
 
     @PostMapping
     public boolean save(@RequestBody CenterDto centerDto){

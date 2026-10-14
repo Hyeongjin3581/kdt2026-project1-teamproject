@@ -1,4 +1,3 @@
-
 package oncare_backend.controller;
 
 import java.util.ArrayList;
@@ -27,11 +26,6 @@ public class CareWorkerReportController {
     @Autowired private CareWorkerReportRepository careWorkerReportRepository;
     @Autowired private RequestRepository requestRepository;
 
-    // 관리자 권한 확인
-    private boolean isAdmin(String accessToken) {
-        return authChecker.hasRole(accessToken, 3) || authChecker.hasRole(accessToken, 4);
-    }
-
     // 로그인한 요양보호사 번호 조회
     private Integer getMyCareworkerNo(String accessToken) {
         if (!authChecker.hasRole(accessToken, 2)) return null;
@@ -58,7 +52,7 @@ public class CareWorkerReportController {
         return guardian.getGuardianNo();
     }
 
-    // 근무기록이 로그인한 요양보호사의 것인지 확인
+    // 로그인한 요양보호사 본인 근무기록 확인
     private boolean isMyReport(String accessToken, Integer reportNo) {
         Integer myCareworkerNo = getMyCareworkerNo(accessToken);
         if (myCareworkerNo == null || reportNo == null) return false;
@@ -74,13 +68,13 @@ public class CareWorkerReportController {
     public boolean saveReport(@RequestBody CareworkerReportDto dto,
             @CookieValue(value = "accessToken", required = false) String accessToken) {
 
-        if (!isAdmin(accessToken) || dto == null) return false;
-        if (dto.getCareworkerNo() == null || dto.getRequestNo() == null) return false;
+        if (!authChecker.hasRole(accessToken, 3) && !authChecker.hasRole(accessToken, 4)) return false;
+        if (dto == null || dto.getCareworkerNo() == null || dto.getRequestNo() == null) return false;
 
         return careWorkerReportService.saveReport(dto);
     }
 
-    // [2] 센터별 근무기록 조회 - 관리자 / 보호자 본인 관련 기록
+    // [2] 센터별 근무기록 조회 - 관리자 또는 관련 보호자
     @GetMapping("/center")
     @Transactional(readOnly = true)
     public List<CareworkerReportDto> findAllByCenter(@RequestParam Integer centerNo,
@@ -88,12 +82,14 @@ public class CareWorkerReportController {
 
         if (centerNo == null) return new ArrayList<>();
 
-        List<CareworkerReportDto> reports = careWorkerReportService.findAllByCenter(centerNo);
-        if (isAdmin(accessToken)) return reports;
+        if (authChecker.hasRole(accessToken, 3) || authChecker.hasRole(accessToken, 4)) {
+            return careWorkerReportService.findAllByCenter(centerNo);
+        }
 
         Integer guardianNo = getMyGuardianNo(accessToken);
         if (guardianNo == null) return new ArrayList<>();
 
+        List<CareworkerReportDto> reports = careWorkerReportService.findAllByCenter(centerNo);
         List<CareworkerReportDto> result = new ArrayList<>();
 
         for (CareworkerReportDto dto : reports) {
@@ -119,7 +115,10 @@ public class CareWorkerReportController {
             @CookieValue(value = "accessToken", required = false) String accessToken) {
 
         if (careworkerNo == null) return new ArrayList<>();
-        if (isAdmin(accessToken)) return careWorkerReportService.findAllByCareworker(careworkerNo);
+
+        if (authChecker.hasRole(accessToken, 3) || authChecker.hasRole(accessToken, 4)) {
+            return careWorkerReportService.findAllByCareworker(careworkerNo);
+        }
 
         Integer myCareworkerNo = getMyCareworkerNo(accessToken);
         if (!careworkerNo.equals(myCareworkerNo)) return new ArrayList<>();
@@ -133,7 +132,7 @@ public class CareWorkerReportController {
             @RequestParam(name = "workStatus") String status,
             @CookieValue(value = "accessToken", required = false) String accessToken) {
 
-        if (!isAdmin(accessToken)) return false;
+        if (!authChecker.hasRole(accessToken, 3) && !authChecker.hasRole(accessToken, 4)) return false;
         if (careworkersReportNo == null || status == null) return false;
 
         return careWorkerReportService.updateReport(careworkersReportNo, status);
@@ -144,11 +143,13 @@ public class CareWorkerReportController {
     public boolean deleteReport(@RequestParam Integer careworkersReportNo,
             @CookieValue(value = "accessToken", required = false) String accessToken) {
 
-        if (!isAdmin(accessToken) || careworkersReportNo == null) return false;
+        if (!authChecker.hasRole(accessToken, 3) && !authChecker.hasRole(accessToken, 4)) return false;
+        if (careworkersReportNo == null) return false;
+
         return careWorkerReportService.deleteReport(careworkersReportNo);
     }
 
-    // [6] 배정 수락 - 해당 요양보호사
+    // [6] 배정 수락 - 본인 요양보호사
     @PutMapping("/accept")
     public boolean acceptAssignment(@RequestBody AssignmentActionDto dto,
             @CookieValue(value = "accessToken", required = false) String accessToken) {
@@ -157,7 +158,7 @@ public class CareWorkerReportController {
         return careWorkerReportService.acceptAssignment(dto);
     }
 
-    // [7] 배정 거절 - 해당 요양보호사
+    // [7] 배정 거절 - 본인 요양보호사
     @PutMapping("/reject")
     public boolean rejectAssignment(@RequestBody AssignmentActionDto dto,
             @CookieValue(value = "accessToken", required = false) String accessToken) {
@@ -171,8 +172,8 @@ public class CareWorkerReportController {
     public boolean assignCareworker(@RequestBody AssignCareworkerDto dto,
             @CookieValue(value = "accessToken", required = false) String accessToken) {
 
-        if (!isAdmin(accessToken) || dto == null) return false;
-        if (dto.getRequestNo() == null || dto.getCareworkerNo() == null) return false;
+        if (!authChecker.hasRole(accessToken, 3) && !authChecker.hasRole(accessToken, 4)) return false;
+        if (dto == null || dto.getRequestNo() == null || dto.getCareworkerNo() == null) return false;
 
         return careWorkerReportService.assignCareworker(dto);
     }
@@ -193,7 +194,9 @@ public class CareWorkerReportController {
     public List<CareWorkerRecommendationDto> candidates(@RequestParam Integer requestNo,
             @CookieValue(value = "accessToken", required = false) String accessToken) {
 
-        if (!isAdmin(accessToken) || requestNo == null) return new ArrayList<>();
+        if (!authChecker.hasRole(accessToken, 3) && !authChecker.hasRole(accessToken, 4)) return new ArrayList<>();
+        if (requestNo == null) return new ArrayList<>();
+
         return autoAssignService.top3Careworkers(requestNo);
     }
 
@@ -202,7 +205,9 @@ public class CareWorkerReportController {
     public List<CareworkerDto> availableCareworker(@RequestParam Integer requestNo,
             @CookieValue(value = "accessToken", required = false) String accessToken) {
 
-        if (!isAdmin(accessToken) || requestNo == null) return new ArrayList<>();
+        if (!authChecker.hasRole(accessToken, 3) && !authChecker.hasRole(accessToken, 4)) return new ArrayList<>();
+        if (requestNo == null) return new ArrayList<>();
+
         return autoAssignService.filterCareworkers(requestNo);
     }
 
@@ -217,7 +222,7 @@ public class CareWorkerReportController {
         return careWorkerReportService.findMyConfirmed(myCareworkerNo);
     }
 
-    // [13] 확정 근무 취소 - 해당 요양보호사
+    // [13] 확정 근무 취소 - 본인 요양보호사
     @PutMapping("/cancel")
     public boolean cancel(@RequestBody AssignmentActionDto dto,
             @CookieValue(value = "accessToken", required = false) String accessToken) {
@@ -226,7 +231,7 @@ public class CareWorkerReportController {
         return careWorkerReportService.cancel(dto);
     }
 
-    // [14] 근무 완료 - 해당 요양보호사
+    // [14] 근무 완료 - 본인 요양보호사
     @PutMapping("/complete")
     public boolean complete(@RequestBody AssignmentActionDto dto,
             @CookieValue(value = "accessToken", required = false) String accessToken) {
