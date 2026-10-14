@@ -14,7 +14,7 @@ export default function GuardianApply({ recipient, recipients, onSelectRecipient
   const [preferredGender, setPreferredGender] = useState("무관"); // 선호하는 요양보호사 성별 : 무관 / 여자 / 남자
   const [sentCount, setSentCount] = useState(0);
   const [message, setMessage] = useState("");
-  const dates = upcomingDates(7);
+  const dates = upcomingDates(14, 1); // 희망 날짜 : 오늘은 빼고 내일부터 2주(14일)
   const [selectedDates, setSelectedDates] = useState([]); // 선택한 날짜 (yyyy-MM-dd)
   const [dateTimes, setDateTimes] = useState({}); // 날짜별 { start, end }
   const orderedDates = dates.filter((d) => selectedDates.includes(d.iso));
@@ -120,16 +120,15 @@ export default function GuardianApply({ recipient, recipients, onSelectRecipient
           </div>
           <div className="mt-4 space-y-4">
             <div>
-              <p className="text-xs font-semibold text-slate-600">희망 날짜<span className="ml-1 font-normal text-slate-400">(오늘부터 7일 이내, 원하는 날짜를 모두 선택)</span></p>
+              <p className="text-xs font-semibold text-slate-600">희망 날짜<span className="ml-1 font-normal text-slate-400">(내일부터 2주 이내, 원하는 날짜를 모두 선택)</span></p>
               <div className="mt-2 grid grid-cols-4 gap-2 sm:grid-cols-7">
                 {dates.map((d) => {
                   const on = selectedDates.includes(d.iso);
                   return (
                     <button key={d.iso} type="button" onClick={() => toggleDate(d.iso)}
                       className={`rounded-xl border px-1 py-2.5 text-center transition ${on ? "border-teal-500 bg-teal-500 text-white" : "border-slate-200 text-slate-600 hover:border-teal-300 hover:text-teal-600"}`}>
-                      <span className="block text-[10px] font-semibold opacity-80">{d.today ? "오늘" : d.day}</span>
+                      <span className="block text-[10px] font-semibold opacity-80">{d.day}</span>
                       <span className="block text-sm font-bold">{d.label}</span>
-                      {d.today && <span className="block text-[10px] opacity-80">({d.day})</span>}
                     </button>
                   );
                 })}
