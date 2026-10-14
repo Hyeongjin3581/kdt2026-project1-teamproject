@@ -57,7 +57,7 @@ public class CareRecipientController {
         return guardianRepository.findByUserEntity_UserNo(userDto.getUserNo());
     }
 
-	// 1. 수급자 등록 --> 보호자(1)만
+	// 1. 수급자 등록 --> 보호자(1)만 , 본인 보호자 번호로만
 	@PostMapping("")
 	public boolean CareRecipientSave(@CookieValue(value = "accessToken", required = false)String token,
                                      @RequestBody CareRecipientDto careRecipientDto) {
@@ -68,6 +68,15 @@ public class CareRecipientController {
         if (!authChecker.hasRole(token,1)){
             return false;
         }
+        // 다른 보호자 번호로는 등록 불가 , 비어 있으면 로그인한 보호자 번호로 채움
+        GuardianEntity guardian = getLoginGuardian(token);
+        if (guardian == null || careRecipientDto == null){
+            return false;
+        }
+        if (careRecipientDto.getGuardianNo() != null && !guardian.getGuardianNo().equals(careRecipientDto.getGuardianNo())){
+            return false;
+        }
+        careRecipientDto.setGuardianNo(guardian.getGuardianNo());
         return careRecipientService.CareRecipientSave(careRecipientDto);
 	}
 

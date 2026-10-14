@@ -1,5 +1,6 @@
 package oncare_backend.controller;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import oncare_backend.service.AuthChecker;
@@ -46,14 +47,26 @@ public class GuardianController {
         return guardian.getGuardianNo();
     }
 
-	// 1. 보호자 전체 조회 --> 관리자 화면 + 보호자 화면(내 보호자 정보 찾기)이 사용하므로 로그인만 확인
+	// 1. 보호자 전체 조회 --> 관리자 화면 + 보호자 화면(내 보호자 정보 찾기)이 사용
+	//    관리자(4)는 전체 , 보호자(1)는 본인 정보만 , 그 외는 빈 목록
 	@GetMapping("")
 	public List<GuardianDto> GuardianFindAll(@CookieValue(value = "accessToken", required = false)String token) {
         Integer no = jwtUtil.getUserNoFromAccessToken(token);
         if (no == null){
             return List.of();
         }
-		return guardianService.GuardianFindAll();
+        if (authChecker.hasRole(token,4)){
+            return guardianService.GuardianFindAll();
+        }
+        Integer myGuardianNo = getMyGuardianNo(token);
+        if (myGuardianNo == null){
+            return List.of();
+        }
+        List<GuardianDto> result = new ArrayList<>();
+        for (GuardianDto dto : guardianService.GuardianFindAll()) {
+            if (myGuardianNo.equals(dto.getGuardianNo())) result.add(dto);
+        }
+		return result;
 	}
 
 	// 2. 보호자 수정 --> 보호자(1) 본인 정보만
