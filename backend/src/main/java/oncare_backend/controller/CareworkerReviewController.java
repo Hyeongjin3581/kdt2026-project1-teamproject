@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import oncare_backend.model.dto.CareworkerReviewDto;
 import oncare_backend.service.CareworkerReviewService;
+import oncare_backend.service.AuthChecker;
 import oncare_backend.service.JwtUtil;
 
 @RestController 
@@ -25,6 +26,8 @@ public class CareworkerReviewController {
 
     @Autowired private JwtUtil jwtUtil;
 
+    @Autowired private AuthChecker authChecker;
+
     // 1. 후기 등록
     @PostMapping("")
     public boolean createReview(
@@ -34,6 +37,7 @@ public class CareworkerReviewController {
             if (accessToken==null)return false;
             Integer loginUserNo = jwtUtil.getUserNoFromAccessToken(accessToken);
             if (loginUserNo==null) return false;
+            if (!authChecker.hasRole(accessToken, 1)) return false;   // 보호자(1)만
         return careworkerReviewService.createReview(reviewDto, loginUserNo);
     }
 
@@ -45,6 +49,7 @@ public class CareworkerReviewController {
         Integer loginUserNo = jwtUtil.getUserNoFromAccessToken(accessToken);
 
         if (loginUserNo == null) return List.of();
+        if (!authChecker.hasRole(accessToken, 2)) return List.of();   // 요양보호사(2)만
         return careworkerReviewService.getReviewsByLoginUser(loginUserNo);
     }
 
@@ -68,6 +73,7 @@ public class CareworkerReviewController {
         if (accessToken==null) return List.of();
         Integer loginUserNo = jwtUtil.getUserNoFromAccessToken(accessToken);
         if (loginUserNo == null) return List.of();
+        if (!authChecker.hasRole(accessToken, 1)) return List.of();   // 보호자(1)만
         return careworkerReviewService.getReviewsByGuardianLoginUser(loginUserNo);
     }
 
@@ -80,6 +86,7 @@ public class CareworkerReviewController {
         if (accessToken==null) return false;
         Integer loginUserNo = jwtUtil.getUserNoFromAccessToken(accessToken);
         if (loginUserNo == null) return false;
+        if (!authChecker.hasRole(accessToken, 1)) return false;   // 보호자(1)만
         return careworkerReviewService.updateReview(reviewDto, loginUserNo);
     }
 
@@ -92,6 +99,7 @@ public class CareworkerReviewController {
         if (accessToken==null) return false;
         Integer loginUserNo = jwtUtil.getUserNoFromAccessToken(accessToken);
         if (loginUserNo == null) return false;
+        if (!authChecker.hasRole(accessToken, 1)) return false;   // 보호자(1)만
         return careworkerReviewService.deleteReview(reviewDto, loginUserNo);
     }
 }
