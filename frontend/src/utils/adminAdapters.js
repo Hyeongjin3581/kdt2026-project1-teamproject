@@ -178,6 +178,7 @@ export function buildAdminModel(raw, opts = {}) {
     return {
       requestNo: q.requestNo,
       requestState: q.requestState,
+      requestGroup: q.requestGroup ?? null, // 한 번에 신청한 날짜끼리 같은 값 (예전 신청은 null)
       reportNo: cw ? rp.careworkersReportNo : null,
       careworkerNo: cw ? cw.careworkerNo : null,
       iso: q.visitDate,
