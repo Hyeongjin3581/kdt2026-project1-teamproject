@@ -31,6 +31,13 @@ public class CaregiverAvailabilityController {
     @Autowired
     private AuthChecker authChecker;
 
+    // @Autowired
+    // private JwtUtil jwtUtil;
+
+    // CaregiverAvailabilityController(JwtUtil jwtUtil) {
+    //     this.jwtUtil = jwtUtil;
+    // }
+
 
     // 1. 근무가능시간 등록
     @PostMapping("")

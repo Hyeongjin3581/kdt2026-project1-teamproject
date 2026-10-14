@@ -1,8 +1,15 @@
 package oncare_backend.controller;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import oncare_backend.model.dto.*;
+import oncare_backend.model.entity.CareworkerEntity;
+import oncare_backend.model.entity.CareworkerReportEntity;
+import oncare_backend.model.entity.GuardianEntity;
+import oncare_backend.model.repository.CareWorkerReportRepository;
+import oncare_backend.model.repository.CareworkersRepository;
+import oncare_backend.model.repository.GuardianRepository;
 import oncare_backend.model.repository.RequestRepository;
 import oncare_backend.service.AuthChecker;
 import oncare_backend.service.AutoAssignService;
@@ -26,13 +33,55 @@ import org.springframework.web.bind.annotation.RequestParam;
 @RestController
 @RequestMapping ("/careworkerreport")
 public class CareWorkerReportController {
+
     @Autowired private CareWorkerReportService careWorkerReportService;
     @Autowired private AutoAssignService autoAssignService;
-    @Autowired private NotifyService notifyService;
-    @Autowired private JwtUtil jwtUtil;
     @Autowired private AuthChecker authChecker;
+    @Autowired private JwtUtil jwtUtil;
+    @Autowired private CareworkersRepository careworkersRepository;
+    @Autowired private GuardianRepository guardianRepository;
+    @Autowired private CareWorkerReportRepository careWorkerReportRepository;
+    @Autowired private RequestRepository requestRepository;
+    @Autowired private NotifyService notifyService;
 
-    // [1] 근무기록 추가 --> 관리자(4) : 요청 관리에서 직접 배정
+    // 로그인한 요양보호사 번호 조회
+    private Integer getMyCareworkerNo(String accessToken) {
+        if (!authChecker.hasRole(accessToken, 2)) return null;
+
+        Integer userNo = jwtUtil.getUserNoFromAccessToken(accessToken);
+        if (userNo == null) return null;
+
+        CareworkerEntity careworker = careworkersRepository.findByUserEntity_UserNo(userNo).orElse(null);
+        if (careworker == null) return null;
+
+        return careworker.getCareworkerNo();
+    }
+
+    // 로그인한 보호자 번호 조회
+    private Integer getMyGuardianNo(String accessToken) {
+        if (!authChecker.hasRole(accessToken, 1)) return null;
+
+        Integer userNo = jwtUtil.getUserNoFromAccessToken(accessToken);
+        if (userNo == null) return null;
+
+        GuardianEntity guardian = guardianRepository.findByUserEntity_UserNo(userNo);
+        if (guardian == null) return null;
+
+        return guardian.getGuardianNo();
+    }
+
+    // 로그인한 요양보호사 본인 근무기록 확인
+    private boolean isMyReport(String accessToken, Integer reportNo) {
+        Integer myCareworkerNo = getMyCareworkerNo(accessToken);
+        if (myCareworkerNo == null || reportNo == null) return false;
+
+        CareworkerReportEntity report = careWorkerReportRepository.findById(reportNo).orElse(null);
+        if (report == null || report.getCareworkerEntity() == null) return false;
+
+        return myCareworkerNo.equals(report.getCareworkerEntity().getCareworkerNo());
+    }
+
+    // [1] 근무기록 추가 - 관리자
     @PostMapping("")
     public boolean saveReport(@CookieValue(value = "accessToken", required = false)String token,
                               @RequestBody CareworkerReportDto careworkerReportDto) {
@@ -229,3 +278,4 @@ public class CareWorkerReportController {
         return careWorkerReportService.complete(assignmentActionDto);
     }
 }
+
