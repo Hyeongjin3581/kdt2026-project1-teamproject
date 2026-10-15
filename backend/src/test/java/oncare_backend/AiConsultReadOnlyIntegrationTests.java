@@ -47,7 +47,7 @@ class AiConsultReadOnlyIntegrationTests {
             String token=jwt.createAccessToken(user());
             int faqNo=db.queryForObject("select faq_no from ai_faq where source_inquiry_no=11 and approved=1",Integer.class);
             String exact=db.queryForObject("select question_text from ai_faq where faq_no=?",String.class,faqNo);
-            when(llm.LLMCall(anyString())).thenReturn("{\"resolution\":\"answered\",\"faqNo\":"+faqNo+"}");
+            when(llm.LLMCall(anyString())).thenReturn("{\"resolution\":\"answered\",\"faqNo\":"+faqNo+",\"answer\":\"방문 기록 메뉴를 열어 일지를 확인해 주세요.\"}");
             for(String question:List.of(exact,"일지는 어디에서 봐요?")) {
                 var response=post("/api/ai/inquiries/consult",Map.of("question",question,"userNo","999","guardianNo","999","inquiryCategoryNo","999"),token);
                 assertEquals(200,response.statusCode());JsonNode result=json.readTree(response.body());

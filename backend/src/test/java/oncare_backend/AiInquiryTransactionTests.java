@@ -39,7 +39,7 @@ class AiInquiryTransactionTests {
         int initialPending=db.queryForObject("select count(*) from guardianinquiry where answer_content is null",Integer.class);
         int faqNo=faqNo(),user=user();
         String question=db.queryForObject("select question_text from ai_faq where faq_no=?",String.class,faqNo);
-        when(llm.LLMCall(anyString())).thenReturn("{\"resolution\":\"answered\",\"faqNo\":"+faqNo+"}");
+        when(llm.LLMCall(anyString())).thenReturn("{\"resolution\":\"answered\",\"faqNo\":"+faqNo+",\"answer\":\"방문 기록 메뉴를 열어 일지를 확인해 주세요.\"}");
         new TransactionTemplate(transactions).execute(status->{
             var exact=service.answer(4,question,null,user);
             var paraphrase=service.answer(4,"방문 후 남겨진 기록을 보려면 어느 화면으로 가나요?",null,user);
@@ -63,14 +63,14 @@ class AiInquiryTransactionTests {
         assertEquals(before,db.queryForList("select * from guardianinquiry order by inquiry_no"));
         assertEquals(beforeRequests,db.queryForList("select * from requests order by request_no"));
         assertEquals(beforeReports,db.queryForList("select * from careworkersreport order by careworkers_report_no"));
-        verify(llm,times(1)).LLMCall(anyString());
+        verify(llm,times(3)).LLMCall(anyString());
     }
 
     @Test void failedLlmWritesNothingAndRetryHasOnlyOneInsert() {
         var before=db.queryForList("select * from guardianinquiry order by inquiry_no");
         int user=user(),faqNo=faqNo();
         when(llm.LLMCall(anyString())).thenThrow(new IllegalStateException("모의 통신 실패"))
-                .thenReturn("{\"resolution\":\"answered\",\"faqNo\":"+faqNo+"}");
+                .thenReturn("{\"resolution\":\"answered\",\"faqNo\":"+faqNo+",\"answer\":\"방문 기록 메뉴를 열어 일지를 확인해 주세요.\"}");
         String question="서비스 방문이 끝난 기록을 찾아보고 싶어요";
         assertThrows(IllegalStateException.class,()->service.answer(4,question,null,user));
         assertEquals(before,db.queryForList("select * from guardianinquiry order by inquiry_no"));

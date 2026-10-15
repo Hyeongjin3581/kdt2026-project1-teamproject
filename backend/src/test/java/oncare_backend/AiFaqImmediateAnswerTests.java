@@ -60,7 +60,7 @@ class AiFaqImmediateAnswerTests {
         assertEquals(404,assertThrows(ResponseStatusException.class,()->controller.answer(7,"guardian")).getStatusCode().value());
     }
 
-    @Test void newQuestionIsSavedPendingWithoutUnapprovedAiAnswer() {
+    @Test void questionNeedingStaffIsSavedPendingWithoutAiAnswer() {
         GuardianRepository guardians=mock(GuardianRepository.class);
         InquiryCategoryRepository categories=mock(InquiryCategoryRepository.class);
         GuardianInquiryRepository inquiries=mock(GuardianInquiryRepository.class);
@@ -80,11 +80,12 @@ class AiFaqImmediateAnswerTests {
         ReflectionTestUtils.setField(service,"inquiryRepository",inquiries);
         ReflectionTestUtils.setField(service,"llmService",llm);
         ReflectionTestUtils.setField(service,"faqRepository",mock(AiFaqRepository.class));
-        Map<String,Object> result=service.answer(4,"새로운 질문",null,12);
+        when(llm.LLMCall(anyString())).thenReturn("{\"resolution\":\"staffRequired\",\"faqNo\":null}");
+        Map<String,Object> result=service.answer(4,"센터 운영 시간이 궁금합니다",null,12);
         assertEquals(21,result.get("inquiryNo"));
         assertEquals(true,result.get("needsStaff"));
         assertEquals("응답 대기",result.get("status"));
-        verifyNoInteractions(llm);
+        verify(llm).LLMCall(anyString());
         verify(inquiries).saveAndFlush(any());
     }
 
