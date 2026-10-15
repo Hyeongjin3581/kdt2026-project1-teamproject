@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,8 +17,10 @@ import oncare_backend.model.repository.GuardianInquiryRepository;
 import oncare_backend.model.repository.RequestRepository;
 
 @Service 
+@RequiredArgsConstructor
 @Transactional 
-public class RequestService implements ActiveUserCheck {
+public class RequestService {
+    private final ActiveUserCheck activeUserCheck;          // 탈퇴(회원 상태 delete) 여부 확인
 
     @Autowired private RequestRepository requestRepository;
     @Autowired private CareRecipientRepository careRecipientRepository;
@@ -57,7 +60,7 @@ public class RequestService implements ActiveUserCheck {
         List<RequestDto> list = new ArrayList<>();
         for( RequestEntity entity : entities ){
             // 탈퇴한 보호자의 오늘 이후 방문은 제외 ( 지난 방문은 기록으로 보존 )
-            if (isWithdrawnVisit(entity)) continue;
+            if (activeUserCheck.isWithdrawnVisit(entity)) continue;
 
             RequestDto dto = RequestDto.entityToDto(entity);
 

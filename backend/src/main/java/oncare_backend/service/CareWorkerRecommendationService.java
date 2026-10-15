@@ -47,10 +47,10 @@ public class CareWorkerRecommendationService {
     private static final double CONTINUITY_SCORE_PER_COUNT = 5.0;
 
 
-    // [1] 석암 타이쵸우의 필수조건을 통과한 후보를 받아 점수를 계산하고 상위 3명을 반환함.
+    // [1] 필수조건을 통과한 후보를 받아 점수를 계산하고 상위 3명을 반환함.
     public List<CareWorkerRecommendationDto> recommendCandidates(Integer careRecipientNo, List<CareworkerEntity> careworkerEntities) {
 
-        // 추천 대상 수급자를 찾습니다. 번호에 해당하는 수급자가 없으면 404 오류를 반환합니다. **
+        // 수급자가 없으면 오류메시지 반환.
         CareRecipientEntity recipient = careRecipientRepository.findById(careRecipientNo)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,  "수급자를 찾을 수 없습니다."));
 
@@ -62,6 +62,7 @@ public class CareWorkerRecommendationService {
         // 수급자 좌표는 저장할 때 DB에 넣어 둔 값을 사용 (좌표를 못 구했으면 0,0)
         double recipientLat = recipient.getLatitude();
         double recipientLng = recipient.getLongitude();
+        // 예외처리
         if (recipientLat == 0.0 && recipientLng == 0.0) {
             throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_CONTENT,
                     "수급자 좌표가 없습니다. 주소를 다시 저장해주세요.");

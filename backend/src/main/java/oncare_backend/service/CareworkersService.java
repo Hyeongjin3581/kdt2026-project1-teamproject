@@ -5,6 +5,7 @@ import java.util.List;
 
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import oncare_backend.model.dto.CareworkerDto;
@@ -18,7 +19,9 @@ import oncare_backend.model.repository.CenterRepository;
 import oncare_backend.model.repository.UserRepository;
 
 @Service
-public class CareworkersService implements ActiveUserCheck {
+@RequiredArgsConstructor
+public class CareworkersService {
+    private final ActiveUserCheck activeUserCheck;          // 탈퇴(회원 상태 delete) 여부 확인
     @Autowired 
     private CareworkersRepository careworkerRepository;
 
@@ -80,7 +83,7 @@ public class CareworkersService implements ActiveUserCheck {
 
         careworkerEntities.forEach(careworkerEntity -> {
             // 탈퇴(회원 상태 delete)한 요양보호사는 목록에서 제외
-            if (!isActiveUser(careworkerEntity.getUserEntity())) {
+            if (!activeUserCheck.isActiveUser(careworkerEntity.getUserEntity())) {
                 return;
             }
             CareworkerDto careworkerDto = CareworkerDto.entityToDto(careworkerEntity);

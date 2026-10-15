@@ -21,7 +21,8 @@ import java.util.List;
 @Service
 @Transactional
 @RequiredArgsConstructor
-public class AutoAssignService implements ActiveUserCheck {
+public class AutoAssignService {
+    private final ActiveUserCheck activeUserCheck;          // 탈퇴(회원 상태 delete) 여부 확인
     private final RequestRepository requestRepository;
     private final CareworkersRepository careworkersRepository;
     private final CaregiverAvailabilityRepository caregiverAvailabilityRepository;
@@ -104,7 +105,7 @@ public class AutoAssignService implements ActiveUserCheck {
             "승인완료".equals(careworkerEntity.getSignState())).toList();
 
         // 탈퇴(회원 상태 delete)한 요양보호사 제외
-        List<CareworkerEntity> activeList = approvedList.stream().filter(careworkerEntity -> isActiveUser(careworkerEntity.getUserEntity())).toList();
+        List<CareworkerEntity> activeList = approvedList.stream().filter(careworkerEntity -> activeUserCheck.isActiveUser(careworkerEntity.getUserEntity())).toList();
 
         // 선호 성별
         String preferredGender = requestEntity.getPreferredGender();
@@ -126,7 +127,7 @@ public class AutoAssignService implements ActiveUserCheck {
     public boolean isAvailable(CareworkerEntity cw, RequestEntity request, Integer excludeRequestNo) {
         return "근무중".equals(cw.getCareworkerState())
             && "승인완료".equals(cw.getSignState())
-            && isActiveUser(cw.getUserEntity())
+            && activeUserCheck.isActiveUser(cw.getUserEntity())
             && genderOk(cw, request.getPreferredGender())
             && canWork(cw, request)
             && !isBusy(cw, request, excludeRequestNo);

@@ -21,7 +21,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
-public class VacancyService implements ActiveUserCheck {
+public class VacancyService {
+    private final ActiveUserCheck activeUserCheck;          // 탈퇴(회원 상태 delete) 여부 확인
 
     private final VacancyRepository vacancyRepository;
     private final RequestRepository requestRepository;
@@ -55,7 +56,7 @@ public class VacancyService implements ActiveUserCheck {
             if (requestEntity.getVisitDate() == null || requestEntity.getVisitDate().isBefore(today)) continue;
 
             // 탈퇴한 보호자의 방문은 대체자를 찾을 필요가 없으므로 제외
-            if (!isActiveGuardian(requestEntity)) continue;
+            if (!activeUserCheck.isActiveGuardian(requestEntity)) continue;
 
             // 이 요청의 근무기록 전체
             List<CareworkerReportEntity> report = vacancyRepository.findByRequestEntity_RequestNo(requestEntity.getRequestNo());

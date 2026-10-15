@@ -7,6 +7,7 @@ import oncare_backend.model.dto.AssignCareworkerDto;
 import oncare_backend.model.dto.AssignmentActionDto;
 import oncare_backend.model.dto.CareworkerDto;
 import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,8 +22,10 @@ import oncare_backend.model.repository.CareworkerReviewRepository;
 import oncare_backend.model.repository.RequestRepository;
 
 @Service
+@RequiredArgsConstructor
 @Transactional 
-public class CareWorkerReportService implements ActiveUserCheck {
+public class CareWorkerReportService {
+    private final ActiveUserCheck activeUserCheck;          // 탈퇴(회원 상태 delete) 여부 확인
 
     @Autowired private CareWorkerReportRepository careWorkerReportRepository;
     @Autowired private CareWorkerRepository careWorkerRepository;
@@ -68,7 +71,7 @@ public class CareWorkerReportService implements ActiveUserCheck {
         List<CareworkerReportDto> list = new ArrayList<>();
         for (CareworkerReportEntity entity : entities) {
             // 탈퇴한 보호자의 오늘 이후 방문은 제외 ( 지난 근무 기록은 보존 )
-            if (isWithdrawnVisit(entity.getRequestEntity())) continue;
+            if (activeUserCheck.isWithdrawnVisit(entity.getRequestEntity())) continue;
 
             CareworkerReportDto dto = CareworkerReportDto.entityToDto(entity);
             list.add(dto);
@@ -87,7 +90,7 @@ public class CareWorkerReportService implements ActiveUserCheck {
         List<CareworkerReportDto> list = new ArrayList<>();
         for(CareworkerReportEntity entity : entities){
             // 탈퇴한 보호자의 오늘 이후 방문은 제외 ( 지난 근무 기록은 보존 )
-            if (isWithdrawnVisit(entity.getRequestEntity())) continue;
+            if (activeUserCheck.isWithdrawnVisit(entity.getRequestEntity())) continue;
 
             CareworkerReportDto dto = CareworkerReportDto.entityToDto(entity);
             list.add(dto);
@@ -210,7 +213,7 @@ public class CareWorkerReportService implements ActiveUserCheck {
         // 필터 이용해서 근무기록에 배정 상태인 것 추출
         List<CareworkerReportEntity> list =
                 careworkerReports.stream().filter(careworkerReportEntity -> "배정".equals(careworkerReportEntity.getWorkStatus()))
-                        .filter(careworkerReportEntity -> !isWithdrawnVisit(careworkerReportEntity.getRequestEntity()))   // 탈퇴한 보호자의 방문 제외
+                        .filter(careworkerReportEntity -> !activeUserCheck.isWithdrawnVisit(careworkerReportEntity.getRequestEntity()))   // 탈퇴한 보호자의 방문 제외
                         .toList();
         // 조회용이라 dto로 변경
         List<CareworkerReportDto> careworkerReportDtos = list.stream().map(careworkerReportEntity -> CareworkerReportDto.entityToDto(careworkerReportEntity)).toList();
@@ -221,7 +224,7 @@ public class CareWorkerReportService implements ActiveUserCheck {
     public List<CareworkerReportDto> findMyConfirmed(Integer careworkerNo) {
         List<CareworkerReportEntity> reportList = careWorkerReportRepository.findByCareworkerEntity_CareworkerNo(careworkerNo);
         return reportList.stream().filter(careworkerReportEntity -> "확정".equals(careworkerReportEntity.getWorkStatus()))
-                .filter(careworkerReportEntity -> !isWithdrawnVisit(careworkerReportEntity.getRequestEntity()))   // 탈퇴한 보호자의 방문 제외
+                .filter(careworkerReportEntity -> !activeUserCheck.isWithdrawnVisit(careworkerReportEntity.getRequestEntity()))   // 탈퇴한 보호자의 방문 제외
                 .map(careworkerReportEntity -> CareworkerReportDto.entityToDto(careworkerReportEntity)).toList();
     }
 
