@@ -95,15 +95,38 @@ public class CareWorkerReportController {
         return careWorkerReportService.saveReport(careworkerReportDto);
     }
 
-    // [2] 센터 별 근무기록 불러오기 --> 관리자, 보호자 화면이 사용하므로 로그인만 확인
-    @GetMapping ("/center")
-    public List<CareworkerReportDto> findAllByCenter(@CookieValue(value = "accessToken", required = false)String token,
-                                                     @RequestParam(name = "centerNo") Integer centerNo){
-        Integer no = jwtUtil.getUserNoFromAccessToken(token);
-        if (no == null){
-            return List.of();
+    // [2] 센터별 근무기록 조회 - 관리자 또는 관련 보호자
+    @GetMapping("/center")
+    @Transactional(readOnly = true)
+    public List<CareworkerReportDto> findAllByCenter(@RequestParam(name = "centerNo") Integer centerNo,
+            @CookieValue(value = "accessToken", required = false) String accessToken) {
+
+        if (centerNo == null) return new ArrayList<>();
+
+        if (authChecker.hasRole(accessToken, 3) || authChecker.hasRole(accessToken, 4)) {
+            return careWorkerReportService.findAllByCenter(centerNo);
         }
-        return careWorkerReportService.findAllByCenter(centerNo);
+
+        Integer guardianNo = getMyGuardianNo(accessToken);
+        if (guardianNo == null) return new ArrayList<>();
+
+        List<CareworkerReportDto> reports = careWorkerReportService.findAllByCenter(centerNo);
+        List<CareworkerReportDto> result = new ArrayList<>();
+
+        for (CareworkerReportDto dto : reports) {
+            if (dto.getRequestNo() == null) continue;
+
+            RequestEntity request = requestRepository.findById(dto.getRequestNo()).orElse(null);
+            if (request == null || request.getCarerecipientEntity() == null) continue;
+
+            CareRecipientEntity recipient = request.getCarerecipientEntity();
+            if (recipient.getGuardianEntity() == null) continue;
+
+            if (guardianNo.equals(recipient.getGuardianEntity().getGuardianNo())) {
+                result.add(dto);
+            }
+        }
+        return result;
     }
 
     // [3] 요양보호사 별 근무기록 불러오기 --> 요양보호사, 관리자(상세 창)가 사용하므로 로그인만 확인
