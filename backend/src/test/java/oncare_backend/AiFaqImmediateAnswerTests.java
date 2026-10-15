@@ -67,7 +67,7 @@ class AiFaqImmediateAnswerTests {
         LLMService llm=mock(LLMService.class);
         GuardianEntity guardian=GuardianEntity.builder().guardianNo(3).guardianState("use").build();
         InquiryCategoryEntity category=InquiryCategoryEntity.builder().inquiryCategoryNo(4).build();
-        when(guardians.findByUserEntity_UserNo(12)).thenReturn(Optional.of(guardian));
+        when(guardians.findByUserEntity_UserNo(12)).thenReturn(guardian);
         when(categories.findById(4)).thenReturn(Optional.of(category));
         when(inquiries.saveAndFlush(any())).thenAnswer(call->{
             GuardianInquiryEntity row=call.getArgument(0);

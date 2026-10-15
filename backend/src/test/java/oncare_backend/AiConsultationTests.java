@@ -32,7 +32,7 @@ class AiConsultationTests {
         ReflectionTestUtils.setField(service,"categoryRepository",categories);
         ReflectionTestUtils.setField(service,"requestRepository",requests);
         ReflectionTestUtils.setField(service,"faqRepository",faqs);
-        when(guardians.findByUserEntity_UserNo(8)).thenReturn(Optional.of(guardian));
+        when(guardians.findByUserEntity_UserNo(8)).thenReturn(guardian);
         when(guardians.findForInquiryHandoff(8)).thenReturn(Optional.of(guardian));
         when(categories.findAll()).thenReturn(List.of(other));
         faq=new AiFaqEntity();faq.setFaqNo(5);faq.setApproved(true);

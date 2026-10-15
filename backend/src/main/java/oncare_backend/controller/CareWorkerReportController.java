@@ -7,6 +7,8 @@ import oncare_backend.model.dto.*;
 import oncare_backend.model.entity.CareworkerEntity;
 import oncare_backend.model.entity.CareworkerReportEntity;
 import oncare_backend.model.entity.GuardianEntity;
+import oncare_backend.model.entity.RequestEntity;
+import oncare_backend.model.entity.CareRecipientEntity;
 import oncare_backend.model.repository.CareWorkerReportRepository;
 import oncare_backend.model.repository.CareworkersRepository;
 import oncare_backend.model.repository.GuardianRepository;
@@ -16,6 +18,7 @@ import oncare_backend.service.AutoAssignService;
 import oncare_backend.service.JwtUtil;
 import oncare_backend.service.NotifyService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.RestController;
 

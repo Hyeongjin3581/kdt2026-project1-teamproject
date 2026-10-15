@@ -32,7 +32,7 @@ class AiInquiryAnswerTests {
         ReflectionTestUtils.setField(service,"inquiryRepository",inquiries);
         ReflectionTestUtils.setField(service,"requestRepository",requests);
         ReflectionTestUtils.setField(service,"faqRepository",faqs);
-        when(guardians.findByUserEntity_UserNo(8)).thenReturn(Optional.of(guardian));
+        when(guardians.findByUserEntity_UserNo(8)).thenReturn(guardian);
         when(categories.findById(4)).thenReturn(Optional.of(category));
         faq=new AiFaqEntity();faq.setFaqNo(5);faq.setSourceInquiryNo(11);faq.setApproved(true);
         faq.setQuestionText("방문 기록은 어디서 확인하나요?");faq.setAnswerText("보호자 포털의 방문 기록 메뉴에서 확인하세요.");

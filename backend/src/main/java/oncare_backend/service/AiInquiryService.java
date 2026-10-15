@@ -265,7 +265,7 @@ public class AiInquiryService {
 
     // 공통 검사: 토큰의 userNo로 보호자를 조회한다. 이용 중인 보호자만 허용한다.
     private GuardianEntity getGuardian(Integer userNo) {
-        GuardianEntity guardian = guardianRepository.findByUserEntity_UserNo(userNo).orElse(null);
+        GuardianEntity guardian = guardianRepository.findByUserEntity_UserNo(userNo);
         if (guardian == null || !"use".equals(guardian.getGuardianState())) throw new IllegalArgumentException("보호자 정보가 없습니다.");
         return guardian;
     }

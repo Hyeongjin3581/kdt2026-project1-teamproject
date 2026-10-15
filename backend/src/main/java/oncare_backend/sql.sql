@@ -2,3 +2,5 @@
 DROP DATABASE IF EXISTS oncare;
 create DATABASE oncare;
 USE oncare;
+
+SELECT COUNT(*) FROM oncare.ai_faq WHERE approved = 1;
