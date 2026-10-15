@@ -83,17 +83,19 @@ export default function AiInquiryAssistant({ requestNo, onSaved, onScheduleGuide
 
   return <Panel className="p-5 font-sans">
     <AiFaq embedded onNewInquiry={() => { questionInput.current?.scrollIntoView({ behavior: "smooth", block: "center" }); questionInput.current?.focus({ preventScroll: true }); }} />
-    <label className="mt-5 block text-sm font-semibold text-slate-700">다른 궁금한 점을 입력해 주세요
+    <h3 className="mt-5 text-sm font-bold text-slate-900">AI에게 질문하기</h3>
+    <p className="mt-1 text-sm text-slate-500">FAQ와 서비스 안내, AI의 일반 지식을 참고해 답변을 작성합니다.</p>
+    <label className="mt-4 block text-sm font-semibold text-slate-700">궁금한 내용을 입력해 주세요
       <textarea ref={questionInput} aria-label="AI 문의 내용" rows={3} maxLength={1000} value={question} onChange={(event) => changeQuestion(event.target.value)} disabled={Boolean(busy)} placeholder="예: 방문 일지는 어디서 볼 수 있나요?" className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-teal-500" />
     </label>
     <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
       <p className="text-xs text-slate-500">{question.length}/1,000자 · 질문만으로 센터에 접수되지 않습니다.</p>
-      <button type="button" onClick={consult} disabled={!question.trim() || Boolean(busy) || alreadySaved} className="rounded-lg bg-teal-600 px-4 py-2.5 text-sm font-bold text-white disabled:opacity-50">{busy === "consult" ? "답변 확인 중..." : "질문하기"}</button>
+      <button type="button" onClick={consult} disabled={!question.trim() || Boolean(busy) || alreadySaved} aria-live="polite" className="rounded-lg bg-teal-600 px-4 py-2.5 text-sm font-bold text-white disabled:opacity-50">{busy === "consult" ? "AI가 답변을 작성하고 있습니다…" : "AI 답변 받기"}</button>
     </div>
     {requestNo != null && <p className="mt-2 text-xs text-slate-500">선택한 방문 일정과 연결된 질문입니다.</p>}
     {error && <p role="alert" className="mt-3 text-sm text-red-600">{error}</p>}
     {currentResult && <div role="status" className={`mt-4 rounded-lg border p-4 ${currentResult.resolution === "answered" ? "border-teal-200 bg-teal-50" : "border-amber-200 bg-amber-50"}`}>
-      <p className="text-xs font-bold text-slate-600">{currentResult.resolution === "answered" ? "AI 안내" : currentResult.resolution === "scheduleRequired" ? "일정 변경 요청 안내" : "담당 센터 확인 필요"}</p>
+      <p className="text-xs font-bold text-slate-600">{currentResult.resolution === "answered" ? "AI 답변" : currentResult.resolution === "scheduleRequired" ? "일정 변경 요청 안내" : "담당 센터 확인 필요"}</p>
       <p className="mt-2 whitespace-pre-wrap break-words text-sm leading-6 text-slate-800">{currentResult.answer}</p>
       {currentResult.resolution === "staffRequired" && !alreadySaved && <>
         <p className="mt-3 text-xs text-slate-600">아직 접수되지 않았습니다. 아래 버튼을 누르면 입력한 질문을 담당 센터에 전달합니다.</p>

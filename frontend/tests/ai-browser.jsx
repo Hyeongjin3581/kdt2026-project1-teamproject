@@ -284,9 +284,9 @@ async function run() {
   const initialInquiries = inquiries.length;
   const beforeConsult = calls.length;
   hold = "/api/ai/inquiries/consult";
-  change(questionInput(), "일지는 어디서 봐요?"); await sleep(); await click("질문하기");
+  change(questionInput(), "일지는 어디서 봐요?"); await sleep(); await click("AI 답변 받기");
   const consultCount = callsTo(hold).length;
-  button("답변 확인 중...").click(); await sleep();
+  button("AI가 답변을 작성하고 있습니다…").click(); await sleep();
   check(callsTo(hold).length === consultCount && questionInput().disabled, "상담 중 중복 질문과 내용 변경 차단");
   hold = ""; release();
   await waitFor(() => text().includes("DB 근거 기반의 AI 답변입니다"), "AI 안내");
@@ -295,12 +295,12 @@ async function run() {
   check(consultCall.body.question === "일지는 어디서 봐요?" && consultCall.body.requestNo === null && Object.keys(consultCall.body).length === 2, "상담에는 질문·방문만 전달하고 사용자·유형 번호 제외");
   check(!calls.slice(beforeConsult).some((call) => call.path === "/guardianinquiry"), "상담만으로 문의 내역 재조회 없음");
   resolution = "scheduleRequired";
-  change(questionInput(), "내일 방문을 10시로 바꿔주세요"); await sleep(); await click("질문하기");
+  change(questionInput(), "내일 방문을 10시로 바꿔주세요"); await sleep(); await click("AI 답변 받기");
   await waitFor(() => button("일정 변경 요청하기"), "일정 변경 분기");
   await click("일정 변경 요청하기");
   check(document.activeElement.id === "guardian-request-form" && inquiries.length === initialInquiries && !button("센터에 문의 전달"), "일정 변경은 기존 폼 이동만 수행하고 자동 접수 없음");
   resolution = "staffRequired";
-  change(questionInput(), "센터에서 확인할 질문"); await sleep(); await click("질문하기");
+  change(questionInput(), "센터에서 확인할 질문"); await sleep(); await click("AI 답변 받기");
   await waitFor(() => button("센터에 문의 전달"), "담당자 확인 분기");
   check(inquiries.length === initialInquiries && text().includes("아직 접수되지 않았습니다"), "staffRequired도 사용자 전달 전 저장 없음");
   hold = "/api/ai/inquiries/handoff";
@@ -311,10 +311,10 @@ async function run() {
   hold = ""; release();
   await waitFor(() => text().includes("센터에 문의가 접수되었습니다"), "접수 확인");
   await waitFor(() => text().includes("센터에서 확인할 질문"), "접수 내역 갱신");
-  check(inquiries.length === initialInquiries + 1 && !button("센터에 문의 전달") && button("질문하기").disabled, "명시적 전달로만 1건 생성하고 재접수 차단");
+  check(inquiries.length === initialInquiries + 1 && !button("센터에 문의 전달") && button("AI 답변 받기").disabled, "명시적 전달로만 1건 생성하고 재접수 차단");
   const firstHandoff = callsTo("/api/ai/inquiries/handoff").at(-1);
   check(/^[0-9a-f-]{36}$/i.test(firstHandoff.body.requestId) && firstHandoff.body.question === "센터에서 확인할 질문" && inquiries.at(-1).answerContent === null, "UUID·원문 전달과 실제 응답 대기 상태 사용");
-  change(questionInput(), "응답 유실 검증 질문"); await sleep(); await click("질문하기");
+  change(questionInput(), "응답 유실 검증 질문"); await sleep(); await click("AI 답변 받기");
   await waitFor(() => button("센터에 문의 전달"), "재시도할 상담");
   loseHandoffResponse = true; await click("센터에 문의 전달");
   await waitFor(() => text().includes("문의 전달 결과를 확인하지 못했습니다"), "응답 유실");
@@ -326,14 +326,14 @@ async function run() {
   await waitFor(() => text().includes("센터에 문의가 접수되었습니다"), "기존 접수 확인");
   check(JSON.stringify(callsTo("/api/ai/inquiries/handoff").at(-1).body) === JSON.stringify(lostBody) && inquiries.length === afterLost && text().includes("응답 완료"), "응답 유실 재시도는 같은 키·내용으로 기존 번호·최신 상태 사용");
   handoffStatus = "응답 대기";
-  change(questionInput(), "충돌 검증 질문"); await sleep(); await click("질문하기");
+  change(questionInput(), "충돌 검증 질문"); await sleep(); await click("AI 답변 받기");
   await waitFor(() => button("센터에 문의 전달"), "충돌 상담");
   failure = { path: "/api/ai/inquiries/handoff", code: 409 };
   const beforeConflict = callsTo("/api/ai/inquiries/handoff").length;
   await click("센터에 문의 전달"); await waitFor(() => text().includes("(409)"), "접수 키 충돌");
   check(button("센터에 문의 전달").disabled && callsTo("/api/ai/inquiries/handoff").length === beforeConflict + 1 && !text().includes("접수되었습니다"), "409에서 새 키 자동 생성·접수 차단");
   failure = null;
-  change(questionInput(), "내용을 변경한 새 접수"); await sleep(); await click("질문하기");
+  change(questionInput(), "내용을 변경한 새 접수"); await sleep(); await click("AI 답변 받기");
   await waitFor(() => button("센터에 문의 전달") && !button("센터에 문의 전달").disabled, "새 접수 의도");
   refreshFails = true; await click("센터에 문의 전달");
   await waitFor(() => text().includes("내역을 갱신하지 못했습니다") && text().includes("센터에 문의가 접수되었습니다"), "접수 후 갱신 오류");
@@ -345,13 +345,13 @@ async function run() {
     await mount(<AiInquiryAssistant />);
     failure = { path: "/api/ai/inquiries/consult", code };
     const beforeFailure = inquiries.length;
-    change(questionInput(), "오류 검증 질문"); await sleep(); await click("질문하기");
+    change(questionInput(), "오류 검증 질문"); await sleep(); await click("AI 답변 받기");
     await waitFor(() => document.querySelector('[role="alert"]'), "상담 오류");
     check(inquiries.length === beforeFailure && !button("센터에 문의 전달") && questionInput().value === "오류 검증 질문", `${code ?? "통신"} 상담 오류는 자동 인계하지 않고 입력 유지`);
   }
   failure = null; invalidConsult = true;
   await mount(<AiInquiryAssistant />);
-  change(questionInput(), "잘못된 응답"); await sleep(); await click("질문하기");
+  change(questionInput(), "잘못된 응답"); await sleep(); await click("AI 답변 받기");
   await waitFor(() => text().includes("응답 형식이 올바르지"), "잘못된 상담 응답");
   check(!button("센터에 문의 전달"), "200 false 응답을 답변·인계로 처리하지 않음");
   invalidConsult = false;
@@ -361,16 +361,16 @@ async function run() {
     { answer: "안내", resolution: "answered", sourceFaqNos: ["1"] },
   ]) {
     consultOverride = invalid;
-    await click("질문하기"); await waitFor(() => text().includes("응답 형식이 올바르지"), "잘못된 상담 계약");
+    await click("AI 답변 받기"); await waitFor(() => text().includes("응답 형식이 올바르지"), "잘못된 상담 계약");
     check(!button("센터에 문의 전달"), "알 수 없는 분기·빈 답변·잘못된 근거 번호는 표시·접수 차단");
   }
   consultOverride = null;
   const beforeLength = callsTo("/api/ai/inquiries/consult").length;
-  change(questionInput(), "가".repeat(1001)); await sleep(); await click("질문하기");
+  change(questionInput(), "가".repeat(1001)); await sleep(); await click("AI 답변 받기");
   check(callsTo("/api/ai/inquiries/consult").length === beforeLength && text().includes("1,000자 이내"), "1000자 초과 질문 요청 차단");
   for (const code of [400, 403, 502]) {
     await mount(<AiInquiryAssistant />);
-    change(questionInput(), "전달 실패 검증"); await sleep(); await click("질문하기");
+    change(questionInput(), "전달 실패 검증"); await sleep(); await click("AI 답변 받기");
     await waitFor(() => button("센터에 문의 전달"), "전달 오류 상담");
     failure = { path: "/api/ai/inquiries/handoff", code };
     await click("센터에 문의 전달");
@@ -384,13 +384,13 @@ async function run() {
     }
   }
   await mount(<AiInquiryAssistant requestNo={21} />);
-  change(questionInput(), "방문 연결 질문"); await sleep(); await click("질문하기");
+  change(questionInput(), "방문 연결 질문"); await sleep(); await click("AI 답변 받기");
   await waitFor(() => button("센터에 문의 전달"), "본인 방문 연결");
   await click("센터에 문의 전달"); await waitFor(() => text().includes("접수되었습니다"), "본인 방문 접수");
   check(callsTo("/api/ai/inquiries/consult").at(-1).body.requestNo === "21" && callsTo("/api/ai/inquiries/handoff").at(-1).body.requestNo === "21", "상담·전달 모두 선택 방문 번호를 문자열로 전송");
   await mount(<AiInquiryAssistant requestNo={21} />);
   hold = "/api/ai/inquiries/consult";
-  change(questionInput(), "이전 방문 질문"); await sleep(); await click("질문하기");
+  change(questionInput(), "이전 방문 질문"); await sleep(); await click("AI 답변 받기");
   root.render(<AiInquiryAssistant requestNo={22} />); await sleep();
   hold = ""; release(); await sleep();
   check(!button("센터에 문의 전달") && !text().includes("담당 센터 확인 필요"), "방문 변경 후 이전 상담 응답 표시 차단");
@@ -399,7 +399,7 @@ async function run() {
   faqs[0].approved = false; await click("새로고침");
   await waitFor(() => text().includes("아직 공개된 공통 질문이 없습니다"), "빈 FAQ");
   change(questionInput(), "추천 질문이 없는 상담"); await sleep();
-  check(!button("질문하기").disabled, "FAQ가 없어도 직접 질문 입력·상담 가능");
+  check(!button("AI 답변 받기").disabled, "FAQ가 없어도 직접 질문 입력·상담 가능");
   check(!calls.some((call) => ["/api/ai/inquiries/answer", "/api/ai/inquiries/drafts"].includes(call.path)), "새 화면에서 이전 저장·초안 API 호출 없음");
 
   includeVisit = true;
