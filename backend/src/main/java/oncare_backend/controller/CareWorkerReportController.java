@@ -77,7 +77,7 @@ public class CareWorkerReportController {
     // [2] 센터별 근무기록 조회 - 관리자 또는 관련 보호자
     @GetMapping("/center")
     @Transactional(readOnly = true)
-    public List<CareworkerReportDto> findAllByCenter(@RequestParam Integer centerNo,
+    public List<CareworkerReportDto> findAllByCenter(@RequestParam(name = "centerNo") Integer centerNo,
             @CookieValue(value = "accessToken", required = false) String accessToken) {
 
         if (centerNo == null) return new ArrayList<>();
