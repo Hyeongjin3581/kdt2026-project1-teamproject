@@ -10,7 +10,7 @@ const sentiments = [
 ];
 const button = "rounded-lg border border-teal-200 px-4 py-2.5 text-sm font-bold text-teal-700 hover:bg-teal-50 disabled:cursor-not-allowed disabled:opacity-50";
 
-export default function AiReviewStats({ compact = false, refreshKey = 0, disabled = false, analysisLock, onBusyChange, onAnalyzed }) {
+export default function AiReviewStats({ compact = false, refreshKey = 0, disabled = false, analysisLock, onBusyChange, onAnalyzed, onAnalysisResults }) {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [analyzing, setAnalyzing] = useState(false);
@@ -59,6 +59,7 @@ export default function AiReviewStats({ compact = false, refreshKey = 0, disable
       if (!Array.isArray(response.data) || !response.data.every((item) => item && item.reviewNo != null
         && (typeof item.error === "string" || sentiments.some(([name]) => name === item.sentiment)))) throw invalidAiResponse(response);
       const failed = response.data.filter((item) => typeof item.error === "string").length;
+      onAnalysisResults?.(response.data);
       setResult(`분석 결과: 성공 ${response.data.length - failed}건 · 실패 ${failed}건${response.data.length === 0 ? " (처리할 후기가 없습니다.)" : ""}`);
     } catch (error) {
       if (mounted.current) setResult(aiErrorMessage(error));
@@ -92,6 +93,9 @@ export default function AiReviewStats({ compact = false, refreshKey = 0, disable
           : [["전체 후기", stats.total], ["분석된 후기", stats.analyzed], ["분석 대기 후기", stats.pending], ["내용이 없는 후기", stats.noText]]).map(([label, count]) =>
           <div key={label} className="rounded-lg bg-slate-50 p-3"><p className="text-xs text-slate-500">{label}</p><p className="mt-1 text-xl font-bold text-slate-900">{count}건</p></div>)}
       </div>
+      {Number.isInteger(stats.mismatchCount) && stats.mismatchCount >= 0
+        ? <Link to="/admin/reviews?mismatch=true" className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-amber-200 bg-amber-50/50 p-3 text-sm"><span className="font-semibold text-amber-800">평가 불일치 <b className="ml-2">{stats.mismatchCount}건</b></span><span className="text-xs font-bold text-teal-700">검토 필요 후기 보기 →</span></Link>
+        : <div className="mt-3 rounded-lg bg-slate-50 p-3 text-xs text-slate-500"><b>평가 불일치 · 연결 준비</b><p className="mt-1">불일치 통계 정보가 아직 제공되지 않습니다.</p></div>}
       {!compact && <><p className="mt-4 text-xs text-slate-500">비율은 분석 완료된 후기 기준입니다.</p>
       <div className="mt-3 space-y-3">
         {sentiments.map(([name, color]) => <div key={name}>

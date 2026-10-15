@@ -7,6 +7,7 @@ import AiReviewStats from "../src/features/admin/dashboard/AiReviewStats";
 import AiFaqManagement from "../src/features/admin/inquiries/AiFaqManagement";
 import AiFaq from "../src/features/guardian/request/AiFaq";
 import AiInquiryAssistant from "../src/features/guardian/request/AiInquiryAssistant";
+import { todayIso } from "../src/utils/guardianAdapters";
 import "../src/index.css";
 
 const root = createRoot(document.getElementById("root"));
@@ -33,10 +34,14 @@ let hold = "";
 let release = null;
 let confirmResult = true;
 let confirmations = [];
-let needsStaff = false;
-let invalidDraft = false;
-let invalidAnswer = false;
+let resolution = "answered";
+let invalidConsult = false;
+let consultOverride = null;
+let loseHandoffResponse = false;
+let handoffStatus = "응답 대기";
+const handoffs = new Map();
 let refreshFails = false;
+let includeVisit = false;
 let reviewItems = [1, 2, 3, 4, 5, 6].map((reviewNo) => ({
   reviewNo, careworkersReportNo: reviewNo + 100, guardianName: "검증 보호자", careworkerNo: 5, careworkerName: "검증 요양보호사",
   rating: 8, reviewContent: reviewNo === 3 ? null : `검증 후기 ${reviewNo}`, createDate: "2026-10-14T10:00:00", updateDate: null,
@@ -59,9 +64,15 @@ axios.defaults.adapter = async (config) => {
   else if (path === "/center") data = [{ centerNo: 1, centerName: "검증 센터" }];
   else if (path === "/guardian") data = [{ guardianNo: 7, userNo: 1, guardianName: "검증 보호자" }];
   else if (path === "/carerecipient") data = [{ careRecipientNo: 21, guardianNo: 7, careRecipientName: "검증 수급자" }];
-  else if (path === "/guardianinquiry") data = inquiries;
+  else if (path === "/guardianinquiry") {
+    if (config.method === "post") {
+      inquiries.push({ ...body, inquiryNo: 100 + inquiries.length, answerContent: null, createDate: `${todayIso}T10:00:00` });
+      data = true;
+    } else data = inquiries;
+  }
   else if (path === "/inquirycategory") data = categories;
-  else if (["/api/careworkers", "/request/carerecipient", "/careworkerreport/center"].includes(path)) data = [];
+  else if (path === "/request/carerecipient") data = includeVisit ? [{ requestNo: 71, careRecipientNo: 21, visitDate: todayIso, visitStartTime: "09:00:00", visitEndTime: "12:00:00", requestState: "신청" }] : [];
+  else if (["/api/careworkers", "/careworkerreport/center"].includes(path)) data = [];
   else if (path === "/api/ai/reviews/stats") data = stats;
   else if (path === "/api/ai/reviews") data = reviewItems.map((review) => ({ ...review }));
   else if (path === "/api/ai/reviews/analyze-pending") {
@@ -70,19 +81,21 @@ axios.defaults.adapter = async (config) => {
     stats = { ...stats, analyzed: 3, pending: 2, counts: { ...zeroes, "긍정": 3 } };
   }
   else if (path === "/api/ai/reviews/analyze") data = { reviewNo: config.params.reviewNo, sentiment: "긍정", cached: true };
-  else if (path === "/api/ai/inquiries/drafts") {
-    data = { inquiryCategoryNo: invalidDraft ? 999 : config.params.inquiryCategoryNo, questions: ["초안 질문 A", "초안 질문 B"] };
+  else if (path === "/api/ai/inquiries/consult") {
+    data = consultOverride ?? (invalidConsult ? false : { answer: resolution === "answered" ? "DB 근거 기반의 AI 답변입니다." : resolution === "scheduleRequired" ? "희망 날짜와 시간을 입력해 주세요." : "담당 센터 확인이 필요합니다.", resolution, sourceFaqNos: resolution === "answered" ? [1] : [] });
   }
-  else if (path === "/api/ai/inquiries/answer") {
-    if (invalidAnswer) data = false;
+  else if (path === "/api/ai/inquiries/handoff") {
+    const previous = handoffs.get(body.requestId);
+    if (previous && (previous.question !== body.question || previous.requestNo !== body.requestNo)) throw { response: { status: 409 }, config };
+    if (previous) data = { ...previous.response, status: handoffStatus };
     else {
       const inquiryNo = 100 + inquiries.length;
-      const answer = needsStaff ? "센터 확인을 기다려주세요." : "DB 근거 기반의 AI 답변입니다.";
-      inquiries.push({ inquiryNo, guardianNo: 7, inquiryCategoryNo: Number(body.inquiryCategoryNo), inquiryContent: body.question,
-        requestNo: body.requestNo, answerContent: needsStaff ? null : `[AI 안내] ${answer}`, createDate: "2026-10-14T10:00:00" });
-      data = { inquiryNo, inquiryCategoryNo: Number(body.inquiryCategoryNo), answer, needsStaff, status: needsStaff ? "응답 대기" : "응답 완료" };
-      if (refreshFails) failure = { path: "/guardianinquiry", code: 500 };
+      inquiries.push({ inquiryNo, guardianNo: 7, inquiryCategoryNo: 4, inquiryContent: body.question, requestNo: body.requestNo, answerContent: null, createDate: `${todayIso}T10:00:00` });
+      data = { inquiryNo, inquiryCategoryNo: 4, status: handoffStatus };
+      handoffs.set(body.requestId, { ...body, response: data });
     }
+    if (refreshFails) failure = { path: "/guardianinquiry", code: 500 };
+    if (loseHandoffResponse) { loseHandoffResponse = false; throw new Error("접수 후 응답 유실 모의"); }
   }
   else if (path === "/api/ai/faq/admin") data = faqs.map((faq) => ({ ...faq }));
   else if (path === "/api/ai/faq/generate") {
@@ -192,12 +205,26 @@ async function run() {
   await click("FAQ 승인"); await waitFor(() => button("승인 해제"), "재승인");
   await app("/guardian/request", 1);
   await waitFor(() => button("공통 질문 수정") && text().includes("요청 내역"), "보호자 문의 및 FAQ");
-  document.querySelector("summary").click(); await sleep();
-  check(text().includes("AI 문의 도우미") && text().includes("승인된 공통 FAQ") && document.querySelector("details").open, "AI 문의 도우미와 접기 가능한 공통 FAQ를 별도 표시");
+  check([...document.querySelectorAll("h2")].filter((heading) => heading.textContent === "AI 문의").length === 1 && !document.querySelector('[aria-label="AI 문의 유형"]') && !document.querySelector("details"), "중복 제목·유형 선택 없이 AI 문의 한 영역에 표시");
+  check(getComputedStyle(document.querySelector("h1")).fontFamily === getComputedStyle(document.querySelector('[aria-label="AI 문의 내용"]')).fontFamily, "요청 문의 제목과 입력 글꼴을 기본 본문 글꼴로 통일");
+  const beforeNewInquiry = calls.length;
+  await click("다른 질문하기");
+  check(document.activeElement.getAttribute("aria-label") === "AI 문의 내용" && !calls.slice(beforeNewInquiry).some((call) => call.method === "post"), "FAQ의 다른 질문하기는 같은 AI 입력란으로 이동하며 문의를 접수하지 않음");
   const beforeAnswer = calls.length;
   await click("공통 질문 수정");
   await waitFor(() => text().includes(inquiries[0].answerContent), "DB FAQ 답변");
   check(button("공통 질문 수정").getAttribute("aria-expanded") === "true" && calls.slice(beforeAnswer).every((call) => call.method === "get"), "보호자 FAQ 클릭은 답변 GET만 호출하며 문의를 변경하지 않음");
+  faqs.push({ faqNo: 2, sourceInquiryNo: 12, question: "다른 추천 질문", answer: "다른 DB 저장 답변", approved: true });
+  await click("새로고침");
+  await waitFor(() => button("다른 추천 질문"), "여러 FAQ");
+  hold = "/api/ai/faq/2/answer";
+  await click("다른 추천 질문");
+  check(text().includes("저장된 답변을 불러오는 중"), "FAQ 질문 클릭 시 답변 조회 로딩 표시");
+  await click("공통 질문 수정");
+  await waitFor(() => text().includes(inquiries[0].answerContent), "다른 질문으로 전환");
+  hold = ""; release(); await sleep();
+  check(button("공통 질문 수정").getAttribute("aria-expanded") === "true" && button("다른 추천 질문").getAttribute("aria-expanded") === "false" && !text().includes("다른 DB 저장 답변"), "질문 전환 후 늦은 이전 답변은 취소하고 선택한 DB 답변만 표시");
+  faqs = faqs.filter((item) => item.faqNo === 1);
   await click("공통 질문 수정");
   check(button("공통 질문 수정").getAttribute("aria-expanded") === "false", "질문 다시 클릭하면 접힘");
   faqs[0].approved = false;
@@ -251,114 +278,145 @@ async function run() {
   check(text().includes("요청 내역"), "FAQ 오류 시 기존 보호자 요청 내역 유지");
   failure = null;
   await app("/guardian/request", 1);
-  await waitFor(() => document.querySelector('[aria-label="AI 문의 유형"]')?.options.length === 3 && text().includes("요청 내역"), "AI 문의 도우미");
-  check([...document.querySelector('[aria-label="AI 문의 유형"]').options].map((item) => item.value).join(",") === "1,3,4", "문의 유형과 번호는 DB 목록 응답으로 표시");
   const questionInput = () => document.querySelector('[aria-label="AI 문의 내용"]');
-  const categoryInput = () => document.querySelector('[aria-label="AI 문의 유형"]');
-  change(categoryInput(), "4"); await sleep();
-  hold = "/api/ai/inquiries/drafts";
-  await click("질문 초안 받기");
-  const draftCount = callsTo(hold).length;
-  button("질문 생성 중...").click();
-  await sleep();
-  check(callsTo(hold).length === draftCount && categoryInput().disabled && categoryInput().value === "4", "초안 생성 중 중복 요청과 유형 변경 차단");
+  await waitFor(() => questionInput() && text().includes("요청 내역"), "통합 AI 상담");
+  check(!document.querySelector('[aria-label="AI 문의 유형"]') && !button("질문 초안 받기"), "유형 선택·AI 초안 제거");
+  const initialInquiries = inquiries.length;
+  const beforeConsult = calls.length;
+  hold = "/api/ai/inquiries/consult";
+  change(questionInput(), "일지는 어디서 봐요?"); await sleep(); await click("AI 답변 받기");
+  const consultCount = callsTo(hold).length;
+  button("AI가 답변을 작성하고 있습니다…").click(); await sleep();
+  check(callsTo(hold).length === consultCount && questionInput().disabled, "상담 중 중복 질문과 내용 변경 차단");
   hold = ""; release();
-  await waitFor(() => button("초안 질문 A"), "질문 초안");
-  const answerBeforeDraft = callsTo("/api/ai/inquiries/answer").length;
-  await click("초안 질문 A");
-  check(questionInput().value === "초안 질문 A" && callsTo("/api/ai/inquiries/answer").length === answerBeforeDraft, "초안 선택은 편집 입력만 채우며 문의를 등록하지 않음");
-  change(questionInput(), "초안을 편집한 일반 질문"); await sleep();
-  const beforeInquiry = calls.length;
-  hold = "/api/ai/inquiries/answer";
-  await click("AI 답변 받기 · 문의 등록");
-  const answerCount = callsTo(hold).length;
-  button("답변 확인 중...").click(); await sleep();
-  check(callsTo(hold).length === answerCount && categoryInput().disabled && questionInput().disabled, "답변 등록 중 중복 제출·유형·내용 변경 차단");
+  await waitFor(() => text().includes("DB 근거 기반의 AI 답변입니다"), "AI 안내");
+  check(inquiries.length === initialInquiries && !button("센터에 문의 전달") && !text().includes("접수되었습니다"), "answered는 안내만 표시하고 관리자 문의 생성 없음");
+  const consultCall = callsTo("/api/ai/inquiries/consult").at(-1);
+  check(consultCall.body.question === "일지는 어디서 봐요?" && consultCall.body.requestNo === null && Object.keys(consultCall.body).length === 2, "상담에는 질문·방문만 전달하고 사용자·유형 번호 제외");
+  check(!calls.slice(beforeConsult).some((call) => call.path === "/guardianinquiry"), "상담만으로 문의 내역 재조회 없음");
+  resolution = "scheduleRequired";
+  change(questionInput(), "내일 방문을 10시로 바꿔주세요"); await sleep(); await click("AI 답변 받기");
+  await waitFor(() => button("일정 변경 요청하기"), "일정 변경 분기");
+  await click("일정 변경 요청하기");
+  check(document.activeElement.id === "guardian-request-form" && inquiries.length === initialInquiries && !button("센터에 문의 전달"), "일정 변경은 기존 폼 이동만 수행하고 자동 접수 없음");
+  resolution = "staffRequired";
+  change(questionInput(), "센터에서 확인할 질문"); await sleep(); await click("AI 답변 받기");
+  await waitFor(() => button("센터에 문의 전달"), "담당자 확인 분기");
+  check(inquiries.length === initialInquiries && text().includes("아직 접수되지 않았습니다"), "staffRequired도 사용자 전달 전 저장 없음");
+  hold = "/api/ai/inquiries/handoff";
+  await click("센터에 문의 전달");
+  const handoffCount = callsTo(hold).length;
+  button("전달 중...").click(); await sleep();
+  check(callsTo(hold).length === handoffCount && questionInput().disabled, "전달 중 중복 클릭·내용 변경 차단");
   hold = ""; release();
-  await waitFor(() => text().includes("이미 등록된 문의") && text().includes("REQUEST HISTORY · 4"), "저장 및 내역 갱신");
-  const inquiryCall = callsTo("/api/ai/inquiries/answer").at(-1);
-  check(inquiryCall.body.inquiryCategoryNo === "4" && inquiryCall.body.requestNo === null && !Object.hasOwn(inquiryCall.body, "guardianNo") && !Object.hasOwn(inquiryCall.body, "userNo"), "방문 선택 없이 일반 문의 등록, 사용자 번호를 보내지 않음");
-  check(questionInput().value === "초안을 편집한 일반 질문" && text().includes("DB 근거 기반의 AI 답변입니다") && text().includes("응답 완료"), "등록 후 질문·답변·서버 상태를 유지하며 내역 갱신");
-  check(calls.slice(beforeInquiry).filter((call) => call.method === "get").every((call) => call.path === "/guardianinquiry"), "AI 저장 후 문의 내역만 조회하고 방문 일정이나 배정을 변경하지 않음");
-  check(button("AI 답변 받기 · 문의 등록").disabled, "이미 저장한 같은 질문 재제출 차단 및 inquiryNo 표시");
-  change(categoryInput(), "3"); await sleep();
-  check(questionInput().value === "" && !button("초안 질문 A") && !text().includes("DB 근거 기반의 AI 답변입니다"), "유형 전환 시 이전 초안·질문·답변 초기화");
-  needsStaff = true;
-  change(questionInput(), "담당자 변경 문의"); await sleep();
-  await click("AI 답변 받기 · 문의 등록");
-  await waitFor(() => text().includes("센터 확인을 기다려주세요") && text().includes("REQUEST HISTORY · 5"), "센터 대기 등록");
-  check(text().includes("응답 대기") && text().includes("같은 질문을 기존 문의 작성으로 다시 등록하지"), "needsStaff=true의 서버 응답 대기 상태 및 중복 문의 방지 안내");
-  change(categoryInput(), "1"); await sleep();
-  await click("희망 날짜·시간 입력 위치 보기");
-  check(document.activeElement.id === "guardian-request-form", "실제 일정 변경은 기존 희망 날짜·시간 입력 위치로 안내");
-  change(categoryInput(), "4"); await sleep();
-  needsStaff = false;
-  refreshFails = true;
-  change(questionInput(), "내역 갱신 실패 검증 질문"); await sleep();
-  await click("AI 답변 받기 · 문의 등록");
-  await waitFor(() => text().includes("내역을 갱신하지 못했습니다") && text().includes("이미 등록된 문의"), "내역 갱신 실패");
-  check(questionInput().value === "내역 갱신 실패 검증 질문" && text().includes("DB 근거 기반의 AI 답변입니다") && button("AI 답변 받기 · 문의 등록").disabled, "내역 갱신 실패에도 저장된 답변·입력·중복 방지 유지");
-  failure = null; refreshFails = false;
-  await click("문의 내역 새로고침");
-  await waitFor(() => text().includes("REQUEST HISTORY · 6"), "문의 내역 재시도");
-  check(text().includes("DB 근거 기반의 AI 답변입니다"), "내역 재시도 성공 후에도 AI 답변 유지");
-  await app("/admin/inquiries", 4);
-  await waitFor(() => text().includes("내역 갱신 실패 검증 질문"), "관리자 AI 문의 조회");
-  const aiRow = [...document.querySelectorAll("tbody tr")].find((row) => row.textContent.includes("내역 갱신 실패 검증 질문"));
-  const pendingRow = [...document.querySelectorAll("tbody tr")].find((row) => row.textContent.includes("담당자 변경 문의"));
-  check(aiRow.textContent.includes("✨ AI 안내") && aiRow.textContent.includes("응답 완료") && aiRow.textContent.includes("응답 수정"), "관리자 문의에서 [AI 안내] 답변 구분과 기존 응답 수정 유지");
-  check(pendingRow.textContent.includes("응답 대기") && pendingRow.textContent.includes("응답하기"), "AI 센터 대기 문의도 answerContent 기준으로 기존 처리 가능");
-  let savedCount = 0;
-  await mount(<AiInquiryAssistant categories={categories} requestNo={21} onSaved={() => { savedCount++; }} />);
-  await waitFor(() => categoryInput()?.value === "1", "방문 연결 문의");
-  change(questionInput(), "연결한 방문 질문"); await sleep();
-  await click("AI 답변 받기 · 문의 등록");
-  await waitFor(() => text().includes("이미 등록된 문의"), "연결한 방문 저장");
-  check(callsTo("/api/ai/inquiries/answer").at(-1).body.requestNo === "21" && savedCount === 1, "선택된 본인 방문 번호를 문자열 requestNo로 전달");
-  for (const code of [400, 403, 404, 502]) {
-    await mount(<AiInquiryAssistant categories={categories} />);
-    await waitFor(() => categoryInput()?.value === "1", "문의 오류 검증");
-    failure = { path: "/api/ai/inquiries/answer", code };
-    change(questionInput(), "오류 검증 질문"); await sleep();
-    await click("AI 답변 받기 · 문의 등록");
-    await waitFor(() => text().includes(`(${code})`), `문의 답변 오류 ${code}`);
-    check(!text().includes("이미 등록된 문의") && questionInput().value === "오류 검증 질문", `${code} 문의 오류를 성공으로 숨기지 않고 입력 유지`);
-  }
+  await waitFor(() => text().includes("센터에 문의가 접수되었습니다"), "접수 확인");
+  await waitFor(() => text().includes("센터에서 확인할 질문"), "접수 내역 갱신");
+  check(inquiries.length === initialInquiries + 1 && !button("센터에 문의 전달") && button("AI 답변 받기").disabled, "명시적 전달로만 1건 생성하고 재접수 차단");
+  const firstHandoff = callsTo("/api/ai/inquiries/handoff").at(-1);
+  check(/^[0-9a-f-]{36}$/i.test(firstHandoff.body.requestId) && firstHandoff.body.question === "센터에서 확인할 질문" && inquiries.at(-1).answerContent === null, "UUID·원문 전달과 실제 응답 대기 상태 사용");
+  change(questionInput(), "응답 유실 검증 질문"); await sleep(); await click("AI 답변 받기");
+  await waitFor(() => button("센터에 문의 전달"), "재시도할 상담");
+  loseHandoffResponse = true; await click("센터에 문의 전달");
+  await waitFor(() => text().includes("문의 전달 결과를 확인하지 못했습니다"), "응답 유실");
+  const lostBody = callsTo("/api/ai/inquiries/handoff").at(-1).body;
+  const afterLost = inquiries.length;
+  check(!text().includes("접수되었습니다") && questionInput().value === "응답 유실 검증 질문", "응답 유실을 성공으로 단정하지 않고 입력 유지");
+  handoffStatus = "응답 완료";
+  await click("센터에 문의 전달");
+  await waitFor(() => text().includes("센터에 문의가 접수되었습니다"), "기존 접수 확인");
+  check(JSON.stringify(callsTo("/api/ai/inquiries/handoff").at(-1).body) === JSON.stringify(lostBody) && inquiries.length === afterLost && text().includes("응답 완료"), "응답 유실 재시도는 같은 키·내용으로 기존 번호·최신 상태 사용");
+  handoffStatus = "응답 대기";
+  change(questionInput(), "충돌 검증 질문"); await sleep(); await click("AI 답변 받기");
+  await waitFor(() => button("센터에 문의 전달"), "충돌 상담");
+  failure = { path: "/api/ai/inquiries/handoff", code: 409 };
+  const beforeConflict = callsTo("/api/ai/inquiries/handoff").length;
+  await click("센터에 문의 전달"); await waitFor(() => text().includes("(409)"), "접수 키 충돌");
+  check(button("센터에 문의 전달").disabled && callsTo("/api/ai/inquiries/handoff").length === beforeConflict + 1 && !text().includes("접수되었습니다"), "409에서 새 키 자동 생성·접수 차단");
   failure = null;
-  await mount(<AiInquiryAssistant categories={categories} />);
-  await waitFor(() => categoryInput()?.value === "1", "잘못된 응답");
-  invalidDraft = true;
-  await click("질문 초안 받기");
-  await waitFor(() => text().includes("응답 형식이 올바르지"), "다른 유형 응답");
-  check(!button("초안 질문 A"), "다른 유형 번호로 반환된 초안 응답 표시 차단");
-  invalidDraft = false; invalidAnswer = true;
-  change(questionInput(), "false 응답 검증"); await sleep();
-  await click("AI 답변 받기 · 문의 등록");
-  await waitFor(() => text().includes("응답 형식이 올바르지"), "false 답변");
-  check(!text().includes("이미 등록된 문의"), "HTTP 200 boolean false를 문의 저장 성공으로 표시하지 않음");
-  invalidAnswer = false;
-  const beforeLength = callsTo("/api/ai/inquiries/answer").length;
-  change(questionInput(), "가".repeat(1001)); await sleep();
-  await click("AI 답변 받기 · 문의 등록");
-  check(callsTo("/api/ai/inquiries/answer").length === beforeLength && text().includes("1,000자 이내"), "1,000자 초과 문의를 요청 단계에서도 차단");
-  await mount(<AiInquiryAssistant categories={categories} />);
-  await waitFor(() => categoryInput()?.value === "1", "늦은 초안");
-  hold = "/api/ai/inquiries/drafts";
-  await click("질문 초안 받기");
-  await mount(<AiInquiryAssistant categories={[categories[2]]} />);
-  await waitFor(() => categoryInput()?.value === "4", "새 유형 화면");
+  change(questionInput(), "내용을 변경한 새 접수"); await sleep(); await click("AI 답변 받기");
+  await waitFor(() => button("센터에 문의 전달") && !button("센터에 문의 전달").disabled, "새 접수 의도");
+  refreshFails = true; await click("센터에 문의 전달");
+  await waitFor(() => text().includes("내역을 갱신하지 못했습니다") && text().includes("센터에 문의가 접수되었습니다"), "접수 후 갱신 오류");
+  check(callsTo("/api/ai/inquiries/handoff").at(-1).body.requestId !== lostBody.requestId && !button("센터에 문의 전달"), "새 내용은 새 UUID, 내역 오류에도 접수 완료 유지");
+  failure = null; refreshFails = false; await click("문의 내역 새로고침");
+  await waitFor(() => text().includes("내용을 변경한 새 접수") && !text().includes("내역을 갱신하지 못했습니다"), "내역 재조회");
+  check(text().includes("센터에 문의가 접수되었습니다"), "내역 재조회 후 접수 결과 유지");
+  for (const code of [400, 403, 502, null]) {
+    await mount(<AiInquiryAssistant />);
+    failure = { path: "/api/ai/inquiries/consult", code };
+    const beforeFailure = inquiries.length;
+    change(questionInput(), "오류 검증 질문"); await sleep(); await click("AI 답변 받기");
+    await waitFor(() => document.querySelector('[role="alert"]'), "상담 오류");
+    check(inquiries.length === beforeFailure && !button("센터에 문의 전달") && questionInput().value === "오류 검증 질문", `${code ?? "통신"} 상담 오류는 자동 인계하지 않고 입력 유지`);
+  }
+  failure = null; invalidConsult = true;
+  await mount(<AiInquiryAssistant />);
+  change(questionInput(), "잘못된 응답"); await sleep(); await click("AI 답변 받기");
+  await waitFor(() => text().includes("응답 형식이 올바르지"), "잘못된 상담 응답");
+  check(!button("센터에 문의 전달"), "200 false 응답을 답변·인계로 처리하지 않음");
+  invalidConsult = false;
+  for (const invalid of [
+    { answer: "안내", resolution: "unknown", sourceFaqNos: [] },
+    { answer: " ", resolution: "staffRequired", sourceFaqNos: [] },
+    { answer: "안내", resolution: "answered", sourceFaqNos: ["1"] },
+  ]) {
+    consultOverride = invalid;
+    await click("AI 답변 받기"); await waitFor(() => text().includes("응답 형식이 올바르지"), "잘못된 상담 계약");
+    check(!button("센터에 문의 전달"), "알 수 없는 분기·빈 답변·잘못된 근거 번호는 표시·접수 차단");
+  }
+  consultOverride = null;
+  const beforeLength = callsTo("/api/ai/inquiries/consult").length;
+  change(questionInput(), "가".repeat(1001)); await sleep(); await click("AI 답변 받기");
+  check(callsTo("/api/ai/inquiries/consult").length === beforeLength && text().includes("1,000자 이내"), "1000자 초과 질문 요청 차단");
+  for (const code of [400, 403, 502]) {
+    await mount(<AiInquiryAssistant />);
+    change(questionInput(), "전달 실패 검증"); await sleep(); await click("AI 답변 받기");
+    await waitFor(() => button("센터에 문의 전달"), "전달 오류 상담");
+    failure = { path: "/api/ai/inquiries/handoff", code };
+    await click("센터에 문의 전달");
+    await waitFor(() => document.querySelector('[role="alert"]'), "전달 오류");
+    const failedHandoff = callsTo("/api/ai/inquiries/handoff").at(-1).body;
+    check(!text().includes("접수되었습니다") && questionInput().value === "전달 실패 검증", `${code} 전달 실패를 성공으로 표시하지 않음`);
+    failure = null;
+    if (code === 502) {
+      await click("센터에 문의 전달"); await waitFor(() => text().includes("접수되었습니다"), "502 전달 재시도");
+      check(callsTo("/api/ai/inquiries/handoff").at(-1).body.requestId === failedHandoff.requestId, "502 재시도에도 동일한 UUID 사용");
+    }
+  }
+  await mount(<AiInquiryAssistant requestNo={21} />);
+  change(questionInput(), "방문 연결 질문"); await sleep(); await click("AI 답변 받기");
+  await waitFor(() => button("센터에 문의 전달"), "본인 방문 연결");
+  await click("센터에 문의 전달"); await waitFor(() => text().includes("접수되었습니다"), "본인 방문 접수");
+  check(callsTo("/api/ai/inquiries/consult").at(-1).body.requestNo === "21" && callsTo("/api/ai/inquiries/handoff").at(-1).body.requestNo === "21", "상담·전달 모두 선택 방문 번호를 문자열로 전송");
+  await mount(<AiInquiryAssistant requestNo={21} />);
+  hold = "/api/ai/inquiries/consult";
+  change(questionInput(), "이전 방문 질문"); await sleep(); await click("AI 답변 받기");
+  root.render(<AiInquiryAssistant requestNo={22} />); await sleep();
   hold = ""; release(); await sleep();
-  check(!button("초안 질문 A") && categoryInput().value === "4", "이전 유형 화면의 늦은 응답은 취소하고 새 화면에 표시하지 않음");
-  await mount(<AiInquiryAssistant categories={[]} />);
-  check(button("질문 초안 받기").disabled && text().includes("조회된 문의 유형이 없습니다"), "DB 유형 빈 목록 안내와 요청 차단");
+  check(!button("센터에 문의 전달") && !text().includes("담당 센터 확인 필요"), "방문 변경 후 이전 상담 응답 표시 차단");
   await app("/guardian/request", 1);
-  await waitFor(() => text().includes("요청 내역") && categoryInput()?.options.length === 3, "빈 FAQ와 도우미");
-  faqs[0].approved = false;
-  document.querySelector("summary").click(); await sleep();
-  await click("새로고침");
-  await waitFor(() => text().includes("아직 공개된 공통 질문이 없습니다"), "빈 공통 FAQ");
-  check(!button("질문 초안 받기").disabled, "공통 FAQ가 0건이어도 AI 질문 초안 기능 사용 가능");
-  check(document.documentElement.scrollWidth <= window.innerWidth, "보호자 AI 도우미·공통 FAQ 화면 가로 넘침 없음");
+  await waitFor(() => questionInput() && text().includes("요청 내역"), "빈 FAQ에서도 직접 질문");
+  faqs[0].approved = false; await click("새로고침");
+  await waitFor(() => text().includes("아직 공개된 공통 질문이 없습니다"), "빈 FAQ");
+  change(questionInput(), "추천 질문이 없는 상담"); await sleep();
+  check(!button("AI 답변 받기").disabled, "FAQ가 없어도 직접 질문 입력·상담 가능");
+  check(!calls.some((call) => ["/api/ai/inquiries/answer", "/api/ai/inquiries/drafts"].includes(call.path)), "새 화면에서 이전 저장·초안 API 호출 없음");
+
+  includeVisit = true;
+  await app("/guardian/request", 1);
+  await waitFor(() => [...document.querySelectorAll("button")].some((item) => item.textContent.includes("09:00 ~ 12:00")), "기존 문의에 연결할 방문");
+  const beforeDirect = calls.length;
+  await click("다른 질문하기");
+  [...document.querySelectorAll("button")].find((item) => item.textContent.includes("09:00 ~ 12:00")).click(); await sleep();
+  const directPanel = document.getElementById("guardian-request-form").closest("section");
+  change(directPanel.querySelector("select"), "기타 문의"); await sleep();
+  change(directPanel.querySelector("textarea"), "직접 작성한 센터 문의"); await sleep();
+  check(!calls.slice(beforeDirect).some((call) => call.method === "post"), "일반 문의는 작성만으로 등록되지 않음");
+  await click("요청 보내기");
+  await waitFor(() => text().includes("요청이 센터에 전달되었습니다"), "일반 문의 제출");
+  const directPosts = calls.slice(beforeDirect).filter((call) => call.method === "post");
+  check(directPosts.length === 1 && directPosts[0].path === "/guardianinquiry" && directPosts[0].body.requestNo === 71 && directPosts[0].body.inquiryCategoryNo === 4 && directPosts[0].credentials === true, "명시적 제출 시 기존 문의 API에 방문·유형·원문을 전달하고 AI 답변 API는 호출하지 않음");
+  check(inquiries.at(-1).answerContent === null && text().includes("직접 작성한 센터 문의"), "일반 문의는 자동 AI 답변 없이 담당자 응답 대기로 내역에 표시");
   faqs[0].approved = true;
   await mount(<AiFaq />);
   await waitFor(() => button("공통 질문 수정"), "답변 취소 검증");
@@ -376,6 +434,26 @@ async function run() {
   await mount(management());
   await waitFor(() => text().includes("FAQ #1"), "최종 검증 화면");
   check(document.documentElement.scrollWidth <= window.innerWidth, "FAQ 관리 화면 가로 넘침 없음");
+  faqs.push(
+    { faqNo: 2, question: "방문 일정 변경은 어떻게 요청하나요?", answer: "요청·문의에서 방문 일정을 선택해 희망 날짜와 시간을 입력해주세요.", approved: true },
+    { faqNo: 3, question: "문의 답변은 어디서 확인하나요?", answer: "요청 내역에서 작성한 문의를 선택해 확인해주세요.", approved: true },
+  );
+  await app("/guardian/request", 1);
+  await waitFor(() => button("문의 답변은 어디서 확인하나요?") && text().includes("요청 내역"), "여러 FAQ가 있는 통합 상담 화면");
+  check(document.querySelectorAll('button[id^="ai-faq-question-"]').length === 3 && document.querySelectorAll('[aria-label="AI 문의 내용"]').length === 1, "서버의 여러 FAQ와 직접 질문 입력을 한 상담 영역에 표시");
+  faqs.push(...[4, 5, 6, 7].map((faqNo) => ({ faqNo, question: `추가 공통 질문 ${faqNo}`, answer: `저장된 안내 ${faqNo}`, approved: true })));
+  await click("새로고침");
+  await waitFor(() => button("추천 질문 더 보기 (7개)"), "FAQ 전체 목록");
+  check(document.querySelectorAll('button[id^="ai-faq-question-"]').length === 3, "대표 질문 3개만 먼저 표시");
+  await click("추천 질문 더 보기 (7개)");
+  check(document.querySelectorAll('button[id^="ai-faq-question-"]').length === 7, "더 보기로 서버 FAQ 전체 표시");
+  await click("추가 공통 질문 7");
+  await waitFor(() => text().includes("저장된 안내 7"), "펼친 FAQ 답변");
+  await click("추천 질문 접기");
+  check(!text().includes("저장된 안내 7") && document.querySelectorAll('button[id^="ai-faq-question-"]').length === 3, "추천 목록을 접으면 숨긴 답변도 제거");
+  const counseling = document.querySelector('[aria-label="AI 문의 내용"]').closest("section");
+  check(counseling.getBoundingClientRect().width <= document.documentElement.clientWidth, "통합 AI 상담 카드가 화면 너비 안에 표시");
+  window.scrollTo(0, 0); await sleep();
   window.aiTestResult = { passed, count: passed.length, viewport: window.innerWidth, mode: "mock browser (실제 로그인·DB 미검증)" };
 }
 run().catch((error) => {
