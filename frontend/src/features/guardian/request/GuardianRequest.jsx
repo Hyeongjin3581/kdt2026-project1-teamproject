@@ -8,7 +8,6 @@ import LoadStatus from "../../../components/common/LoadStatus";
 import { TODAY } from "../../../constants";
 import { buildHistory, buildVisits, todayIso } from "../../../utils/guardianAdapters";
 import { upcomingDates } from "../../../utils/upcomingDates";
-import AiFaq from "./AiFaq";
 import AiInquiryAssistant from "./AiInquiryAssistant";
 import { aiErrorMessage } from "../../../utils/aiError";
 
@@ -22,6 +21,7 @@ export default function GuardianRequest({ guardian, recipients, activeRecipientI
   const [requests, setRequests] = useState([]);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [historyError, setHistoryError] = useState("");
+  const [focusSchedule, setFocusSchedule] = useState(false);
   const historyRequest = useRef(null);
   const [status, setStatus] = useState("loading");
   const [loadError, setLoadError] = useState(null); // 병합 중 빠진 선언 복구 (2026. 10. 06)
@@ -111,9 +111,20 @@ export default function GuardianRequest({ guardian, recipients, activeRecipientI
     }
   }
   const showScheduleForm = () => {
-    document.getElementById("guardian-request-form")?.scrollIntoView({ behavior: "smooth", block: "center" });
-    document.getElementById("guardian-request-form")?.focus({ preventScroll: true });
+    setEditing(false);
+    setSelectedRequestId(null);
+    setReqSent(false);
+    const scheduleCategory = categories.find((category) => category.inquiryCategoryNo === 1);
+    if (scheduleCategory) setRequestType(scheduleCategory.inquiryCategoryName);
+    setFocusSchedule(true);
   };
+  useEffect(() => {
+    if (focusSchedule && status === "ok" && selectedRequestId === null) {
+      document.getElementById("guardian-request-form")?.scrollIntoView({ behavior: "smooth", block: "center" });
+      document.getElementById("guardian-request-form")?.focus({ preventScroll: true });
+      setFocusSchedule(false);
+    }
+  }, [focusSchedule, status, selectedRequestId]);
 
   // 선택한 내역(문의/서비스 신청) 수정·삭제 : 문의는 관리자 응답 전까지만, 서비스 신청은 "신청" 상태일 때만 가능
   const [editing, setEditing] = useState(false);
@@ -209,24 +220,23 @@ export default function GuardianRequest({ guardian, recipients, activeRecipientI
       alert("서버 통신 오류가 발생했습니다.");
     }
   };
-  if (status !== "ok") return <div className="space-y-5"><AiInquiryAssistant categories={categories} categoriesLoading={status === "loading"} onSaved={refreshHistory} /><LoadStatus status={status} onRetry={loadData} error={loadError} /></div>;
+  if (status !== "ok") return <div className="space-y-5 font-sans"><AiInquiryAssistant key="guardian-ai" requestNo={selectedVisit?.id} onSaved={refreshHistory} onScheduleGuide={showScheduleForm} /><LoadStatus status={status} onRetry={loadData} error={loadError} /></div>;
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5 font-sans">
       <div>
         <p className="font-mono text-[10px] font-bold tracking-[.16em] text-teal-600">GUARDIAN PORTAL · {TODAY.replace(/[()]/g, "").trim()}</p>
-        <h1 className="font-display text-2xl font-extrabold tracking-tight text-slate-900">요청 · 문의</h1>
+        <h1 className="font-sans text-2xl font-extrabold tracking-tight text-slate-900">요청 · 문의</h1>
         <p className="mt-1 text-sm text-slate-500">방문 시간 변경이나 문의사항을 센터에 전달합니다.</p>
       </div>
-      <AiInquiryAssistant categories={categories} requestNo={selectedVisit?.id} onSaved={refreshHistory} onScheduleGuide={showScheduleForm} />
-      <details className="rounded-lg border border-slate-200 bg-white p-4"><summary className="cursor-pointer text-sm font-semibold text-teal-700">센터의 공통 FAQ 보기</summary><div className="mt-3"><AiFaq /></div></details>
+      <AiInquiryAssistant key="guardian-ai" requestNo={selectedVisit?.id} onSaved={refreshHistory} onScheduleGuide={showScheduleForm} />
       <div className="grid gap-5 lg:grid-cols-[1.2fr_.8fr]">
         <Panel className="p-5">
           {selectedRequest ? <>
             <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-100 pb-4">
               <div>
                 <p className="font-mono text-[10px] font-bold tracking-[.14em] text-teal-600">REQUEST DETAIL · {selectedRequest.id}</p>
-                <h2 className="mt-1 font-display text-lg font-bold text-slate-900">{selectedRecipient.name} 어르신 · {selectedRequest.type}</h2>
+                <h2 className="mt-1 font-sans text-lg font-bold text-slate-900">{selectedRecipient.name} 어르신 · {selectedRequest.type}</h2>
                 <p className="mt-1 text-xs text-slate-400">{selectedRequest.date} 접수 · {selectedRequest.kind}</p>
               </div>
               <Badge tone={selectedRequest.tone}>{selectedRequest.status}</Badge>
@@ -256,7 +266,8 @@ export default function GuardianRequest({ guardian, recipients, activeRecipientI
               <button type="button" onClick={() => { setEditing(false); setSelectedRequestId(null); }} className="rounded-lg border border-slate-200 px-4 py-2 text-xs font-bold text-slate-600 transition hover:bg-slate-50">새 요청 작성</button>
             </div>
           </> : <>
-          <h2 id="guardian-request-form" tabIndex={-1} className="scroll-mt-20 font-display font-bold text-slate-900">요청 보내기</h2>
+          <h2 id="guardian-request-form" tabIndex={-1} className="scroll-mt-20 font-sans font-bold text-slate-900">직접 문의하기</h2>
+          <p className="mt-1 text-xs font-semibold text-teal-700">작성해 제출한 문의는 담당 센터에 접수되며 관리자 답변을 기다립니다.</p>
           <p className="mt-1 text-xs text-slate-400">{selectedRecipient ? `${selectedRecipient.name} 어르신` : "수급자"}의 방문 일정에 대한 요청을 센터에 전달합니다.</p>
           {selectedVisit && <div className="mt-4 flex items-center justify-between rounded-lg border border-teal-100 bg-teal-50 px-3 py-2.5"><div><p className="text-[10px] font-bold tracking-wide text-teal-600">선택한 방문 일정</p><p className="mt-0.5 text-xs font-bold text-teal-800">{selectedVisit.date} · {selectedVisit.time}</p></div><button type="button" onClick={() => setSelectedVisitId(null)} className="text-xs font-semibold text-teal-700 hover:underline">변경</button></div>}
           {!selectedVisit ? (
@@ -309,7 +320,7 @@ export default function GuardianRequest({ guardian, recipients, activeRecipientI
         </Panel>
         <Panel className="overflow-hidden">
           <div className="border-b border-slate-100 px-5 py-4">
-            <div className="flex flex-wrap items-center justify-between gap-2"><h2 className="font-display font-bold text-slate-900">요청 내역</h2>
+            <div className="flex flex-wrap items-center justify-between gap-2"><h2 className="font-sans font-bold text-slate-900">요청 내역</h2>
               <button type="button" onClick={refreshHistory} disabled={historyLoading} className="rounded-lg border border-teal-200 px-3 py-2.5 text-xs font-bold text-teal-700 disabled:opacity-50">{historyLoading ? "내역 조회 중..." : "문의 내역 새로고침"}</button></div>
             {historyError && <p role="alert" className="mt-2 text-xs text-red-600">{historyError}</p>}
             <p className="mt-1 text-xs text-slate-400">수급자를 선택해 해당 요청·문의·신청 내역을 확인하세요.</p>
