@@ -47,10 +47,10 @@ React SPA (보호자 · 요양보호사 · 관리자) ── axios / STOMP ─�
 
 | 팀원 | 담당 |
 | --- | --- |
-| **정형진** | 보호자 · 보호자문의 · 수급자 API, 추천점수 상위 3명 반환 로직, 결원관리 |
-| 주석암 | user · userCategory · center API, 상태변경 API, 외부 API · 웹소켓(채팅) |
-| 임준희 | 요양보호사 근무기록 · 배정 API, Google SMTP 이메일 인증 |
-| 박현민 | 요양보호사 · 근무가능시간 · 후기 API, Gemini 기반 후기 감정 분석 |
+| **나** | 보호자 · 보호자문의 · 수급자 API, 추천점수 상위 3명 반환 로직, 결원관리 |
+| 팀원 A | user · userCategory · center API, 상태변경 API, 외부 API · 웹소켓(채팅) |
+| 팀원 B | 요양보호사 근무기록 · 배정 API, Google SMTP 이메일 인증 |
+| 팀원 C | 요양보호사 · 근무가능시간 · 후기 API, Gemini 기반 후기 감정 분석 |
 
 ## 내가 맡은 부분
 
