@@ -5,7 +5,7 @@
 | 항목 | 내용 |
 | --- | --- |
 | 기간 | 2026.09.23 ~ 10.15 |
-| 팀 | 4조 '보호자와 수급자들' · 4명 (정형진 · 주석암 · 임준희 · 박현민) |
+| 팀 | 4명 |
 | 내 역할 | 프론트 + 백엔드 : **요양보호사 추천 점수(상위 3명) · 결원 관리**, 보호자 · 수급자 · 보호자 문의 API |
 | 백엔드 | Java 21 · Spring Boot · Spring Data JPA · WebSocket(STOMP) · JWT · MySQL · Redis |
 | 프론트 | React 19 · Vite 8 · Tailwind CSS 4 · axios · STOMP |
